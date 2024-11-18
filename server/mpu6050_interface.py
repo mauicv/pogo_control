@@ -4,10 +4,15 @@ sensor has the same two addresss 0x68 and 0x69. However, they also have an AD0 p
 addresses. By using the AD0 pin we can connect multiple sensors to the same I2C bus.
 """
 from src.mpu6050 import mpu6050
+from filters.low_pass import LowPassFilter
 
 class MPU6050Interface:
-    def __init__(self):
+    def __init__(self, filter=None):
         self.mpu = mpu6050(0x68)
+        if filter is None:
+            self.filter = LowPassFilter(num_components=6)
+        else:
+            self.filter = filter
 
     def get_data(self):
         """Returns a list of the acceleration and gyroscope data.
@@ -15,15 +20,7 @@ class MPU6050Interface:
         Order:
         [ax, ay, az, gx, gy, gz]
         """
-        return [
+        return self.filter.filter([
             *self.mpu.get_accel_data().values(),
             *self.mpu.get_gyro_data().values()
-        ]
-
-    def get_data_sample(self, n_samples: int = 4):
-        sum_data = [0] * 6
-        for _ in range(n_samples):
-            data = self.get_data()
-            sum_data = [sum_data[i] + data[i] for i in range(6)]
-        return [sum_data[i] / n_samples for i in range(6)]
-
+        ])

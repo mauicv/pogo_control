@@ -1,5 +1,6 @@
 import pigpio
 
+
 class PIGPIO_ServoInterface:
     def __init__(self, pin_map: dict):
         self.pin_map = pin_map

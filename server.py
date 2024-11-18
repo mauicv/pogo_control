@@ -1,8 +1,8 @@
 import sys
 import time
-from src.channel import Channel
-# from src.piggpio_servo_interface import PIGPIO_ServoInterface
-from src.mpu6050_interface import MPU6050Interface
+from server.channel import Channel
+# from server.piggpio_servo_interface import PIGPIO_ServoInterface
+from server.mpu6050_interface import MPU6050Interface
 
 
 # SERVO_PINMAP = {1:4, 2:18, 3:27, 4:10, 5:20, 6:19, 7:13, 8:6}
