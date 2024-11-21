@@ -1,5 +1,7 @@
 from google.cloud import storage
 import torch
+import logging
+logger = logging.getLogger(__name__)
 
 
 def parse_version(blob_name):
@@ -13,10 +15,9 @@ class GCSModel:
             model_limits=25,
         ) -> None:
         self.bucket = bucket
-        self.version = None
         self.model = None
         self.model_limits = model_limits
-        self.load_model()
+        self.version = self.get_latest_model_version()
 
     def remove_old_models(self):
         blobs = self.bucket.list_blobs(prefix='actor')
@@ -35,35 +36,52 @@ class GCSModel:
             blobs = self.bucket.list_blobs(prefix='actor')
             filtered_blobs = [blob for blob in blobs if blob.name.endswith('.pt')]
             versions = [parse_version(blob.name) for blob in filtered_blobs]
-            print('[versions]', sorted(versions))
-            version = max(versions)
+            logger.info(f'versions: {sorted(versions)}')
+            if len(versions) == 0:
+                version = None
+            else:
+                version = max(versions)
         except Exception as e:
-            print(f"Error getting latest model version: {e}")
+            logger.error(f"Error getting latest model version: {e}")
             version = 0
         return version
 
     def upload_model(self, model):
-        if self.version is None: self.get_latest_model_version()
+        if self.version is None: self.version = self.get_latest_model_version()
+        logger.info(f"'self.version', {self.version}")
 
         try:
-            blob_name = f"actor/actor-{self.version + 1}.pt"
+            if self.version is None:
+                logger.info('no version found, setting to 0')
+                self.version = 0
+            else:
+                self.version += 1
+            blob_name = f"actor/actor-{self.version}.pt"
             blob = self.bucket.blob(blob_name)
             with blob.open("wb", ignore_flush=True) as f:
                 torch.save(model, f)
-            print(f'uploaded model version {self.version + 1}')
-            self.version += 1
+            logger.info(f'uploaded model version {self.version}')
         except Exception as e:
-            print(f"Error uploading model: {e}")
+            logger.error(f"Error uploading model: {e}")
             raise e
 
     def load_model(self):
         remote_version = self.get_latest_model_version()
-        if self.version is None or remote_version != self.version:
+        if remote_version is None:
+            logger.info('no remote model found')
+            return None
+        if remote_version is None:
+            # no model remote or otherwise
+            self.version = remote_version
+        if (remote_version != self.version) or \
+                (self.model is None and remote_version is not None):
+            # if the remote version is different from the local version
+            # or if there is no local model but there is a remote model
             blob_name = f"actor/actor-{remote_version}.pt"
             blob = self.bucket.blob(blob_name)
             self.model = torch.load(blob.open("rb"))
             self.version = remote_version
-            print(f'loaded model version {self.version}')
+            logger.info(f'loaded model version {self.version}')
         else:
-            print(f'model version {self.version} already loaded')
+            logger.info(f'model version {self.version} already loaded')
         return self.model
