@@ -9,4 +9,4 @@ class LowPassFilter:
                 self.prev_values[i] = new_values[i]
             else:
                 self.prev_values[i] = self.alpha * self.prev_values[i] + (1 - self.alpha) * new_values[i]
-        return self.prev_values
+        return self.prev_values.copy()

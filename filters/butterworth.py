@@ -1,21 +1,25 @@
-# from scipy import signal
-# import matplotlib.pyplot as plt
-# import numpy as np
+import numpy as np
+from scipy.signal import butter, lfilter
 
 
-# t = np.linspace(0, 1, 1000, False)  # 1 second
-# sig = np.sin(2*np.pi*10*t) + np.sin(2*np.pi*20*t)
-# fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
-# ax1.plot(t, sig)
-# ax1.set_title('10 Hz and 20 Hz sinusoids')
-# ax1.axis([0, 1, -2, 2])
+class ButterworthFilter:
+    def __init__(self, order, cutoff, fs, num_components):
+        self.filters = [_ButterworthFilter(order, cutoff, fs) for _ in range(num_components)]
+
+    def filter(self, new_values):
+        return [f.filter(x) for f, x in zip(self.filters, new_values)]
 
 
-# sos = signal.butter(10, 15, 'lowpass', fs=1000, output='sos')
-# filtered = signal.sosfilt(sos, sig)
-# ax2.plot(t, filtered)
-# ax2.set_title('After 15 Hz high-pass filter')
-# ax2.axis([0, 1, -2, 2])
-# ax2.set_xlabel('Time [seconds]')
-# plt.tight_layout()
-# plt.show()
+class _ButterworthFilter:
+    def __init__(self, order, cutoff, fs):
+        self.order = order
+        self.cutoff = cutoff
+        self.fs = fs
+        nyq = 0.5 * self.fs
+        self.normal_cutoff = self.cutoff / nyq
+        self.b, self.a = butter(self.order, self.normal_cutoff, btype='low', analog=False)
+        self.zi = np.zeros(max(len(self.a), len(self.b)) - 1)
+
+    def filter(self, x):
+        y, self.zi = lfilter(self.b, self.a, [x], zi=self.zi)
+        return y.tolist()[0]
