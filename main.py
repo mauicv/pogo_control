@@ -21,11 +21,11 @@ def server():
 
     mpu = MPU6050Interface()
     servo = PIGPIO_ServoInterface(SERVO_PINMAP)
-    servo.update_angle([1500] * 8)
+    servo.update_angle([0.0] * 8)
 
     def _handle_message(message):
         servo.update_angle(message)
-        data = mpu.get_data_sample()
+        data = mpu.get_data()
         return data
 
     channel = Channel(host=HOST, port=POST)
@@ -57,6 +57,7 @@ def client():
         host='192.168.0.27',
         port=8000
     )
+    client.connect()
     # low_pass_filter = LowPassFilter(
     #     alpha=0.85,
     #     num_components=6

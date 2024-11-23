@@ -7,7 +7,8 @@ class PIGPIO_ServoInterface:
     HALF_RANGE = (SERVO_PWM_THRESHOLD_MAX - SERVO_PWM_THRESHOLD_MIN) / 2
 
     def normalized_action_to_servo_pwm(self, action: float) -> int:
-        return int(self.SERVO_PWM_THRESHOLD_MIN + action * self.HALF_RANGE)
+        # Action is in the range [-1, 1]
+        return int(self.SERVO_PWM_THRESHOLD_MIN + (1 + action) * self.HALF_RANGE)
 
     def __init__(self, pin_map: dict):
         self.pin_map = pin_map

@@ -20,6 +20,7 @@ class Client:
         data = json.dumps(data)
         self.s.sendall(data.encode())
         data = self.s.recv(1024)
+        print(data)
         data = json.loads(data.decode())
         assert data, 'Response Error!'
         return data
