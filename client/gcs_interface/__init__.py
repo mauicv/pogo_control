@@ -13,4 +13,4 @@ class GCS_Interface:
         client = storage.Client.from_service_account_json(credentials)
         self.bucket = client.bucket(bucket)
         self.model = GCSModel(self.bucket, model_limits)
-        self.rollout = GCSRollout(self.bucket, rollout_limits)
+        self.rollout = GCSRollout(self.bucket)

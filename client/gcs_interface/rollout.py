@@ -1,40 +1,23 @@
 from google.cloud import storage
-import torch
-
-
-def parse_version(blob_name):
-    return int(blob_name.split('-')[1].split('.')[0])
+import json
+import uuid
 
 
 class GCSRollout:
     def __init__(
             self,
             bucket,
-            limits=100000,
         ) -> None:
         self.bucket = bucket
-        self.limits = limits
-        self.rollout_index = None
+        self.experiment_id = str(uuid.uuid4())
 
-    def get_latest_rollout_index(self):
-        pass
-        # try:
-        #     blobs = self.bucket.list_blobs(prefix='rollouts')
-        #     filtered_blobs = [blob for blob in blobs if blob.name.endswith('.pt')]
-        #     versions = [parse_version(blob.name) for blob in filtered_blobs]
-        #     print('[versions]', sorted(versions))
-        #     version = max(versions)
-        # except Exception as e:
-        #     print(f"Error getting latest model version: {e}")
-        #     version = 0
-        # return version
+    def upload_rollout(self, rollout, model_version):
+        rollout_index = str(uuid.uuid4())
+        blob_name = f"rollouts/{model_version}-{self.experiment_id}-{rollout_index}.json"
+        blob = self.bucket.blob(blob_name)
+        blob.upload_from_string(json.dumps(rollout))
 
-    def upload_rollout(self, rollout):
-        pass
-
-    def get_rollout(self, version):
-        pass
-
-    def remove_old_rollouts(self):
-        pass
-
+    def remove_all_rollouts(self):
+        blobs = self.bucket.list_blobs(prefix='rollouts')
+        for blob in blobs:
+            blob.delete()

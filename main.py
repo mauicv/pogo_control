@@ -7,7 +7,20 @@ logger = logging.getLogger(__name__)
 @click.group()
 @click.option('--debug/--no-debug', default=False)
 def cli(debug):
-    click.echo(f"Debug mode is {'on' if debug else 'off'}")
+    pass
+
+
+@cli.command()
+def clean():
+    from client.gcs_interface import GCS_Interface
+    gcs = GCS_Interface(
+        credentials='world-model-rl-01a513052a8a.json',
+        bucket='pogo_wmrl',
+        model_limits=4,
+    )
+    gcs.rollout.remove_all_rollouts()
+    gcs.model.remove_old_models()
+
 
 @cli.command()
 def server():
@@ -34,12 +47,14 @@ def server():
 
 
 @cli.command()
-def client():
+@click.option('--num-steps', type=int, default=100)
+@click.option('--interval', type=float, default=0.1)
+@click.option('--consecutive-error-limit', type=int, default=10)
+def client(num_steps, interval, consecutive_error_limit):
     from client.client import Client
-    from filters.low_pass import LowPassFilter
     from filters.butterworth import ButterworthFilter
     from client.gcs_interface import GCS_Interface
-    from client.sample import sample
+    from client.run import run_client
     import torch
     torch.set_grad_enabled(False)
 
@@ -50,26 +65,28 @@ def client():
     gcs = GCS_Interface(
         credentials='world-model-rl-01a513052a8a.json',
         bucket='pogo_wmrl',
-        model_limits=4,
+        model_limits=4
     )
-    gcs.model.load_model()
     client = Client(
         host='192.168.0.27',
         port=8000
     )
     client.connect()
-    # low_pass_filter = LowPassFilter(
-    #     alpha=0.85,
-    #     num_components=6
-    # )
     butterworth_filter = ButterworthFilter(
         order=2,
         cutoff=5.0,
         fs=50.0,
         num_components=6
     )
-    rollout = sample(gcs.model.model, butterworth_filter, client)
-    print(rollout)
+    run_client(
+        gcs,
+        client,
+        butterworth_filter,
+        num_steps=num_steps,
+        interval=interval,
+        consecutive_error_limit=consecutive_error_limit
+    )
+
 
 if __name__ == "__main__":
     cli()

@@ -19,6 +19,11 @@ class GCSModel:
         self.model_limits = model_limits
         self.version = self.get_latest_model_version()
 
+    def remove_all_models(self):
+        blobs = self.bucket.list_blobs(prefix='actor')
+        for blob in blobs:
+            blob.delete()
+
     def remove_old_models(self):
         blobs = self.bucket.list_blobs(prefix='actor')
         filtered_blobs = [blob for blob in blobs if blob.name.endswith('.pt')]

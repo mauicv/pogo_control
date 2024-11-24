@@ -1,6 +1,5 @@
 import os
 import sys
-import torch
 import logging
 
 logger = logging.getLogger(__name__)
@@ -9,20 +8,20 @@ logger = logging.getLogger(__name__)
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from client.sample import sample
 from tests.mock_client import MockClient
-from client.model import Actor
 from filters.butterworth import ButterworthFilter
+from client.gcs_interface import GCS_Interface
 
 
 def test_sample():
+    gcs = GCS_Interface(
+        credentials='world-model-rl-01a513052a8a.json',
+        bucket='pogo_wmrl',
+        model_limits=4,
+    )
+    model = gcs.model.load_model()
     client = MockClient(
         host="localhost",
         port=8000
-    )
-    model = Actor(
-        input_dim=6,
-        output_dim=8,
-        bound=1,
-        num_layers=2
     )
     filter = ButterworthFilter(
         order=2,
@@ -38,5 +37,10 @@ def test_sample():
     )
     assert len(rollout.states) == 100
     assert len(rollout.actions) == 100
+
+    gcs.rollout.upload_rollout(
+        rollout.to_dict(),
+        gcs.model.version
+    )
 
 test_sample()
