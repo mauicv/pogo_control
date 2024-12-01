@@ -1,5 +1,12 @@
 import click
 import logging
+import dotenv
+import os
+
+dotenv.load_dotenv()
+
+BLUETOOTH_BTADDR = os.getenv('BLUETOOTH_BTADDR')
+BLUETOOTH_CHANNEL = os.getenv('BLUETOOTH_CHANNEL')
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +31,7 @@ def clean():
 
 @cli.command()
 def server():
-    from server.channel import Channel
+    from server.channel import Channel, BlueToothChannel
     from server.mpu6050_interface import MPU6050Interface
     from server.piggpio_servo_interface import PIGPIO_ServoInterface
 
@@ -41,7 +48,8 @@ def server():
         data = mpu.get_data()
         return data
 
-    channel = Channel(host=HOST, port=POST)
+    # channel = Channel(host=HOST, port=POST)
+    channel = BlueToothChannel(btaddr=BLUETOOTH_BTADDR, channel=BLUETOOTH_CHANNEL)
     channel.serve(_handle_message)
     click.echo(f"Server running on {HOST}:{POST}")
 
@@ -51,7 +59,7 @@ def server():
 @click.option('--interval', type=float, default=0.1)
 @click.option('--consecutive-error-limit', type=int, default=10)
 def client(num_steps, interval, consecutive_error_limit):
-    from client.client import Client
+    from client.client import Client, BlueToothClient
     from filters.butterworth import ButterworthFilter
     from client.gcs_interface import GCS_Interface
     from client.run import run_client
@@ -67,9 +75,9 @@ def client(num_steps, interval, consecutive_error_limit):
         bucket='pogo_wmrl',
         model_limits=4
     )
-    client = Client(
-        host='192.168.0.27',
-        port=8000
+    client = BlueToothClient(
+        btaddr=BLUETOOTH_BTADDR,
+        channel=BLUETOOTH_CHANNEL
     )
     client.connect()
     butterworth_filter = ButterworthFilter(

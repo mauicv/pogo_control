@@ -29,3 +29,30 @@ class Client:
     def close(self):
         self.s.close()
 
+
+class BlueToothClient:
+    def __init__(self, btaddr, channel):
+        self.btaddr = btaddr
+        self.channel = channel
+        self.s = socket.socket(
+            socket.AF_BLUETOOTH,
+            socket.SOCK_STREAM,
+            socket.BTPROTO_RFCOMM
+        )
+
+    def connect(self):
+        self.s.connect((self.btaddr, self.channel))
+        data = self.s.recv(1024)
+        assert data == b'ACK_CONN', 'error connecting!'
+
+    def send_data(self, data):
+        data = json.dumps(data)
+        self.s.sendall(data.encode())
+        data = self.s.recv(1024)
+        data = json.loads(data.decode())
+        assert data, 'Response Error!'
+        return data
+
+    def close(self):
+        self.s.close()
+
