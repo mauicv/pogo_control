@@ -37,16 +37,16 @@ def sample(
     rollout = Rollout(states=[], actions=[], times=[])
     current_time = time.time()
     for _ in range(num_steps):
+        current_time = time.time()
+        print(current_time)
         state = client.send_data(action)
         state = torch.tensor(state)
         action = model(state, deterministic=True).numpy()
         action = filter.filter(action)
         state = client.send_data(action)
-        rollout.append(state, action, time.time())
+        rollout.append(state, action, current_time)
         elapsed_time = time.time() - current_time
-        if elapsed_time > interval:
-            current_time = time.time()
-        else:
+        if elapsed_time < interval:
             time.sleep(interval - elapsed_time)
 
     return rollout

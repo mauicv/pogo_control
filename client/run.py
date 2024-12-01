@@ -39,8 +39,17 @@ def perform_rollouts(
     consecutive_errors = 0
     while True:
         try:
-            rollout = sample(model, butterworth_filter, client, num_steps, interval)
-            gcs.rollout.upload_rollout(rollout, gcs.model.version)
+            rollout = sample(
+                model,
+                butterworth_filter,
+                client,
+                num_steps,
+                interval
+            )
+            gcs.rollout.upload_rollout(
+                rollout.to_dict(),
+                gcs.model.version
+            )
             model = gcs.model.load_model()
 
             consecutive_errors = 0

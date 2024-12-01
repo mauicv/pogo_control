@@ -1,6 +1,7 @@
 import os
 import sys
 import logging
+import matplotlib.pyplot as plt
 
 logger = logging.getLogger(__name__)
 

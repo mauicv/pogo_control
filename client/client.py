@@ -1,6 +1,8 @@
 import socket
 import json
 
+# AC:BC:32:D1:8F:C0
+
     
 class Client:
     def __init__(self, host, port):
@@ -20,7 +22,6 @@ class Client:
         data = json.dumps(data)
         self.s.sendall(data.encode())
         data = self.s.recv(1024)
-        print(data)
         data = json.loads(data.decode())
         assert data, 'Response Error!'
         return data
