@@ -2,3 +2,5 @@ puppy_pi_servo_control
 __pycache__
 venv
 world-model-rl-01a513052a8a.json
+.env
+.DS_Store

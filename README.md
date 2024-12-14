@@ -17,3 +17,11 @@ The sampler performs a set of actions. Firstly Its responsible for performing th
 Secondly, it checks the google cloud bucket for new actor model versions. If there are new versions it will download them and use them to generate the actions during the next round of rollouts.
 
 Note the actor model is trained externally and periodically uploaded to the google cloud bucket.
+
+
+## Setting up Pogo
+
+1. Set up OS on the Raspberry Pi.
+2. Enable I2C interface using raspi-config.
+3. pip install requirements/server.txt
+4. Setup pigpio daemon

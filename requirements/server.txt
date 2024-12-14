@@ -1,0 +1,4 @@
+click
+python-dotenv
+numpy
+scipy

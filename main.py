@@ -1,5 +1,8 @@
 import click
 import logging
+import dotenv
+import os
+dotenv.load_dotenv()
 
 logger = logging.getLogger(__name__)
 
@@ -29,8 +32,8 @@ def server():
     from server.piggpio_servo_interface import PIGPIO_ServoInterface
 
     SERVO_PINMAP = {1:4, 2:18, 3:27, 4:10, 5:20, 6:19, 7:13, 8:6}
-    HOST = "192.168.0.27"
-    POST = 8000
+    HOST = os.getenv("HOST")
+    POST = os.getenv("POST")
 
     mpu = MPU6050Interface()
     servo = PIGPIO_ServoInterface(SERVO_PINMAP)
@@ -67,9 +70,12 @@ def client(num_steps, interval, consecutive_error_limit):
         bucket='pogo_wmrl',
         model_limits=4
     )
+    host = os.getenv("HOST")
+    port = os.getenv("POST")
+
     client = Client(
-        host='192.168.0.27',
-        port=8000
+        host=host,
+        port=port
     )
     client.connect()
     butterworth_filter = ButterworthFilter(
