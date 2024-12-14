@@ -33,7 +33,7 @@ def server():
 
     SERVO_PINMAP = {1:4, 2:18, 3:27, 4:10, 5:20, 6:19, 7:13, 8:6}
     HOST = os.getenv("HOST")
-    POST = os.getenv("POST")
+    POST = int(os.getenv("POST"))
 
     mpu = MPU6050Interface()
     servo = PIGPIO_ServoInterface(SERVO_PINMAP)
@@ -71,7 +71,7 @@ def client(num_steps, interval, consecutive_error_limit):
         model_limits=4
     )
     host = os.getenv("HOST")
-    port = os.getenv("POST")
+    port = int(os.getenv("POST"))
 
     client = Client(
         host=host,

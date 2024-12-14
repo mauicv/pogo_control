@@ -24,4 +24,5 @@ Note the actor model is trained externally and periodically uploaded to the goog
 1. Set up OS on the Raspberry Pi.
 2. Enable I2C interface using raspi-config.
 3. pip install requirements/server.txt
-4. Setup pigpio daemon
+4. Setup pigpio daemon: see [here](https://abyz.me.uk/rpi/pigpio/download.html)
+5
