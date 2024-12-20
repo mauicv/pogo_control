@@ -13,7 +13,8 @@ def run_client(
         butterworth_filter: ButterworthFilter,
         num_steps: int = 100,
         interval: float = 0.1,
-        consecutive_error_limit: int = 10
+        consecutive_error_limit: int = 10,
+        noise: float = 0.3
     ):
 
     model = wait_for_model(gcs)
@@ -24,8 +25,10 @@ def run_client(
         gcs,
         num_steps,
         interval,
-        consecutive_error_limit
+        consecutive_error_limit,
+        noise
     )
+
 
 def perform_rollouts(
         model: torch.nn.Module,
@@ -34,7 +37,8 @@ def perform_rollouts(
         gcs: GCS_Interface,
         num_steps: int = 100,
         interval: float = 0.1,
-        consecutive_error_limit: int = 10
+        consecutive_error_limit: int = 10,
+        noise: float = 0.3
     ):
     consecutive_errors = 0
     while True:
@@ -44,14 +48,14 @@ def perform_rollouts(
                 butterworth_filter,
                 client,
                 num_steps,
-                interval
+                interval,
+                noise
             )
             gcs.rollout.upload_rollout(
                 rollout.to_dict(),
                 gcs.model.version
             )
             model = gcs.model.load_model()
-
             consecutive_errors = 0
         except Exception as e:
             print(e)

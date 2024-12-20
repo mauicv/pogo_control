@@ -25,4 +25,4 @@ Note the actor model is trained externally and periodically uploaded to the goog
 2. Enable I2C interface using raspi-config.
 3. pip install requirements/server.txt
 4. Setup pigpio daemon: see [here](https://abyz.me.uk/rpi/pigpio/download.html)
-5
+5. Run `python3 main.py server` to start the server.

@@ -52,8 +52,9 @@ def server():
 @cli.command()
 @click.option('--num-steps', type=int, default=100)
 @click.option('--interval', type=float, default=0.1)
+@click.option('--noise', type=float, default=0.3)
 @click.option('--consecutive-error-limit', type=int, default=10)
-def client(num_steps, interval, consecutive_error_limit):
+def client(num_steps, interval, noise, consecutive_error_limit):
     from client.client import Client
     from filters.butterworth import ButterworthFilter
     from client.gcs_interface import GCS_Interface
@@ -79,10 +80,10 @@ def client(num_steps, interval, consecutive_error_limit):
     )
     client.connect()
     butterworth_filter = ButterworthFilter(
-        order=2,
-        cutoff=5.0,
+        order=4,
+        cutoff=2.0,
         fs=50.0,
-        num_components=6
+        num_components=8 # 8 servo motors
     )
     run_client(
         gcs,
@@ -90,6 +91,7 @@ def client(num_steps, interval, consecutive_error_limit):
         butterworth_filter,
         num_steps=num_steps,
         interval=interval,
+        noise=noise,
         consecutive_error_limit=consecutive_error_limit
     )
 

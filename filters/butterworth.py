@@ -6,7 +6,7 @@ class ButterworthFilter:
     def __init__(
             self,
             order: int = 2,
-            cutoff: float = 5.0,
+            cutoff: float = 2.0,
             fs: float = 50.0,
             num_components: int = 6
         ):
@@ -20,7 +20,7 @@ class _ButterworthFilter:
     def __init__(self, order, cutoff, fs):
         self.order = order
         self.cutoff = cutoff
-        self.fs = fs
+        self.fs = fs 
         nyq = 0.5 * self.fs
         self.normal_cutoff = self.cutoff / nyq
         self.b, self.a = butter(self.order, self.normal_cutoff, btype='low', analog=False)
