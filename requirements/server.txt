@@ -2,3 +2,4 @@ click
 python-dotenv
 numpy
 scipy
+simple-pid

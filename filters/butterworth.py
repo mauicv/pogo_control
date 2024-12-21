@@ -12,7 +12,7 @@ class ButterworthFilter:
         ):
         self.filters = [_ButterworthFilter(order, cutoff, fs) for _ in range(num_components)]
 
-    def filter(self, new_values):
+    def __call__(self, new_values):
         assert len(new_values) == len(self.filters), "Number of new values must match number of filters"
         return [f.filter(x) for f, x in zip(self.filters, new_values)]
 
