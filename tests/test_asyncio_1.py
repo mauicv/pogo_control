@@ -40,13 +40,13 @@ if __name__ == "__main__":
 
     async_servo_interface.normalized_action_to_servo_pwm = lambda x: x
 
-    async_servo_interface.update_angle_setpoints([0.5])
+    async_servo_interface.update_angle([0.5])
     time.sleep(2)
-    async_servo_interface.update_angle_setpoints([-0.5])
+    async_servo_interface.update_angle([-0.5])
     time.sleep(2)
-    async_servo_interface.update_angle_setpoints([0.5])
+    async_servo_interface.update_angle([0.5])
     time.sleep(2)
-    async_servo_interface.update_angle_setpoints([0.6])
+    async_servo_interface.update_angle([0.6])
     time.sleep(2)
     async_servo_interface.deinit()
 

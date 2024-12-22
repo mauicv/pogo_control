@@ -33,7 +33,7 @@ def server():
     from server.piggpio_async_servo_interface import PIGPIO_AsyncServoInterface
     import pigpio
 
-    SERVO_PINMAP = {1:4, 2:18, 3:27, 4:10, 5:20, 6:19, 7:13, 8:6}
+    SERVO_PINMAP = {0:4, 1:18, 2:27, 3:10, 4:20, 5:19, 6:13, 7:6}
     HOST = os.getenv("HOST")
     POST = int(os.getenv("POST"))
 
@@ -47,7 +47,6 @@ def server():
         pid_ki=0.01,
         pid_kd=0.001,
     )
-    servo.update_angle([0.0] * 8)
 
     def _handle_message(message):
         servo.update_angle(message)

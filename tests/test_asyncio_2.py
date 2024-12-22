@@ -46,7 +46,7 @@ if __name__ == "__main__":
     )
 
     for action in rollout['actions']:
-        async_servo_interface.update_angle_setpoints(action)
+        async_servo_interface.update_angle(action)
         time.sleep(0.1)
     async_servo_interface.deinit()
 

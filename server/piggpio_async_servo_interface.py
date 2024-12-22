@@ -67,14 +67,14 @@ class PIGPIO_AsyncServoInterface:
 
         self.servo_update_loop = Loop(
             interval=self.update_interval,
-            func=self.update_angle
+            func=self._update_angle
         )
         self.servo_update_loop.start()
 
-    def update_angle_setpoints(self, values: list[float]):
+    def update_angle(self, values: list[float]):
         self.pid_controller.set_setpoint(values)
 
-    def update_angle(self):
+    def _update_angle(self):
         updates = [a+b for a, b in zip(self.servo_pw, self.pid_controller(self.servo_pw))]
         for pin_id, value in enumerate(updates):
             servo_pwm = self.normalized_action_to_servo_pwm(value)
