@@ -37,7 +37,7 @@ def perform_rollouts(
         gcs: GCS_Interface,
         num_steps: int = 100,
         interval: float = 0.1,
-        consecutive_error_limit: int = 10,
+        consecutive_error_limit: int = 3,
         noise: float = 0.3
     ):
     consecutive_errors = 0
@@ -62,7 +62,7 @@ def perform_rollouts(
             consecutive_errors += 1
             if consecutive_errors > consecutive_error_limit:
                 print("Too many consecutive errors, exiting")
-                break
+                raise e
             sleep(1)
             continue
 

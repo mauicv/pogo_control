@@ -35,7 +35,7 @@ def sample(
     ) -> Rollout:
     torch.set_grad_enabled(False)
     action = torch.tensor([0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5])
-    action = filter.filter(action)
+    action = filter(action)
     rollout = Rollout(states=[], actions=[], times=[])
     current_time = time.time()
     for _ in range(num_steps):

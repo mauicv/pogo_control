@@ -50,15 +50,10 @@ class PIGPIO_AsyncServoInterface:
         ):
         self.pin_map = pin_map
         self.update_interval = update_interval
-        self.pid_controller = MultiPIDController(
-            num_components=len(pin_map),
-            kp=pid_kp,
-            ki=pid_ki,
-            kd=pid_kd,
-        )
         self.pigpio = pigpio
         if not self.pigpio.connected:
             raise Exception("Failed to connect to pigpio")
+
         self.servo_pw = [0] * len(self.pin_map)
         for pin_id, pin in self.pin_map.items():
             try:
@@ -66,6 +61,15 @@ class PIGPIO_AsyncServoInterface:
             except Exception as err:
                 print(err)
                 self.servo_pw[pin_id] = 0
+
+        self.pid_controller = MultiPIDController(
+            num_components=len(pin_map),
+            kp=pid_kp,
+            ki=pid_ki,
+            kd=pid_kd,
+            init_setpoints=self.servo_pw,
+            starting_outputs=self.servo_pw,
+        )
 
         self.servo_update_loop = Loop(
             interval=self.update_interval,

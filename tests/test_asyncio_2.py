@@ -28,6 +28,7 @@ class MockPIGPIO:
     
     def set_servo_pulsewidth(self, pin, value):
         self.values[pin].append(value)
+        print(f"Setting servo {pin} to {value}")
 
     def stop(self):
         pass

@@ -6,12 +6,23 @@ class MultiPIDController:
     def __init__(
             self,
             num_components: int = 8,
-            init_setpoint: float = 0.0,
             kp: float = 1.0,
             ki: float = 0.1,
             kd: float = 0.01,
+            init_setpoints: list[float] = None,
+            init_outputs: list[float] = None,   
         ):
-        self.controllers = [PID(kp, ki, kd, setpoint=init_setpoint) for _ in range(num_components)]
+        if init_setpoints is None:
+            init_setpoints = [0.0] * num_components
+        if init_outputs is None:
+            init_outputs = [0.0] * num_components
+        self.controllers = [
+            PID(
+                kp=kp, ki=ki, kd=kd,
+                starting_output=init_output,
+                setpoint=init_setpoint,
+            ) for init_output, init_setpoint in zip(init_outputs, init_setpoints)
+        ]
 
     def set_setpoint(self, new_setpoints: list[float]):
         assert len(new_setpoints) == len(self.controllers), \
