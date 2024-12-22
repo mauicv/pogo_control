@@ -49,6 +49,7 @@ def sample(
         # NOTE: the state, actions stored here are related as the
         # action resulting from the state (not the state resulting
         # from the action)
+        state = state.numpy()
         rollout.append(state, action, current_time)
         state = client.send_data(action)
 
