@@ -3,7 +3,7 @@ class LowPassFilter:
         self.alpha = alpha
         self.prev_values = [None] * num_components
 
-    def filter(self, new_values):
+    def __call__(self, new_values):
         assert len(new_values) == len(self.prev_values), "Number of new values must match number of filters"
         for i in range(len(new_values)):
             if self.prev_values[i] is None:

@@ -20,7 +20,7 @@ class MPU6050Interface:
         Order:
         [ax, ay, az, gx, gy, gz]
         """
-        return self.filter.filter([
+        return self.filter([
             *self.mpu.get_accel_data().values(),
             *self.mpu.get_gyro_data().values()
         ])

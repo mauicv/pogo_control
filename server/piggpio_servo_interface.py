@@ -1,6 +1,3 @@
-import pigpio
-
-
 class PIGPIO_ServoInterface:
     SERVO_PWM_THRESHOLD_MIN = 500
     SERVO_PWM_THRESHOLD_MAX = 2500
@@ -10,9 +7,9 @@ class PIGPIO_ServoInterface:
         # Action is in the range [-1, 1]
         return int(self.SERVO_PWM_THRESHOLD_MIN + (1 + action) * self.HALF_RANGE)
 
-    def __init__(self, pin_map: dict):
+    def __init__(self, pin_map: dict, pigpio):
         self.pin_map = pin_map
-        self.pigpio = pigpio.pi()
+        self.pigpio = pigpio
         if not self.pigpio.connected:
             raise Exception("Failed to connect to pigpio")
         self.servo_pw = {}
@@ -24,7 +21,9 @@ class PIGPIO_ServoInterface:
                 self.servo_pw[pin_id] = 0
 
     def update_angle(self, values: list[float]):
-        for pin, value in zip(self.pin_map.values(), values):
+        for i in range(len(values)):
+            pin = self.pin_map[i]
+            value = values[i]
             servo_pwm = self.normalized_action_to_servo_pwm(value)
             self.pigpio.set_servo_pulsewidth(pin, servo_pwm)
 

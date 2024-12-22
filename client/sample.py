@@ -44,7 +44,7 @@ def sample(
         action = model(state, deterministic=True).numpy()
         action = action + np.random.normal(0, noise, size=action.shape)
         action = np.clip(action, -1, 1)
-        action = filter.filter(action)
+        action = filter(action)
         current_time = time.time()
         # NOTE: the state, actions stored here are related as the
         # action resulting from the state (not the state resulting
