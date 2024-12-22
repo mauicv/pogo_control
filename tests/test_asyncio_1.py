@@ -25,7 +25,6 @@ class MockPIGPIO:
 
 
 if __name__ == "__main__":
-    control_signal = []
     pin_map = {
         0: 18,
     }

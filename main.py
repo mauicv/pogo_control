@@ -29,7 +29,8 @@ def clean():
 def server():
     from server.channel import Channel
     from server.mpu6050_interface import MPU6050Interface
-    from server.piggpio_servo_interface import PIGPIO_ServoInterface
+    # from server.piggpio_servo_interface import PIGPIO_ServoInterface
+    from server.piggpio_async_servo_interface import PIGPIO_AsyncServoInterface
     import pigpio
 
     SERVO_PINMAP = {1:4, 2:18, 3:27, 4:10, 5:20, 6:19, 7:13, 8:6}
@@ -38,7 +39,14 @@ def server():
 
     pigpio = pigpio.pi()
     mpu = MPU6050Interface()
-    servo = PIGPIO_ServoInterface(SERVO_PINMAP, pigpio=pigpio)
+    servo = PIGPIO_AsyncServoInterface(
+        SERVO_PINMAP,
+        pigpio=pigpio,
+        update_interval=0.01,
+        pid_kp=0.1,
+        pid_ki=0.01,
+        pid_kd=0.001,
+    )
     servo.update_angle([0.0] * 8)
 
     def _handle_message(message):
