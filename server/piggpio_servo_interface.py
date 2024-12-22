@@ -5,6 +5,8 @@ class PIGPIO_ServoInterface:
 
     def normalized_action_to_servo_pwm(self, action: float) -> int:
         # Action is in the range [-1, 1]
+        if action > 1: action = 1
+        elif action < -1: action = -1
         return int(self.SERVO_PWM_THRESHOLD_MIN + (1 + action) * self.HALF_RANGE)
 
     def __init__(self, pin_map: dict, pigpio):
