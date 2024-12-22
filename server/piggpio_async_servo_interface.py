@@ -68,7 +68,7 @@ class PIGPIO_AsyncServoInterface:
             ki=pid_ki,
             kd=pid_kd,
             init_setpoints=self.servo_pw,
-            starting_outputs=self.servo_pw,
+            init_outputs=self.servo_pw,
         )
 
         self.servo_update_loop = Loop(
