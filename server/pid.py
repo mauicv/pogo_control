@@ -18,7 +18,7 @@ class MultiPIDController:
             init_outputs = [0.0] * num_components
         self.controllers = [
             PID(
-                kp=kp, ki=ki, kd=kd,
+                kp, ki, kd,
                 starting_output=init_output,
                 setpoint=init_setpoint,
             ) for init_output, init_setpoint in zip(init_outputs, init_setpoints)
