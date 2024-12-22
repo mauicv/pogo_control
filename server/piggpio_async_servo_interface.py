@@ -41,9 +41,9 @@ class PIGPIO_AsyncServoInterface:
             self,
             pin_map: dict,
             update_interval: float = 0.01,
-            pid_kp: float = 1.0,
-            pid_ki: float = 0.1,
-            pid_kd: float = 0.01,
+            pid_kp: float = 0.1,
+            pid_ki: float = 0.01,
+            pid_kd: float = 0.001,
             pigpio = None,
         ):
         self.pin_map = pin_map
@@ -75,7 +75,7 @@ class PIGPIO_AsyncServoInterface:
         self.pid_controller.set_setpoint(values)
 
     def update_angle(self):
-        updates = self.pid_controller(self.servo_pw)
+        updates = [a+b for a, b in zip(self.servo_pw, self.pid_controller(self.servo_pw))]
         for pin_id, value in enumerate(updates):
             servo_pwm = self.normalized_action_to_servo_pwm(value)
             pin = self.pin_map[pin_id]
