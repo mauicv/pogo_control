@@ -32,7 +32,7 @@ if __name__ == "__main__":
     async_servo_interface = PIGPIO_AsyncServoInterface(
         update_interval=0.01,
         pid_kp=0.1,
-        pid_ki=0.01,
+        pid_ki=0.05,
         pid_kd=0.001,
         pin_map=pin_map,
         pigpio=mock_pigpio

@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import os
 import sys
 import numpy as np
+from random import randint
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from server.piggpio_async_servo_interface import PIGPIO_AsyncServoInterface
@@ -24,11 +25,10 @@ class MockPIGPIO:
         }
 
     def get_servo_pulsewidth(self, pin):
-        return 0
-    
+        return 1900
+
     def set_servo_pulsewidth(self, pin, value):
         self.values[pin].append(value)
-        print(f"Setting servo {pin} to {value}")
 
     def stop(self):
         pass

@@ -38,6 +38,9 @@ class PIGPIO_AsyncServoInterface:
         if action > 1: action = 1
         elif action < -1: action = -1
         return int(self.SERVO_PWM_THRESHOLD_MIN + (1 + action) * self.HALF_RANGE)
+    
+    def servo_pwm_to_normalized_action(self, pwm_action: float) -> int:
+        return ((pwm_action - self.SERVO_PWM_THRESHOLD_MIN)/self.HALF_RANGE) - 1
 
     def __init__(
             self,
@@ -57,7 +60,9 @@ class PIGPIO_AsyncServoInterface:
         self.servo_pw = [0] * len(self.pin_map)
         for pin_id, pin in self.pin_map.items():
             try:
-                self.servo_pw[pin_id] = self.pigpio.get_servo_pulsewidth(pin)
+                self.servo_pw[pin_id] = self.servo_pwm_to_normalized_action(
+                    self.pigpio.get_servo_pulsewidth(pin)
+                )
             except Exception as err:
                 print(err)
                 self.servo_pw[pin_id] = 0
@@ -68,7 +73,6 @@ class PIGPIO_AsyncServoInterface:
             ki=pid_ki,
             kd=pid_kd,
             init_setpoints=self.servo_pw,
-            init_outputs=self.servo_pw,
         )
 
         self.servo_update_loop = Loop(
