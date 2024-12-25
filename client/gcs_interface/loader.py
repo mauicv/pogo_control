@@ -17,6 +17,7 @@ class DataLoader:
             reward_function=None
         ) -> None:
         if not reward_function:
+            # TODO: check this is the correct function for forward velocity!
             reward_function = lambda x: x[:, :, [0]] # Forward velocity reward function
         self.reward_function = reward_function
         self.bucket = bucket
@@ -52,7 +53,13 @@ class DataLoader:
                 self.indexed_rollouts.add(blob.name)
 
     def fetch_rollouts(self):
-        missing_rollouts = self.indexed_rollouts - self.fetched_rollouts 
+        missing_rollouts = self.indexed_rollouts - self.fetched_rollouts
+
+        if len(missing_rollouts) > self.num_runs:
+            missing_rollouts = list(missing_rollouts)
+            missing_rollouts.sort(key=lambda x: int(x.split('/')[-1].split('-')[0]))
+            missing_rollouts = missing_rollouts[-self.num_runs:]
+
         for rollout in tqdm(missing_rollouts):
             run_index = self.rollout_ind % self.num_runs
             with self.bucket.blob(rollout).open('r') as f:

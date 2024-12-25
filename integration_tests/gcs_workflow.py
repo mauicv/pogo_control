@@ -55,7 +55,7 @@ if __name__ == '__main__':
     print('Fetching rollouts')
     gcs.loader.fetch_rollouts()
 
-    assert gcs.loader.indexed_rollouts == gcs.loader.fetched_rollouts
+    assert gcs.loader.fetched_rollouts.issubset(gcs.loader.indexed_rollouts)
 
     print('Sampling second set of rollouts')
     for i in range(2):
@@ -77,7 +77,7 @@ if __name__ == '__main__':
 
     assert gcs.loader.indexed_rollouts != gcs.loader.fetched_rollouts
     gcs.loader.fetch_rollouts()
-    assert gcs.loader.indexed_rollouts == gcs.loader.fetched_rollouts
+    assert gcs.loader.fetched_rollouts.issubset(gcs.loader.indexed_rollouts)
 
     s, a, r = gcs.loader.sample(
         batch_size=2,
@@ -112,4 +112,4 @@ if __name__ == '__main__':
         )
 
     gcs.loader.index_rollouts()
-    print(gcs.loader.indexed_rollouts - gcs.loader.fetched_rollouts)
+    print(gcs.loader.fetched_rollouts)
