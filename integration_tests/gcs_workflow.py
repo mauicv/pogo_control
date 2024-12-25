@@ -79,7 +79,7 @@ if __name__ == '__main__':
     gcs.loader.fetch_rollouts()
     assert gcs.loader.indexed_rollouts == gcs.loader.fetched_rollouts
 
-    s, a = gcs.loader.sample(
+    s, a, r = gcs.loader.sample(
         batch_size=2,
         num_time_steps=16,
         from_start=True
@@ -87,6 +87,7 @@ if __name__ == '__main__':
 
     assert s.shape == (2, 16, 6)
     assert a.shape == (2, 16, 8)
+    assert r.shape == (2, 16, 1)
 
     model = Actor(
         input_dim=6,

@@ -14,7 +14,11 @@ class DataLoader:
             num_runs=0,
             state_dim=6,
             action_dim=8,
+            reward_function=None
         ) -> None:
+        if not reward_function:
+            reward_function = lambda x: x[:, :, [0]] # Forward velocity reward function
+        self.reward_function = reward_function
         self.bucket = bucket
         self.experiment_name = experiment_name
         self.rollout_ind = 0
@@ -93,4 +97,5 @@ class DataLoader:
         return (
             self.state_buffer[b_inds, t_inds].detach(),
             self.action_buffer[b_inds, t_inds].detach(),
+            self.reward_function(self.state_buffer[b_inds, t_inds].detach())
         )
