@@ -15,6 +15,7 @@ from client.gcs_interface import GCS_Interface
 
 def test_sample():
     gcs = GCS_Interface(
+        experiment_name='test',
         credentials='world-model-rl-01a513052a8a.json',
         bucket='pogo_wmrl',
         model_limits=4,

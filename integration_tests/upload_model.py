@@ -21,6 +21,7 @@ if __name__ == "__main__":
         credentials='world-model-rl-01a513052a8a.json',
         bucket='pogo_wmrl',
         model_limits=4,
+        experiment_name='test'
     )
     model = Actor(
         input_dim=6,
@@ -28,8 +29,6 @@ if __name__ == "__main__":
         bound=1,
         num_layers=2
     )
-    # model = gcs.model.upload_model(model)
-    # model = gcs.model.load_model()
 
     model = gcs.model.load_model()
     gcs.model.remove_old_models()

@@ -4,3 +4,4 @@ numpy
 scipy
 google-cloud-storage
 torch
+tqdm
