@@ -4,3 +4,5 @@ venv
 world-model-rl-01a513052a8a.json
 .env
 .DS_Store
+build
+src/pogo_control.egg-info

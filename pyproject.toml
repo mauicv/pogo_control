@@ -32,3 +32,6 @@ client = [
     "torch",
     "tqdm"
 ]
+
+[project.scripts]
+pogo = "cli:cli"
