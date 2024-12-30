@@ -21,6 +21,7 @@ def test_sample():
         credentials='world-model-rl-01a513052a8a.json',
         bucket='pogo_wmrl',
         model_limits=4,
+        experiment_name='test'
     )
     model = gcs.model.load_model()
     client = MockClient(
@@ -35,8 +36,7 @@ def test_sample():
     )
     torch.set_grad_enabled(False)
     action = torch.tensor([0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5])
-    action = filter.filter(action)
-    current_time = time.time()
+    action = filter(action)
     states = []
     actions = []
     unfiltered_actions = [] 
@@ -46,17 +46,11 @@ def test_sample():
         
         action = model(state, deterministic=True).numpy()
         unfiltered_actions.append(action)
-        action = filter.filter(action)
+        action = filter(action)
         actions.append(action)
         
         state = client.send_data(action)
         states.append(state)
-        # elapsed_time = time.time() - current_time
-        # if elapsed_time > interval:
-        #     current_time = time.time()
-        # else:
-        #     time.sleep(interval - elapsed_time)
-
     plt.plot(unfiltered_actions, label="Unfiltered")
     plt.plot(actions, label="Filtered")
     plt.legend()

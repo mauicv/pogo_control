@@ -20,6 +20,14 @@ class Rollout:
         }
 
     def append(self, state, action, time):
+        if isinstance(state, torch.Tensor):
+            state = state.numpy().tolist()
+        if isinstance(action, torch.Tensor):
+            action = action.numpy().tolist()
+        if isinstance(state, np.ndarray):
+            state = state.tolist()
+        if isinstance(action, np.ndarray):
+            action = action.tolist()
         self.states.append(state)
         self.actions.append(action)
         self.times.append(time)

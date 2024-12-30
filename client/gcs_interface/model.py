@@ -12,20 +12,22 @@ class GCSModel:
     def __init__(
             self,
             bucket,
+            experiment_name,
             model_limits=25,
         ) -> None:
         self.bucket = bucket
         self.model = None
         self.model_limits = model_limits
+        self.experiment_name = experiment_name
         self.version = self.get_latest_model_version()
 
     def remove_all_models(self):
-        blobs = self.bucket.list_blobs(prefix='actor')
+        blobs = self.bucket.list_blobs(prefix=f'{self.experiment_name}/actor')
         for blob in blobs:
             blob.delete()
 
     def remove_old_models(self):
-        blobs = self.bucket.list_blobs(prefix='actor')
+        blobs = self.bucket.list_blobs(prefix=f'{self.experiment_name}/actor')
         filtered_blobs = [blob for blob in blobs if blob.name.endswith('.pt')]
         self.version = max([parse_version(blob.name) for blob in filtered_blobs])
         version_diff = self.version - self.model_limits
@@ -38,7 +40,7 @@ class GCSModel:
 
     def get_latest_model_version(self):
         try:
-            blobs = self.bucket.list_blobs(prefix='actor')
+            blobs = self.bucket.list_blobs(prefix=f'{self.experiment_name}/actor')
             filtered_blobs = [blob for blob in blobs if blob.name.endswith('.pt')]
             versions = [parse_version(blob.name) for blob in filtered_blobs]
             logger.info(f'versions: {sorted(versions)}')
@@ -61,7 +63,7 @@ class GCSModel:
                 self.version = 0
             else:
                 self.version += 1
-            blob_name = f"actor/actor-{self.version}.pt"
+            blob_name = f"{self.experiment_name}/actor/actor-{self.version}.pt"
             blob = self.bucket.blob(blob_name)
             with blob.open("wb", ignore_flush=True) as f:
                 torch.save(model, f)
@@ -82,7 +84,7 @@ class GCSModel:
                 (self.model is None and remote_version is not None):
             # if the remote version is different from the local version
             # or if there is no local model but there is a remote model
-            blob_name = f"actor/actor-{remote_version}.pt"
+            blob_name = f"{self.experiment_name}/actor/actor-{remote_version}.pt"
             blob = self.bucket.blob(blob_name)
             self.model = torch.load(blob.open("rb"))
             self.version = remote_version
