@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pogo-control"
+authors = [
+    {name = "Alex Athorne", email = "alexander.athorne@gmail.com"},
+]
+description = "Robotics control code for training a raspberry pi robot"
+readme = "README.md"
+requires-python = ">=3.7"
+keywords = ["robotics", "control", "experiments", "rl", "pytorch", "world-models"]
+license = {text = "BSD-3-Clause"}
+classifiers = [
+    "Programming Language :: Python :: 3",
+]
+dependencies = [
+    "click",
+    "python-dotenv",
+    "numpy",
+    "scipy",
+]
+dynamic = ["version"]
+
+[project.optional-dependencies]
+server = [
+    "simple-pid"
+]
+client = [
+    "google-cloud-storage",
+    "torch",
+    "tqdm"
+]
