@@ -61,13 +61,14 @@ class PIGPIO_AsyncServoInterface:
 
         self.servo_pw = [0] * len(self.pin_map)
         for pin_id, pin in self.pin_map.items():
-            try:
-                self.servo_pw[pin_id] = self.servo_pwm_to_normalized_action(
-                    self.pigpio.get_servo_pulsewidth(pin)
-                )
-            except Exception as err:
-                print(err)
-                self.servo_pw[pin_id] = init_pos[pin_id]
+            self.servo_pw[pin_id] = self.init_pos[pin_id]
+            # try:
+            #     self.servo_pw[pin_id] = self.servo_pwm_to_normalized_action(
+            #         self.pigpio.get_servo_pulsewidth(pin)
+            #     )
+            # except Exception as err:
+            #     print(err)
+            #     self.servo_pw[pin_id] = self.init_pos[pin_id]
 
         self.pid_controller = MultiPIDController(
             num_components=len(pin_map),
