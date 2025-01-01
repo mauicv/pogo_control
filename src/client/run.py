@@ -43,6 +43,8 @@ def perform_rollouts(
     consecutive_errors = 0
     while True:
         try:
+            print('==========================================')
+            print('Sampling rollout')
             rollout = sample(
                 model,
                 butterworth_filter,
@@ -51,6 +53,9 @@ def perform_rollouts(
                 interval,
                 noise
             )
+            print('Re-initalizing')
+            set_init_state(client)
+            print('Uploading rollout')
             gcs.rollout.upload_rollout(
                 rollout.to_dict(),
                 gcs.model.version
@@ -58,7 +63,8 @@ def perform_rollouts(
             model = gcs.model.load_model()
             consecutive_errors = 0
         except Exception as e:
-            print(e)
+            # print(e)
+            raise e
             consecutive_errors += 1
             if consecutive_errors > consecutive_error_limit:
                 print("Too many consecutive errors, exiting")
@@ -75,3 +81,11 @@ def wait_for_model(gcs: GCS_Interface):
             print(e)
             sleep(1)
             continue
+
+
+def set_init_state(
+        client: Client,
+        target_position: list[float]=(0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5)
+    ):
+    client.send_data(target_position)
+    sleep(4)

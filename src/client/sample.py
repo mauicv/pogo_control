@@ -1,5 +1,6 @@
 import torch
 import time
+from tqdm import tqdm
 from dataclasses import dataclass
 from client.client import Client
 from filters.butterworth import ButterworthFilter
@@ -46,7 +47,7 @@ def sample(
     action = filter(action)
     rollout = Rollout(states=[], actions=[], times=[])
     current_time = time.time()
-    for _ in range(num_steps):
+    for _ in tqdm(range(num_steps)):
         state = client.send_data(action)
         state = torch.tensor(state)
         action = model(state, deterministic=True).numpy()

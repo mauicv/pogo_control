@@ -5,7 +5,8 @@ logger = logging.getLogger(__name__)
 
 
 def parse_version(blob_name):
-    return int(blob_name.split('-')[1].split('.')[0])
+    model_name = blob_name.split('/')[-1]
+    return int(model_name.split('-')[1].split('.')[0])
 
 
 class GCSModel:

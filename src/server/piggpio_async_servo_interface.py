@@ -1,7 +1,7 @@
 import threading
 import time
+from typing import Optional
 from server.pid import MultiPIDController
-
 
 class Loop:
     def __init__(self, interval, func):
@@ -45,12 +45,14 @@ class PIGPIO_AsyncServoInterface:
     def __init__(
             self,
             pin_map: dict,
+            init_pos: list[float],
             update_interval: float = 0.01,
             pid_kp: float = 0.1,
             pid_ki: float = 0.01,
             pid_kd: float = 0.001,
             pigpio = None,
         ):
+        self.init_pos = init_pos
         self.pin_map = pin_map
         self.update_interval = update_interval
         self.pigpio = pigpio
@@ -65,7 +67,7 @@ class PIGPIO_AsyncServoInterface:
                 )
             except Exception as err:
                 print(err)
-                self.servo_pw[pin_id] = 0
+                self.servo_pw[pin_id] = init_pos[pin_id]
 
         self.pid_controller = MultiPIDController(
             num_components=len(pin_map),

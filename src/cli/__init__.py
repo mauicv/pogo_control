@@ -14,9 +14,11 @@ def cli(debug):
 
 
 @cli.command()
-def clean():
+@click.option('--experiment-name', type=str, default='pogo_control')
+def clean(experiment_name):
     from client.gcs_interface import GCS_Interface
     gcs = GCS_Interface(
+        experiment_name=experiment_name,
         credentials='world-model-rl-01a513052a8a.json',
         bucket='pogo_wmrl',
         model_limits=4,
@@ -34,6 +36,7 @@ def server():
     import pigpio
 
     SERVO_PINMAP = {0:4, 1:18, 2:27, 3:10, 4:20, 5:19, 6:13, 7:6}
+    INITIAL_POSITION = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0}
     HOST = os.getenv("HOST")
     POST = int(os.getenv("POST"))
 
@@ -41,6 +44,7 @@ def server():
     mpu = MPU6050Interface()
     servo = PIGPIO_AsyncServoInterface(
         SERVO_PINMAP,
+        INITIAL_POSITION,
         pigpio=pigpio,
         update_interval=0.01,
         pid_kp=0.1,
@@ -57,13 +61,32 @@ def server():
     channel.serve(_handle_message)
     click.echo(f"Server running on {HOST}:{POST}")
 
+@cli.command()
+@click.option('--name', type=str, default='pogo_control')
+def create(name):
+    from client.gcs_interface import GCS_Interface
+    from client.model import Actor
+    gcs = GCS_Interface(
+        experiment_name=name,
+        credentials='world-model-rl-01a513052a8a.json',
+        bucket='pogo_wmrl',
+        model_limits=4
+    )
+    model = Actor(
+        input_dim=6,
+        output_dim=8,
+        bound=1,
+        num_layers=3
+    )
+    gcs.model.upload_model(model)
 
 @cli.command()
-@click.option('--num-steps', type=int, default=100)
+@click.option('--num-steps', type=int, default=250)
 @click.option('--interval', type=float, default=0.1)
 @click.option('--noise', type=float, default=0.3)
 @click.option('--consecutive-error-limit', type=int, default=10)
-def client(num_steps, interval, noise, consecutive_error_limit):
+@click.option('--name', type=str, default='pogo_control')
+def client(num_steps, interval, noise, consecutive_error_limit, name):
     from client.client import Client
     from filters.butterworth import ButterworthFilter
     from client.gcs_interface import GCS_Interface
@@ -76,6 +99,7 @@ def client(num_steps, interval, noise, consecutive_error_limit):
         format='%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s'
     )
     gcs = GCS_Interface(
+        experiment_name=name,
         credentials='world-model-rl-01a513052a8a.json',
         bucket='pogo_wmrl',
         model_limits=4
