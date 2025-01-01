@@ -36,7 +36,8 @@ def server():
     import pigpio
 
     SERVO_PINMAP = {0:4, 1:18, 2:27, 3:10, 4:20, 5:19, 6:13, 7:6}
-    INITIAL_POSITION = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0}
+    INITIAL_POSITION = {0:-0.4, 1:-0.4, 2:0.4, 3:0.4, 4:-0.4, 5:-0.4, 6:0.4, 7:0.4}
+
     HOST = os.getenv("HOST")
     POST = int(os.getenv("POST"))
 
@@ -127,6 +128,22 @@ def client(num_steps, interval, noise, consecutive_error_limit, name):
         noise=noise,
         consecutive_error_limit=consecutive_error_limit
     )
+
+
+@cli.command()
+def reset():
+    from client.client import Client
+    from client.run import set_init_state
+
+    host = os.getenv("HOST")
+    port = int(os.getenv("POST"))
+
+    client = Client(
+        host=host,
+        port=port
+    )
+    client.connect()
+    set_init_state(client)
 
 
 if __name__ == "__main__":

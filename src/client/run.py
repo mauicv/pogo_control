@@ -63,8 +63,8 @@ def perform_rollouts(
             model = gcs.model.load_model()
             consecutive_errors = 0
         except Exception as e:
-            # print(e)
-            raise e
+            print(e)
+            # raise e
             consecutive_errors += 1
             if consecutive_errors > consecutive_error_limit:
                 print("Too many consecutive errors, exiting")
@@ -85,7 +85,7 @@ def wait_for_model(gcs: GCS_Interface):
 
 def set_init_state(
         client: Client,
-        target_position: list[float]=(0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5)
+        target_position: list[float]=(-0.4, -0.4, 0.4, 0.4, -0.4, -0.4, 0.4, 0.4)
     ):
     client.send_data(target_position)
     sleep(4)
