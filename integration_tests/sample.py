@@ -19,6 +19,8 @@ def test_sample():
         credentials='world-model-rl-01a513052a8a.json',
         bucket='pogo_wmrl',
         model_limits=4,
+        state_dim=14,
+        action_dim=8
     )
     model = gcs.model.load_model()
     client = MockClient(

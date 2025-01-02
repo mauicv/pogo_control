@@ -14,6 +14,8 @@ class GCS_Interface:
             model_limits=25,
             num_runs=0,
             rollout_length=100,
+            state_dim=14,
+            action_dim=8,
         ) -> None:
         client = storage.Client.from_service_account_json(credentials)
         self.bucket = client.bucket(bucket)
@@ -30,5 +32,7 @@ class GCS_Interface:
             self.bucket,
             experiment_name=experiment_name,
             num_runs=num_runs,
-            rollout_length=rollout_length
+            rollout_length=rollout_length,
+            state_dim=state_dim,
+            action_dim=action_dim
         )

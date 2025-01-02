@@ -1,6 +1,4 @@
 import threading
-import time
-from typing import Optional
 from server.pid import MultiPIDController
 
 class Loop:
@@ -60,15 +58,8 @@ class PIGPIO_AsyncServoInterface:
             raise Exception("Failed to connect to pigpio")
 
         self.servo_pw = [0] * len(self.pin_map)
-        for pin_id, pin in self.pin_map.items():
+        for pin_id, _ in self.pin_map.items():
             self.servo_pw[pin_id] = self.init_pos[pin_id]
-            # try:
-            #     self.servo_pw[pin_id] = self.servo_pwm_to_normalized_action(
-            #         self.pigpio.get_servo_pulsewidth(pin)
-            #     )
-            # except Exception as err:
-            #     print(err)
-            #     self.servo_pw[pin_id] = self.init_pos[pin_id]
 
         self.pid_controller = MultiPIDController(
             num_components=len(pin_map),
@@ -83,6 +74,9 @@ class PIGPIO_AsyncServoInterface:
             func=self._update_angle
         )
         self.servo_update_loop.start()
+
+    def get_data(self):
+        return [self.servo_pw[pin_id] for pin_id in range(len(self.servo_pw))]
 
     def update_angle(self, values: list[float]):
         self.pid_controller.set_setpoint(values)

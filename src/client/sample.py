@@ -6,6 +6,7 @@ from client.client import Client
 from filters.butterworth import ButterworthFilter
 import numpy as np
 
+INITIAL_POSITION = (-0.4, -0.4, 0.4, 0.4, -0.4, -0.4, 0.4, 0.4)
 
 @dataclass
 class Rollout:
@@ -43,7 +44,7 @@ def sample(
         noise: float = 0.3
     ) -> Rollout:
     torch.set_grad_enabled(False)
-    action = torch.tensor([0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5])
+    action = torch.tensor(INITIAL_POSITION)
     action = filter(action)
     rollout = Rollout(states=[], actions=[], times=[])
     current_time = time.time()

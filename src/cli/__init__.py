@@ -14,11 +14,11 @@ def cli(debug):
 
 
 @cli.command()
-@click.option('--experiment-name', type=str, default='pogo_control')
-def clean(experiment_name):
+@click.option('--name', type=str, default='pogo_control')
+def clean(name):
     from client.gcs_interface import GCS_Interface
     gcs = GCS_Interface(
-        experiment_name=experiment_name,
+        experiment_name=name,
         credentials='world-model-rl-01a513052a8a.json',
         bucket='pogo_wmrl',
         model_limits=4,
@@ -55,12 +55,14 @@ def server():
 
     def _handle_message(message):
         servo.update_angle(message)
-        data = mpu.get_data()
-        return data
+        mpu_data = mpu.get_data()
+        servo_data = servo.get_data()
+        return mpu_data + servo_data
 
     channel = Channel(host=HOST, port=POST)
     channel.serve(_handle_message)
     click.echo(f"Server running on {HOST}:{POST}")
+
 
 @cli.command()
 @click.option('--name', type=str, default='pogo_control')
@@ -74,12 +76,13 @@ def create(name):
         model_limits=4
     )
     model = Actor(
-        input_dim=6,
+        input_dim=6 + 8, # 6 mpu sensor + 8 servo motors
         output_dim=8,
         bound=1,
         num_layers=3
     )
     gcs.model.upload_model(model)
+
 
 @cli.command()
 @click.option('--num-steps', type=int, default=250)
@@ -143,7 +146,8 @@ def reset():
         port=port
     )
     client.connect()
-    set_init_state(client)
+    INITIAL_POSITION = (-0.4, -0.4, 0.4, 0.4, -0.4, -0.4, 0.4, 0.4)
+    set_init_state(client, INITIAL_POSITION)
 
 
 if __name__ == "__main__":

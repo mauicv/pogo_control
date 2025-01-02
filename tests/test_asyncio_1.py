@@ -35,6 +35,7 @@ if __name__ == "__main__":
         pid_ki=0.05,
         pid_kd=0.001,
         pin_map=pin_map,
+        init_pos=[-0.4, -0.4, 0.4, 0.4, -0.4, -0.4, 0.4, 0.4],
         pigpio=mock_pigpio
     )
 

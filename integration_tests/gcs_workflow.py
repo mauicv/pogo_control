@@ -20,6 +20,8 @@ if __name__ == '__main__':
         model_limits=4,
         num_runs=3,
         rollout_length=100,
+        state_dim=14,
+        action_dim=8,
     )
 
     model = gcs.model.load_model()
@@ -85,12 +87,12 @@ if __name__ == '__main__':
         from_start=True
     )
 
-    assert s.shape == (2, 16, 6)
+    assert s.shape == (2, 16, 14)
     assert a.shape == (2, 16, 8)
     assert r.shape == (2, 16, 1)
 
     model = Actor(
-        input_dim=6,
+        input_dim=14,
         output_dim=8,
         bound=1,
         num_layers=2

@@ -24,7 +24,7 @@ if __name__ == "__main__":
         experiment_name='test'
     )
     model = Actor(
-        input_dim=6,
+        input_dim=6 + 8,
         output_dim=8,
         bound=1,
         num_layers=2
@@ -33,7 +33,7 @@ if __name__ == "__main__":
     model = gcs.model.load_model()
     gcs.model.remove_old_models()
 
-    t = torch.tensor([1., 2., 3., 1., 2., 3.])
+    t = torch.tensor([1., 2., 3., 1., 2., 3., 1., 2., 3., 1., 2., 3., 1., 2., ])
     print(t)
     print(model(t, deterministic=True))
 

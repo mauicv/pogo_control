@@ -4,6 +4,7 @@ import os
 import sys
 import numpy as np
 from random import randint
+from tqdm import tqdm
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from server.piggpio_async_servo_interface import PIGPIO_AsyncServoInterface
@@ -43,10 +44,11 @@ if __name__ == "__main__":
         pid_ki=0.01,
         pid_kd=0.001,
         pin_map=SERVO_PINMAP,
+        init_pos=[-0.4, -0.4, 0.4, 0.4, -0.4, -0.4, 0.4, 0.4],
         pigpio=mock_pigpio
     )
 
-    for action in rollout['actions']:
+    for action in tqdm(rollout['actions']):
         async_servo_interface.update_angle(action)
         time.sleep(0.1)
     async_servo_interface.deinit()

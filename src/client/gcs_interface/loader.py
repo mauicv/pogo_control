@@ -12,7 +12,7 @@ class DataLoader:
             experiment_name,
             rollout_length=100,
             num_runs=0,
-            state_dim=6,
+            state_dim=14,
             action_dim=8,
             reward_function=None
         ) -> None:
