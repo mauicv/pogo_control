@@ -56,7 +56,7 @@ def server():
 
     def _handle_message(message):
         servo.update_angle(message)
-        time.sleep(0.08)
+        time.sleep(0.05)
         mpu_data = mpu.get_data()
         servo_data = servo.get_data()
         return mpu_data + servo_data
@@ -89,7 +89,7 @@ def create(name):
 @cli.command()
 @click.option('--num-steps', type=int, default=250)
 @click.option('--interval', type=float, default=0.1)
-@click.option('--noise', type=float, default=0.3)
+@click.option('--noise', type=float, default=0.4)
 @click.option('--consecutive-error-limit', type=int, default=10)
 @click.option('--name', type=str, default='pogo_control')
 def client(num_steps, interval, noise, consecutive_error_limit, name):
