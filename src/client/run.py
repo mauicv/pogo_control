@@ -63,8 +63,8 @@ def perform_rollouts(
             model = gcs.model.load_model()
             consecutive_errors = 0
         except Exception as e:
-            print(e)
-            # raise e
+            # print(e)
+            raise e
             consecutive_errors += 1
             if consecutive_errors > consecutive_error_limit:
                 print("Too many consecutive errors, exiting")

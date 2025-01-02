@@ -46,22 +46,23 @@ def sample(
     torch.set_grad_enabled(False)
     action = torch.tensor(INITIAL_POSITION)
     action = filter(action)
+    state = client.send_data(action)
+    state = torch.tensor(state)
     rollout = Rollout(states=[], actions=[], times=[])
     current_time = time.time()
     for _ in tqdm(range(num_steps)):
-        state = client.send_data(action)
-        state = torch.tensor(state)
+        current_time = time.time()
         action = model(state, deterministic=True).numpy()
         action = action + np.random.normal(0, noise, size=action.shape)
         action = np.clip(action, -1, 1)
         action = filter(action)
-        current_time = time.time()
         # NOTE: the state, actions stored here are related as the
         # action resulting from the state (not the state resulting
         # from the action)
         state = state.numpy()
         rollout.append(state, action, current_time)
         state = client.send_data(action)
+        state = torch.tensor(state)
 
         elapsed_time = time.time() - current_time
         if elapsed_time < interval:

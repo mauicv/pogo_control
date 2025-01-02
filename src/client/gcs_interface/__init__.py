@@ -10,6 +10,7 @@ class GCS_Interface:
             self,
             experiment_name,
             credentials='world-model-rl-01a513052a8a.json',
+            project_id='world-model-rl',
             bucket='pogo_wmrl',
             model_limits=25,
             num_runs=0,
@@ -17,7 +18,11 @@ class GCS_Interface:
             state_dim=14,
             action_dim=8,
         ) -> None:
-        client = storage.Client.from_service_account_json(credentials)
+        if credentials:
+            client = storage.Client.from_service_account_json(credentials)
+        elif project_id:
+            client = storage.Client(project=project_id)
+
         self.bucket = client.bucket(bucket)
         self.model = GCSModel(
             self.bucket,
