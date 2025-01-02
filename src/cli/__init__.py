@@ -2,6 +2,7 @@ import click
 import logging
 import dotenv
 import os
+import time
 dotenv.load_dotenv()
 
 logger = logging.getLogger(__name__)
@@ -55,6 +56,7 @@ def server():
 
     def _handle_message(message):
         servo.update_angle(message)
+        time.sleep(0.08)
         mpu_data = mpu.get_data()
         servo_data = servo.get_data()
         return mpu_data + servo_data
