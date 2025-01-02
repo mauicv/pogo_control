@@ -18,13 +18,20 @@ class Client:
         data = self.s.recv(1024)
         assert data == b'ACK_CONN', 'error connecting!'
 
-    def send_data(self, data):
-        data = json.dumps(data)
-        self.s.sendall(data.encode())
+    def get_state(self):
+        self.s.sendall(b'GET_STATE')
         data = self.s.recv(1024)
         data = json.loads(data.decode())
         assert data, 'Response Error!'
         return data
+
+    def send_action(self, action):
+        data = json.dumps(action)
+        self.s.sendall(data.encode())
+        data = self.s.recv(1024)
+        data = json.loads(data.decode())
+        assert data == 'ACK_ACTION', 'Response Error!'
+        return True
 
     def close(self):
         self.s.close()
