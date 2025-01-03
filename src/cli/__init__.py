@@ -56,7 +56,7 @@ def server():
 
     def _handle_message(message):
         servo.update_angle(message)
-        time.sleep(0.05)
+        time.sleep(0.08)
         mpu_data = mpu.get_data()
         servo_data = servo.get_data()
         return mpu_data + servo_data
@@ -92,7 +92,15 @@ def create(name):
 @click.option('--noise', type=float, default=0.4)
 @click.option('--consecutive-error-limit', type=int, default=10)
 @click.option('--name', type=str, default='pogo_control')
-def client(num_steps, interval, noise, consecutive_error_limit, name):
+@click.option('--random-model', is_flag=False)
+def client(
+        num_steps,
+        interval,
+        noise,
+        consecutive_error_limit,
+        name,
+        random_model
+    ): 
     from client.client import Client
     from filters.butterworth import ButterworthFilter
     from client.gcs_interface import GCS_Interface
@@ -131,7 +139,8 @@ def client(num_steps, interval, noise, consecutive_error_limit, name):
         num_steps=num_steps,
         interval=interval,
         noise=noise,
-        consecutive_error_limit=consecutive_error_limit
+        consecutive_error_limit=consecutive_error_limit,
+        random_model=random_model
     )
 
 

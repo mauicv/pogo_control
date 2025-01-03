@@ -79,10 +79,16 @@ class PIGPIO_AsyncServoInterface:
         return [self.servo_pw[pin_id] for pin_id in range(len(self.servo_pw))]
 
     def update_angle(self, values: list[float]):
+        print("New setpoints:", values[0])
+        print("Current positions:", self.servo_pw[0])
         self.pid_controller.set_setpoint(values)
 
     def _update_angle(self):
+        current_setpoints = [c.setpoint for c in self.pid_controller.controllers]
         updates = [a+b for a, b in zip(self.servo_pw, self.pid_controller(self.servo_pw))]
+        print("Current setpoints:", current_setpoints)
+        print("New positions after PID:", updates)
+        # updates = [a+b for a, b in zip(self.servo_pw, self.pid_controller(self.servo_pw))]
         for pin_id, value in enumerate(updates):
             servo_pwm = self.normalized_action_to_servo_pwm(value)
             pin = self.pin_map[pin_id]

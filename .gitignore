@@ -6,3 +6,4 @@ world-model-rl-01a513052a8a.json
 .DS_Store
 build
 src/pogo_control.egg-info
+servo-log.txt
