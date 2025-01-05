@@ -71,6 +71,13 @@ class DataLoader:
             self.fetched_rollouts.add(rollout)
             self.rollout_ind += 1
 
+    def compute_rollout_rewards(self, num_rollouts=10):
+        rollout_rewards = []
+        for i in range(self.rollout_ind - num_rollouts, self.rollout_ind):
+            rewards = self.reward_function(self.state_buffer[[i % self.num_runs]])
+            rollout_rewards.append(rewards.mean())
+        return torch.tensor(rollout_rewards).mean()
+
     def sample(
             self,
             batch_size=None,
