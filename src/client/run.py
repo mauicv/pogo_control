@@ -20,7 +20,7 @@ def wait_for_model(gcs: GCS_Interface):
 
 def set_init_state(
         client: Client,
-        target_position: list[float]=(-0.4, -0.4, 0.4, 0.4, -0.4, -0.4, 0.4, 0.4)
+        target_position: list[float]=(-0.4, -0.4, -0.4, -0.4, -0.4, -0.4, -0.4, -0.4)
     ):
     client.send_data(target_position)
     sleep(4)

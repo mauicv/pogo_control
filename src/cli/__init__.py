@@ -31,35 +31,24 @@ def clean(name):
 @cli.command()
 def server():
     from server.channel import Channel
-    from server.mpu6050_interface import MPU6050Interface
-    # from server.piggpio_servo_interface import PIGPIO_ServoInterface
-    from server.piggpio_async_servo_interface import PIGPIO_AsyncServoInterface
+    from server.pogo import Pogo
     import pigpio
+    from server.mpu6050 import mpu6050
 
-    SERVO_PINMAP = {0:4, 1:18, 2:27, 3:10, 4:20, 5:19, 6:13, 7:6}
-    INITIAL_POSITION = {0:-0.4, 1:-0.4, 2:0.4, 3:0.4, 4:-0.4, 5:-0.4, 6:0.4, 7:0.4}
-
+    gpio = pigpio.pi()
+    mpu = mpu6050(0x68)
+    pogo = Pogo(
+        gpio=gpio,
+        mpu=mpu,
+        update_interval=0.01,
+    )
     HOST = os.getenv("HOST")
     POST = int(os.getenv("POST"))
 
-    pigpio = pigpio.pi()
-    mpu = MPU6050Interface()
-    servo = PIGPIO_AsyncServoInterface(
-        SERVO_PINMAP,
-        INITIAL_POSITION,
-        pigpio=pigpio,
-        update_interval=0.01,
-        pid_kp=0.1,
-        pid_ki=0.01,
-        pid_kd=0.001,
-    )
-
     def _handle_message(message):
-        servo.update_angle(message)
+        pogo.update_angle(message)
         time.sleep(0.08)
-        mpu_data = mpu.get_data()
-        servo_data = servo.get_data()
-        return mpu_data + servo_data
+        return pogo.get_data()
 
     channel = Channel(host=HOST, port=POST)
     channel.serve(_handle_message)
@@ -160,6 +149,43 @@ def reset():
     INITIAL_POSITION = (-0.4, -0.4, 0.4, 0.4, -0.4, -0.4, 0.4, 0.4)
     set_init_state(client, INITIAL_POSITION)
 
+
+@cli.command()
+@click.option('--front-left-bottom', type=float, default=0.0)
+@click.option('--front-left-top', type=float, default=0.0)
+@click.option('--front-right-bottom', type=float, default=0.0)
+@click.option('--front-right-top', type=float, default=0.0)
+@click.option('--back-left-bottom', type=float, default=0.0)
+@click.option('--back-left-top', type=float, default=0.0)
+@click.option('--back-right-bottom', type=float, default=0.0)
+@click.option('--back-right-top', type=float, default=0.0)
+def move_robot(front_left_bottom, front_left_top, front_right_bottom, front_right_top, back_left_bottom, back_left_top, back_right_bottom, back_right_top):
+    from server.pogo import Pogo
+    import pigpio
+    from server.mpu6050 import mpu6050
+
+    gpio = pigpio.pi()
+    mpu = mpu6050(0x68)
+    pogo = Pogo(
+        gpio=gpio,
+        mpu=mpu,
+        update_interval=0.01,
+    )
+
+    pogo.update_angle([
+        front_right_top,
+        front_right_bottom,
+        front_left_top,
+        front_left_bottom,
+        back_right_top,
+        back_right_bottom,
+        back_left_top,
+        back_left_bottom
+    ])
+
+    # pogo move-robot --back-right-top=0.2 --front-right-top=-0.3
+    time.sleep(3)
+    pogo.deinit()
 
 if __name__ == "__main__":
     cli()
