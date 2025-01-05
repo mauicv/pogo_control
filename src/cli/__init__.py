@@ -160,33 +160,31 @@ def reset():
 @click.option('--back-right-bottom', type=float, default=0.0)
 @click.option('--back-right-top', type=float, default=0.0)
 def move_robot(front_left_bottom, front_left_top, front_right_bottom, front_right_top, back_left_bottom, back_left_top, back_right_bottom, back_right_top):
-    from server.servo_controller import PIGPIO_AsyncServoInterface
+    from server.channel import Channel
+    from server.pogo import Pogo
     import pigpio
+    from server.mpu6050 import mpu6050
+
+    gpio = pigpio.pi()
+    mpu = mpu6050(0x68)
+    pogo = Pogo(
+        gpio=gpio,
+        mpu=mpu,
+        update_interval=0.01,
+    )
+
+    pogo.update_angle([
+        front_right_top,
+        front_right_bottom,
+        front_left_top,
+        front_left_bottom,
+        back_right_top,
+        back_right_bottom,
+        back_left_top,
+        back_left_bottom
+    ])
 
     # pogo move-robot --back-right-top=0.2 --front-right-top=-0.3
-
-    SERVO_PINMAP = {0:4, 1:18, 2:27, 3:10, 4:20, 5:19, 6:13, 7:6}
-    INITIAL_POSITION = {
-        0: front_right_top, # front right top
-        1: front_right_bottom, # front right bottom
-        2: -front_left_top, # front left top (reversed)
-        3: -front_left_bottom, # front left bottom (reversed)
-        4: back_right_top, # back right top
-        5: back_right_bottom, # back right bottom
-        6: -back_left_top, # back left top (reversed)
-        7: -back_left_bottom # back left bottom (reversed)
-    }
-
-    pigpio = pigpio.pi()
-    servo = PIGPIO_AsyncServoInterface(
-        SERVO_PINMAP,
-        INITIAL_POSITION,
-        pigpio=pigpio,
-        update_interval=0.01,
-        pid_kp=0.1,
-        pid_ki=0.01,
-        pid_kd=0.001,
-    )
 
     time.sleep(3)
     # servo.update_angle()
