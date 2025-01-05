@@ -17,8 +17,9 @@ class DataLoader:
             reward_function=None
         ) -> None:
         if not reward_function:
-            # TODO: check this is the correct function for forward velocity!
-            reward_function = lambda x: x[:, :, [0]] # Forward velocity reward function
+            # in pogos case the mpu6050 is mounted so that the negative direction of the 
+            # y axis points forward.
+            reward_function = lambda x: torch.cumsum(-x[:, :, [1]]) # Forward acceleration reward function
         self.reward_function = reward_function
         self.bucket = bucket
         self.experiment_name = experiment_name
@@ -35,6 +36,11 @@ class DataLoader:
 
         self.action_buffer = torch.zeros(
             (self.num_runs, self.rollout_length, self.action_dim),
+            dtype=torch.float32
+        )
+
+        self.rollout_rewards = torch.zeros(
+            (self.num_runs, self.rollout_length),
             dtype=torch.float32
         )
 
@@ -68,13 +74,15 @@ class DataLoader:
             self.state_buffer[run_index] = states
             actions = torch.tensor(rollout_data['actions'])
             self.action_buffer[run_index] = actions
+            rewards = self.reward_function(states)
+            self.rollout_rewards[run_index] = rewards
             self.fetched_rollouts.add(rollout)
             self.rollout_ind += 1
 
     def compute_rollout_rewards(self, num_rollouts=10):
         rollout_rewards = []
         for i in range(self.rollout_ind - num_rollouts, self.rollout_ind):
-            rewards = self.reward_function(self.state_buffer[[i % self.num_runs]])
+            rewards = self.rollout_rewards[[i % self.num_runs]]
             rollout_rewards.append(rewards.mean())
         return torch.tensor(rollout_rewards).mean()
 
