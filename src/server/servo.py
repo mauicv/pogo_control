@@ -18,6 +18,7 @@ class Servo:
     kd: float = 0.001
     _value: float = 0.0
     pid_controller: PID = None
+    offset: float = 0.0
 
     def __post_init__(self):
         self.pid_controller = PID(
@@ -35,6 +36,7 @@ class Servo:
         if value > self.pin_limits[1]: value = self.pin_limits[1]
         elif value < self.pin_limits[0]: value = self.pin_limits[0]
         value = -value if self.reverse else value
+        value += self.offset
         return value
 
     def _value_to_pwm(self) -> int:
