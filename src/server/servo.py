@@ -32,8 +32,8 @@ class Servo:
     @property
     def value(self):
         value = self._value
-        if value > 1: value = self.pin_limits[1]
-        elif value < -1: value = self.pin_limits[0]
+        if value > self.pin_limits[1]: value = self.pin_limits[1]
+        elif value < self.pin_limits[0]: value = self.pin_limits[0]
         value = -value if self.reverse else value
         return value
 
