@@ -19,7 +19,7 @@ class DataLoader:
         if not reward_function:
             # in pogos case the mpu6050 is mounted so that the negative direction of the 
             # y axis points forward.
-            reward_function = lambda x: torch.cumsum(-x[:, :, [1]]) # Forward acceleration reward function
+            reward_function = lambda x: torch.cumsum(-x[:, :, [1]], dim=1) # Forward acceleration reward function
         self.reward_function = reward_function
         self.bucket = bucket
         self.experiment_name = experiment_name
