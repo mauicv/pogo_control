@@ -3,7 +3,7 @@ from simple_pid import PID
 
 SERVO_PWM_THRESHOLD_MIN: int = 500
 SERVO_PWM_THRESHOLD_MAX: int = 2500
-HALF_RANGE = (SERVO_PWM_THRESHOLD_MAX - SERVO_PWM_THRESHOLD_MIN) / 2
+HALF_RANGE = (SERVO_PWM_THRESHOLD_MAX - SERVO_PWM_THRESHOLD_MIN) / 2 # 1000
 
 @dataclass
 class Servo:
@@ -40,7 +40,10 @@ class Servo:
         return value
 
     def _value_to_pwm(self) -> int:
-        return int(SERVO_PWM_THRESHOLD_MIN + (1 + self.value) * HALF_RANGE)
+        pwm_val = int(SERVO_PWM_THRESHOLD_MIN + (1 + self.value) * HALF_RANGE)
+        if pwm_val > SERVO_PWM_THRESHOLD_MAX: pwm_val = SERVO_PWM_THRESHOLD_MAX
+        elif pwm_val < SERVO_PWM_THRESHOLD_MIN: pwm_val = SERVO_PWM_THRESHOLD_MIN
+        return pwm_val
 
     def get_pwm(self):
         self._value += self.pid_controller(self._value)

@@ -25,7 +25,9 @@ dynamic = ["version"]
 
 [project.optional-dependencies]
 server = [
-    "simple-pid"
+    "simple-pid",
+    "pigpio",
+    "smbus2"
 ]
 client = [
     "google-cloud-storage",
