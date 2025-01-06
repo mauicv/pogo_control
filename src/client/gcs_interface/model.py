@@ -87,7 +87,10 @@ class GCSModel:
             # or if there is no local model but there is a remote model
             blob_name = f"{self.experiment_name}/actor/actor-{remote_version}.pt"
             blob = self.bucket.blob(blob_name)
-            self.model = torch.load(blob.open("rb"))
+            self.model = torch.load(
+                blob.open("rb"),
+                map_location=torch.device('cpu')
+            )
             self.version = remote_version
             logger.info(f'loaded model version {self.version}')
         else:

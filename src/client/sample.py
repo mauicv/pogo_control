@@ -52,7 +52,7 @@ def sample(
     current_time = time.time()
     for _ in tqdm(range(num_steps)):
         current_time = time.time()
-        action = model(state, deterministic=True).numpy()
+        action = model(state).numpy()[0, 0]
         action = action + np.random.normal(0, noise, size=action.shape)
         action = np.clip(action, -1, 1)
         action = filter(action)

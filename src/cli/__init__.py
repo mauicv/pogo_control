@@ -59,19 +59,36 @@ def server():
 @click.option('--name', type=str, default='pogo_control')
 def create(name):
     from client.gcs_interface import GCS_Interface
-    from client.model import Actor
+    from client.model import Actor, EncoderActor, DenseModel
+        
     gcs = GCS_Interface(
         experiment_name=name,
         credentials='world-model-rl-01a513052a8a.json',
         bucket='pogo_wmrl',
         model_limits=4
     )
-    model = Actor(
-        input_dim=6 + 8, # 6 mpu sensor + 8 servo motors
-        output_dim=8,
-        bound=1,
-        num_layers=3
+
+    state_dim = 6 + 8
+    action_dim = 8
+
+    encoder = DenseModel(
+        depth=1,
+        input_dim=state_dim,
+        hidden_dim=256,
+        output_dim=256 * 32,
     )
+
+    actor = Actor(
+        input_dim=256 * 32,
+        output_dim=action_dim,
+        bound=1,
+    )
+
+    model = EncoderActor(
+        encoder=encoder,
+        actor=actor
+    )
+
     gcs.model.upload_model(model)
 
 

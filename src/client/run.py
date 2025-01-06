@@ -2,7 +2,7 @@ from client.client import Client
 from filters.butterworth import ButterworthFilter
 from client.gcs_interface import GCS_Interface
 from client.sample import sample
-from client.model import Actor
+from client.model import Actor, EncoderActor, DenseModel
 import torch
 from time import sleep, time
 torch.set_grad_enabled(False)
@@ -38,6 +38,7 @@ def run_client(
     ):
     if not random_model:
         model = wait_for_model(gcs)
+        print(model)
     consecutive_errors = 0
     count = 0
     time_start = time()
@@ -51,12 +52,27 @@ def run_client(
             print('Sampling rollout')
             if random_model:
                 print('Randomizing model')
-                model = Actor(
-                    input_dim=6 + 8, # 6 mpu sensor + 8 servo motors
-                    output_dim=8,
-                    bound=1,
-                    num_layers=3
+                state_dim = 6 + 8
+                action_dim = 8
+
+                encoder = DenseModel(
+                    depth=1,
+                    input_dim=state_dim,
+                    hidden_dim=256,
+                    output_dim=256 * 32,
                 )
+
+                actor = Actor(
+                    input_dim=256 * 32,
+                    output_dim=action_dim,
+                    bound=1,
+                )
+
+                model = EncoderActor(
+                    encoder=encoder,
+                    actor=actor
+                )
+
             sample_start = time()
             rollout = sample(
                 model,
