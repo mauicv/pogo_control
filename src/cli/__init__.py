@@ -86,7 +86,9 @@ def create(name):
 
     model = EncoderActor(
         encoder=encoder,
-        actor=actor
+        actor=actor,
+        num_latent=256,
+        num_cat=32
     )
 
     gcs.model.upload_model(model)
@@ -98,15 +100,18 @@ def create(name):
 @click.option('--noise', type=float, default=0.4)
 @click.option('--consecutive-error-limit', type=int, default=10)
 @click.option('--name', type=str, default='pogo_control')
-@click.option('--random-model', is_flag=False)
+@click.option('--random-model', is_flag=True)
+@click.option('--test', is_flag=True)
 def client(
         num_steps,
         interval,
         noise,
         consecutive_error_limit,
         name,
-        random_model
+        random_model,
+        test
     ): 
+    print(test)
     from client.client import Client
     from filters.butterworth import ButterworthFilter
     from client.gcs_interface import GCS_Interface
@@ -146,7 +151,8 @@ def client(
         interval=interval,
         noise=noise,
         consecutive_error_limit=consecutive_error_limit,
-        random_model=random_model
+        random_model=random_model,
+        test=test
     )
 
 

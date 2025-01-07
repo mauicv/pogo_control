@@ -15,6 +15,10 @@ class ButterworthFilter:
     def __call__(self, new_values):
         assert len(new_values) == len(self.filters), "Number of new values must match number of filters"
         return [f.filter(x) for f, x in zip(self.filters, new_values)]
+    
+    def reset(self):
+        for f in self.filters:
+            f.reset()
 
 
 class _ButterworthFilter:
@@ -30,3 +34,6 @@ class _ButterworthFilter:
     def filter(self, x):
         y, self.zi = lfilter(self.b, self.a, [x], zi=self.zi)
         return y.tolist()[0]
+    
+    def reset(self):
+        self.zi = np.zeros(max(len(self.a), len(self.b)) - 1)

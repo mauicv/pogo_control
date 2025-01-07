@@ -34,7 +34,8 @@ def run_client(
         interval: float = 0.1,
         consecutive_error_limit: int = 3,
         noise: float = 0.3,
-        random_model: bool = False
+        random_model: bool = False,
+        test: bool = False
     ):
     if not random_model:
         model = wait_for_model(gcs)
@@ -86,10 +87,11 @@ def run_client(
             print('Re-initalizing')
             set_init_state(client)
             print('Uploading rollout')
-            gcs.rollout.upload_rollout(
-                rollout.to_dict(),
-                gcs.model.version
-            )
+            if not test:
+                gcs.rollout.upload_rollout(
+                    rollout.to_dict(),
+                    gcs.model.version
+                )
             if not random_model:
                 model = gcs.model.load_model()
             consecutive_errors = 0

@@ -35,14 +35,22 @@ class Rollout:
         self.times.append(time)
 
 
+def linear_noise_warmup(j, end_i=25):
+    if j < end_i:
+        return j / end_i
+    return 1
+
+
 def sample(
         model: torch.nn.Module,
         filter: ButterworthFilter,
         client: Client,
         num_steps: int = 100,
         interval: float = 0.1,
-        noise: float = 0.3
+        noise: float = 0.3,
+        noise_warmup: int = 25
     ) -> Rollout:
+    filter.reset()
     torch.set_grad_enabled(False)
     action = torch.tensor(INITIAL_POSITION)
     action = filter(action)
@@ -50,10 +58,11 @@ def sample(
     state = torch.tensor(state)
     rollout = Rollout(states=[], actions=[], times=[])
     current_time = time.time()
-    for _ in tqdm(range(num_steps)):
+    for i in tqdm(range(num_steps)):
         current_time = time.time()
         action = model(state).numpy()[0, 0]
-        action = action + np.random.normal(0, noise, size=action.shape)
+        noise_scale = linear_noise_warmup(i, noise_warmup)
+        action = action + np.random.normal(0, noise * noise_scale, size=action.shape)
         action = np.clip(action, -1, 1)
         action = filter(action)
         # NOTE: the state, actions stored here are related as the
