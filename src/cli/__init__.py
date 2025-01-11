@@ -97,7 +97,8 @@ def create(name):
 @cli.command()
 @click.option('--num-steps', type=int, default=250)
 @click.option('--interval', type=float, default=0.1)
-@click.option('--noise', type=float, default=0.4)
+@click.option('--noise', type=float, default=0.0)
+@click.option('--weight-perturbation', type=float, default=0.01)
 @click.option('--consecutive-error-limit', type=int, default=10)
 @click.option('--name', type=str, default='pogo_control')
 @click.option('--random-model', is_flag=True)
@@ -106,12 +107,12 @@ def client(
         num_steps,
         interval,
         noise,
+        weight_perturbation,
         consecutive_error_limit,
         name,
         random_model,
         test
     ): 
-    print(test)
     from client.client import Client
     from filters.butterworth import ButterworthFilter
     from client.gcs_interface import GCS_Interface
@@ -152,7 +153,8 @@ def client(
         noise=noise,
         consecutive_error_limit=consecutive_error_limit,
         random_model=random_model,
-        test=test
+        test=test,
+        weight_perturbation=weight_perturbation
     )
 
 

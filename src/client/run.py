@@ -34,6 +34,7 @@ def run_client(
         interval: float = 0.1,
         consecutive_error_limit: int = 3,
         noise: float = 0.3,
+        weight_perturbation: float = 0.01,
         random_model: bool = False,
         test: bool = False
     ):
@@ -81,7 +82,8 @@ def run_client(
                 client,
                 num_steps,
                 interval,
-                noise
+                noise,
+                weight_perturbation
             )
             print(f'Sampling time: {time() - sample_start:.2f} seconds')
             print('Re-initalizing')

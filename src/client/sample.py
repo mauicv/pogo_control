@@ -48,10 +48,14 @@ def sample(
         num_steps: int = 100,
         interval: float = 0.1,
         noise: float = 0.3,
+        weight_perturbation: float = 0.01,
         noise_warmup: int = 25
     ) -> Rollout:
     filter.reset()
     torch.set_grad_enabled(False)
+    model.perturb_actor(
+        weight_perturbation_size=weight_perturbation
+    )
     action = torch.tensor(INITIAL_POSITION)
     action = filter(action)
     state = client.send_data(action)
