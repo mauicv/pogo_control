@@ -29,7 +29,8 @@ def clean(name):
 
 
 @cli.command()
-def server():
+@click.option('--disable-servos', is_flag=True)
+def server(disable_servos):
     from server.channel import Channel
     from server.pogo import Pogo
     import pigpio
@@ -46,7 +47,8 @@ def server():
     POST = int(os.getenv("POST"))
 
     def _handle_message(message):
-        pogo.update_angle(message)
+        if not disable_servos:
+            pogo.update_angle(message)
         time.sleep(0.08)
         return pogo.get_data()
 
