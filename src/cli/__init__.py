@@ -212,5 +212,30 @@ def move_robot(front_left_bottom, front_left_top, front_right_bottom, front_righ
     time.sleep(3)
     pogo.deinit()
 
+
+@cli.command()
+def sense():
+    from server.pogo import Pogo
+    import pigpio
+    from server.mpu6050 import mpu6050
+
+    gpio = pigpio.pi()
+    mpu = mpu6050(0x68)
+    pogo = Pogo(
+        gpio=gpio,
+        mpu=mpu,
+        update_interval=0.01,
+    )
+    try:
+        while True:
+            data = pogo.get_data()
+            print(data[0:3])
+            time.sleep(0.5)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        pogo.deinit()
+
+
 if __name__ == "__main__":
     cli()
