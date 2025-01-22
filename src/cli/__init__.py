@@ -59,10 +59,10 @@ def server():
 def sensor_server():
     from server.channel import Channel
     from server.mpu6050 import mpu6050
-    from server.mpu6050Mixin import MPU6050Mixin
+    from server.pogo import SensorPogo
 
     mpu = mpu6050(0x68)
-    mpu_mixin = MPU6050Mixin(mpu=mpu, update_interval=0.01)
+    mpu_mixin = SensorPogo(mpu=mpu, update_interval=0.01)
     HOST = os.getenv("HOST")
     POST = int(os.getenv("POST"))
 

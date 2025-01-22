@@ -43,3 +43,23 @@ class Pogo(ServoController, MPU6050Mixin):
     def deinit(self):
         self.deinit_servo_controller()
         self.deinit_mpu()
+
+
+class SensorPogo(MPU6050Mixin):
+    servos: list[Servo] = []
+
+    def __init__(self, update_interval: float = 0.01, mpu=None):
+        if not mpu:
+            from server.mpu6050 import mpu6050
+            mpu = mpu6050(0x68)
+
+        super().__init__(
+            mpu_update_interval=update_interval,
+            mpu=mpu
+        )
+
+    def get_data(self):
+        return self.get_mpu_data()
+    
+    def deinit(self):
+        self.deinit_mpu()
