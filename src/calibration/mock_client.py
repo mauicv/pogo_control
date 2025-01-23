@@ -6,7 +6,7 @@ class MockClient(Client):
         pass
 
     def send_data(self, action: list[float]) -> list[float]:
-        return [random.random() for _ in range(6 + 8)]
+        return [random.random() * 2 - 1 for _ in range(6 + 8)]
     
     def connect(self):
         return True

@@ -30,7 +30,8 @@ def clean(name):
 
 
 @cli.command()
-def server():
+@click.option('port', type=int, default=8000)
+def server(port):
     from server.channel import Channel
     from server.pogo import Pogo
     import pigpio
@@ -44,7 +45,7 @@ def server():
         update_interval=0.01,
     )
     HOST = os.getenv("HOST")
-    POST = int(os.getenv("POST"))
+    POST = port if port else int(os.getenv("POST"))
 
     def _handle_message(message):
         pogo.update_angle(message)
@@ -56,7 +57,8 @@ def server():
 
 
 @cli.command()
-def sensor_server():
+@click.option('port', type=int, default=8000)
+def sensor_server(port):
     from server.channel import Channel
     from server.mpu6050 import mpu6050
     from server.pogo import SensorPogo
@@ -64,7 +66,7 @@ def sensor_server():
     mpu = mpu6050(0x68)
     mpu_mixin = SensorPogo(mpu=mpu, update_interval=0.01)
     HOST = os.getenv("HOST")
-    POST = int(os.getenv("POST"))
+    POST = port if port else int(os.getenv("POST"))
 
     def _handle_message(message):
         # time.sleep(0.08)

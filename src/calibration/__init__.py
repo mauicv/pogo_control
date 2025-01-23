@@ -31,21 +31,31 @@ def cli(ctx, debug):
 
 @cli.command()
 @click.pass_context
-def plot_orientation_3d(ctx):
-    from calibration.plot_orientation_3d import plot_orientation_3d as plot_orientation_3d_func
+def plot_base_readings(ctx):
+    from calibration.plot_sense_readings import plot_base_sense_readings as plot_base_sense_readings_func
     client = ctx.obj['client']
     client.connect()
-    plot_orientation_3d_func(client)
+    plot_base_sense_readings_func(client)
     client.close()
 
 
 @cli.command()
 @click.pass_context
-def plot_sense_readings(ctx):
-    from calibration.plot_sense_readings import plot_sense_readings as plot_sense_readings_func
+def plot_pitch_roll_readings(ctx):
+    from calibration.plot_sense_readings import plot_pitch_roll_readings as plot_pitch_roll_readings_func
     client = ctx.obj['client']
     client.connect()
-    plot_sense_readings_func(client)
+    plot_pitch_roll_readings_func(client)
+    client.close()
+
+
+@cli.command()
+@click.pass_context
+def plot_v_readings(ctx):
+    from calibration.plot_sense_readings import plot_v_readings as plot_v_readings_func
+    client = ctx.obj['client']
+    client.connect()
+    plot_v_readings_func(client)
     client.close()
 
 
