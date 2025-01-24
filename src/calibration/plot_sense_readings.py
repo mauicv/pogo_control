@@ -5,10 +5,8 @@ from client.client import Client
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from calibration.data import SensorDataArray, PitchRollDataArray, VelocityDataArray
-from calibration.filter import (
-    ComplementaryFilter,
-    SimpleVelocityFilter,
-)
+from filters.complementary import ComplementaryFilter
+from filters.simple_velocity import SimpleVelocityFilter
 import random
 
 
@@ -60,6 +58,50 @@ def plot_base_sense_readings(client: Client):
     plt.show()
 
 
+# def plot_pitch_roll_readings(client: Client):
+#     fig, ax = plt.subplots()
+#     xs = np.arange(100)
+#     init_ys = np.zeros(100)
+#     sensor_data = PitchRollDataArray(
+#         roll=init_ys.tolist(),
+#         pitch=init_ys.tolist()
+#     )
+
+#     acc_sensor_data = PitchRollDataArray(
+#         roll=init_ys.tolist(),
+#         pitch=init_ys.tolist()
+#     )
+
+#     filter = ComplementaryFilter()
+
+#     pitch_plot, = ax.plot(xs, init_ys)
+#     roll_plot, = ax.plot(xs, init_ys)
+#     acc_pitch_plot, = ax.plot(xs, init_ys)
+#     acc_roll_plot, = ax.plot(xs, init_ys)
+#     ax.set_title("Pitch/Roll")
+#     ax.set_ylim(-100, 100)
+
+#     def animate(i, client, pitch_roll_data: PitchRollDataArray):
+#         data = client.send_data({})
+#         acc_data = data[0:3]
+#         gyro_data = data[3:6]
+#         filter.update(acc_data, gyro_data)
+
+#         pitch_roll_data.update(filter.pitch, filter.roll)
+#         pitch, roll = pitch_roll_data.get_data()
+
+#         acc_sensor_data.update(filter.a_pitch, filter.a_roll)
+#         acc_pitch, acc_roll = acc_sensor_data.get_data()
+
+#         pitch_plot.set_ydata(pitch)
+#         roll_plot.set_ydata(roll)
+
+#         acc_pitch_plot.set_ydata(acc_pitch)
+#         acc_roll_plot.set_ydata(acc_roll)
+
+#     ani = animation.FuncAnimation(fig, animate, fargs=(client, sensor_data, ), interval=25)
+#     plt.show()
+
 def plot_pitch_roll_readings(client: Client):
     fig, ax = plt.subplots()
     xs = np.arange(100)
@@ -69,37 +111,19 @@ def plot_pitch_roll_readings(client: Client):
         pitch=init_ys.tolist()
     )
 
-    acc_sensor_data = PitchRollDataArray(
-        roll=init_ys.tolist(),
-        pitch=init_ys.tolist()
-    )
-
-    filter = ComplementaryFilter()
-
     pitch_plot, = ax.plot(xs, init_ys)
     roll_plot, = ax.plot(xs, init_ys)
-    acc_pitch_plot, = ax.plot(xs, init_ys)
-    acc_roll_plot, = ax.plot(xs, init_ys)
     ax.set_title("Pitch/Roll")
     ax.set_ylim(-100, 100)
 
     def animate(i, client, pitch_roll_data: PitchRollDataArray):
         data = client.send_data({})
-        acc_data = data[0:3]
-        gyro_data = data[3:6]
-        filter.update(acc_data, gyro_data)
+        pitch, roll = data[6:8]
+        pitch_roll_data.update(pitch, roll)
+        pitch_array, roll_array = pitch_roll_data.get_data()
 
-        pitch_roll_data.update(filter.pitch, filter.roll)
-        pitch, roll = pitch_roll_data.get_data()
-
-        acc_sensor_data.update(filter.a_pitch, filter.a_roll)
-        acc_pitch, acc_roll = acc_sensor_data.get_data()
-
-        pitch_plot.set_ydata(pitch)
-        roll_plot.set_ydata(roll)
-
-        acc_pitch_plot.set_ydata(acc_pitch)
-        acc_roll_plot.set_ydata(acc_roll)
+        pitch_plot.set_ydata(pitch_array)
+        roll_plot.set_ydata(roll_array)
 
     ani = animation.FuncAnimation(fig, animate, fargs=(client, sensor_data, ), interval=25)
     plt.show()

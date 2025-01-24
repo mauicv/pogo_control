@@ -4,6 +4,7 @@ sensor has the same two addresss 0x68 and 0x69. However, they also have an AD0 p
 addresses. By using the AD0 pin we can connect multiple sensors to the same I2C bus.
 """
 from filters.butterworth import ButterworthFilter
+from filters.complementary import ComplementaryFilter
 from server.loop import Loop
 
 class MPU6050Mixin:
@@ -27,7 +28,10 @@ class MPU6050Mixin:
         else:
             self.filter = filter
 
-        self._latest_filtered_data = [0] * 6
+        self.c_filter = ComplementaryFilter(alpha=0.95)
+
+        # 3 for acc, 3 for gyro, 2 for comp
+        self._latest_filtered_data = [0] * (6 + 2)
 
         self.mpu_update_loop = Loop(
             interval=mpu_update_interval,
@@ -41,7 +45,9 @@ class MPU6050Mixin:
             *self.mpu.get_accel_data().values(),
             *self.mpu.get_gyro_data().values()
         ]
-        self._latest_filtered_data = self.filter(raw_data)
+        self.c_filter.update(raw_data[:3], raw_data[3:])
+        comp_data = [self.c_filter.roll, self.c_filter.pitch]
+        self._latest_filtered_data = self.filter(raw_data) + comp_data
 
     def get_mpu_data(self):
         """Returns the most recent filtered MPU data"""
