@@ -10,8 +10,9 @@ logger = logging.getLogger(__name__)
 
 @click.group()
 @click.option('--debug/--no-debug', default=False)
+@click.option('--port', type=int, default=8000)
 @click.pass_context
-def cli(ctx, debug):
+def cli(ctx, debug, port):
     ctx.ensure_object(dict)
     ctx.obj['DEBUG'] = debug
 
@@ -21,7 +22,7 @@ def cli(ctx, debug):
         from client.client import Client
 
     host = os.getenv("HOST")
-    port = int(os.getenv("POST"))
+    port = port if port else int(os.getenv("POST"))
     client = Client(
         host=host,
         port=port

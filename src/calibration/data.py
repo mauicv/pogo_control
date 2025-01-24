@@ -77,4 +77,3 @@ class VelocityDataArray:
             self.vx[-limit:],
             self.vy[-limit:],
         )
-

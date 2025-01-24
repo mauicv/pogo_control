@@ -5,7 +5,10 @@ from client.client import Client
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from calibration.data import SensorDataArray, PitchRollDataArray, VelocityDataArray
-from calibration.filter import ComplementaryFilter, VelocityFilter
+from calibration.filter import (
+    ComplementaryFilter,
+    SimpleVelocityFilter,
+)
 import random
 
 
@@ -70,6 +73,7 @@ def plot_pitch_roll_readings(client: Client):
         roll=init_ys.tolist(),
         pitch=init_ys.tolist()
     )
+
     filter = ComplementaryFilter()
 
     pitch_plot, = ax.plot(xs, init_ys)
@@ -84,7 +88,7 @@ def plot_pitch_roll_readings(client: Client):
         acc_data = data[0:3]
         gyro_data = data[3:6]
         filter.update(acc_data, gyro_data)
-        
+
         pitch_roll_data.update(filter.pitch, filter.roll)
         pitch, roll = pitch_roll_data.get_data()
 
@@ -102,13 +106,13 @@ def plot_pitch_roll_readings(client: Client):
 
 
 def plot_v_readings(client: Client):
-    fig, ax = plt.subplots()
+    fig, axs = plt.subplots(ncols=2)
     xs = np.arange(100)
     init_ys = np.zeros(100)
-    # sensor_data = PitchRollDataArray(
-    #     roll=init_ys.tolist(),
-    #     pitch=init_ys.tolist()
-    # )
+    sensor_data = PitchRollDataArray(
+        roll=init_ys.tolist(),
+        pitch=init_ys.tolist()
+    )
 
     v_data = VelocityDataArray(
         vx=init_ys.tolist(),
@@ -121,19 +125,23 @@ def plot_v_readings(client: Client):
     )
 
     c_filter = ComplementaryFilter()
-    v_filter = VelocityFilter()
+    v_filter = SimpleVelocityFilter()
 
-    # ax_plot, = ax.plot(xs, init_ys)
-    ay_plot, = ax.plot(xs, init_ys)
-    # vx_plot, = ax.plot(xs, init_ys)
-    vy_plot, = ax.plot(xs, init_ys)
-    ax.set_ylim(-10, 10)
+    ay_plot, = axs[0].plot(xs, init_ys)
+    vy_plot, = axs[0].plot(xs, init_ys)
+
+    pitch_plot, = axs[1].plot(xs, init_ys)
+    roll_plot, = axs[1].plot(xs, init_ys)
+
+    axs[0].set_ylim(-10, 10)
+    axs[1].set_ylim(-180, 180)
 
     def animate(
             i,
             client,
             v_data: VelocityDataArray,
-            a_data: VelocityDataArray
+            a_data: VelocityDataArray,
+            sensor_data: PitchRollDataArray,
         ):
         data = client.send_data({})
         acc_data = data[0:3]
@@ -141,8 +149,10 @@ def plot_v_readings(client: Client):
         c_filter.update(acc_data, gyro_data)
         v_filter.update(acc_data, c_filter.g_xy)
 
-        # pitch_roll_data.update(c_filter.pitch, c_filter.roll)
-        # pitch, roll = pitch_roll_data.get_data()
+        sensor_data.update(c_filter.pitch, c_filter.roll)
+        pitch, roll = sensor_data.get_data()
+        pitch_plot.set_ydata(pitch)
+        roll_plot.set_ydata(roll)
 
         vx, vy = v_filter.v_xy
         v_data.update(vx, vy)
@@ -156,5 +166,5 @@ def plot_v_readings(client: Client):
         # ax_plot.set_ydata(ax)
         ay_plot.set_ydata(ay)
 
-    ani = animation.FuncAnimation(fig, animate, fargs=(client, v_data, a_data, ), interval=25)
+    ani = animation.FuncAnimation(fig, animate, fargs=(client, v_data, a_data, sensor_data, ), interval=25)
     plt.show()

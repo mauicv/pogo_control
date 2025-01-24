@@ -27,7 +27,8 @@ dynamic = ["version"]
 server = [
     "simple-pid",
     "pigpio",
-    "smbus2"
+    "smbus2",
+    "opencv-python"
 ]
 client = [
     "google-cloud-storage",

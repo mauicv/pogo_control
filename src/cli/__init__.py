@@ -30,7 +30,7 @@ def clean(name):
 
 
 @cli.command()
-@click.option('port', type=int, default=8000)
+@click.option('--port', type=int, default=8000)
 def server(port):
     from server.channel import Channel
     from server.pogo import Pogo
@@ -57,7 +57,7 @@ def server(port):
 
 
 @cli.command()
-@click.option('port', type=int, default=8000)
+@click.option('--port', type=int, default=8000)
 def sensor_server(port):
     from server.channel import Channel
     from server.mpu6050 import mpu6050
