@@ -71,6 +71,7 @@ def sensor_server(port):
     def _handle_message(message):
         # time.sleep(0.08)
         data = mpu_mixin.get_mpu_data()
+        data += mpu_mixin.get_vo_data()
         return data
 
     channel = Channel(host=HOST, port=POST)
