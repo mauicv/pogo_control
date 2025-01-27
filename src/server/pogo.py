@@ -49,7 +49,7 @@ class Pogo(ServoController, MPU6050Mixin, MonoVOMixin):
         )
 
     def get_data(self):
-        return self.get_mpu_data() + self.get_servo_data()
+        return self.get_mpu_data() + self.get_vo_data() + self.get_servo_data()
     
     def deinit(self):
         self.deinit_servo_controller()

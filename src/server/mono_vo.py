@@ -26,11 +26,10 @@ class MonoVOMixin:
         self.lk_params = lk_params
 
         self.R = np.eye(3)
-        self.t = np.zeros(3)
-        self.v = np.zeros(3)
+        self.t = np.zeros((3, 1))
 
-        self.total_t = np.zeros(3)
         self.total_R = np.eye(3)
+        self.total_t = np.zeros((3, 1))
 
         self.detector = cv2.FastFeatureDetector_create(
             threshold=25,
@@ -95,7 +94,7 @@ class MonoVOMixin:
     def _update_frame(self):
         frame = self.camera.get_frame()
         if frame is not None:
-            if self.last_frame is None:
+            if self.frame is None:
                 self.process_first_frame(frame)
             else:
                 img_1_feat, img_2_feat = self.get_features(frame)

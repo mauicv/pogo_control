@@ -62,6 +62,16 @@ def plot_v_readings(ctx):
 
 @cli.command()
 @click.pass_context
+def plot_t_readings(ctx):
+    from calibration.plot_sense_readings import plot_t_readings as plot_t_readings_func
+    client = ctx.obj['client']
+    client.connect()
+    plot_t_readings_func(client)
+    client.close()
+
+
+@cli.command()
+@click.pass_context
 def measure_mpu_offsets(ctx):
     from calibration.measurement import measure_mpu_offsets as measure_mpu_offsets_func
     client = ctx.obj['client']

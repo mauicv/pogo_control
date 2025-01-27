@@ -22,7 +22,6 @@ class Camera:
         ):
         self.height = height
         self.width = width
-        self.timestamp = 0
         self.fx = fx
         self.fy = fy
         self.cx = cx
@@ -39,49 +38,30 @@ class Camera:
                     frame,
                     cv2.COLOR_BGR2GRAY
                 )
-                frame = cv2.resize(
-                    frame,
-                    (self.width, self.height),
-                    interpolation=cv2.INTER_NEAREST
-                )
                 return Frame(
                     data=frame,
                     timestamp=time.time()
                 )
             else:
+                time.sleep(0.1)
                 self.open()
-                time.sleep(0.01)
                 return self.get_frame()
         else:
             return None
 
     def open(self):
         try:
-            self.vc = cv2.VideoCapture(0)
-            self.vc.set(
-                cv2.CAP_PROP_FOURCC,
-                cv2.VideoWriter_fourcc('Y', 'U', 'Y', 'V')
-            )
-            self.vc.set(
-                cv2.CAP_PROP_FPS,
-                30
-            )
+            self.vc = cv2.VideoCapture(-1)
+            self.vc.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('Y', 'U', 'Y', 'V'))
+            self.vc.set(cv2.CAP_PROP_FPS, 30)
         except Exception as e:
             print(f"Error initializing camera: {e}")
             self.vc = None
 
-    def deinit(self):
+    def close(self):
         try:
             if self.vc is not None:
                 self.vc.release()
                 self.vc = None
         except Exception as e:
             print(f"Error deinitializing camera: {e}")
-
-
-if __name__ == "__main__":
-    camera = Camera()
-    frame = camera.get_frame()
-    if frame is not None:
-        cv2.imwrite("frame.jpg", frame.data)
-        cv2.waitKey(1)

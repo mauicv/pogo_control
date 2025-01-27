@@ -4,7 +4,7 @@ import numpy as np
 from client.client import Client
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-from calibration.data import SensorDataArray, PitchRollDataArray, VelocityDataArray
+from calibration.data import SensorDataArray, PitchRollDataArray, VelocityDataArray, XYZDataArray
 from filters.complementary import ComplementaryFilter
 from filters.simple_velocity import SimpleVelocityFilter
 import random
@@ -191,4 +191,43 @@ def plot_v_readings(client: Client):
         ay_plot.set_ydata(ay)
 
     ani = animation.FuncAnimation(fig, animate, fargs=(client, v_data, a_data, sensor_data, ), interval=25)
+    plt.show()
+
+
+def plot_t_readings(client: Client):
+    fig, ax = plt.subplots()
+    xs = np.arange(100)
+    init_ys = np.zeros(100)
+
+    t_data = XYZDataArray(
+        x=init_ys.tolist(),
+        y=init_ys.tolist(),
+        z=init_ys.tolist()
+    )
+
+    # tx_plot, = ax.plot(xs, init_ys)
+    # ty_plot, = ax.plot(xs, init_ys)
+    # tz_plot, = ax.plot(xs, init_ys)
+    path_plot, = ax.plot(xs, init_ys)
+
+    ax.set_ylim(-100, 100)
+
+    def animate(
+            i,
+            client,
+            t_data: XYZDataArray,
+        ):
+        data = client.send_data({})
+        x, y, z = data[8:11]
+        t_data.update(x[0]+50, y[0], z[0])
+
+        x, y, z = t_data.get_data(limit=1000)
+        path_plot.set_ydata(y)
+        path_plot.set_xdata(x)
+
+        # tx_plot.set_ydata(x)
+        # ty_plot.set_ydata(y)
+        # tz_plot.set_ydata(z)
+
+    ani = animation.FuncAnimation(fig, animate, fargs=(client, t_data, ), interval=25)
     plt.show()

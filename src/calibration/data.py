@@ -77,3 +77,27 @@ class VelocityDataArray:
             self.vx[-limit:],
             self.vy[-limit:],
         )
+
+
+@dataclass
+class XYZDataArray:
+    x: list[float] = field(default_factory=list)
+    y: list[float] = field(default_factory=list)
+    z: list[float] = field(default_factory=list)
+
+    def __post_init__(self):
+        self.x.append(0)
+        self.y.append(0)
+        self.z.append(0)
+
+    def update(self, x, y, z):
+        self.x.append(x)
+        self.y.append(y)
+        self.z.append(z)
+
+    def get_data(self, limit=100):
+        return (
+            self.x[-limit:],
+            self.y[-limit:],
+            self.z[-limit:],
+        )
