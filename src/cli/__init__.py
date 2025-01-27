@@ -3,6 +3,7 @@ import logging
 import dotenv
 import os
 import time
+
 dotenv.load_dotenv()
 
 logger = logging.getLogger(__name__)
@@ -29,14 +30,14 @@ def clean(name):
 
 
 @cli.command()
-@click.option('--disable-servos', is_flag=True)
-def server(disable_servos):
+@click.option('--port', type=int, default=8000)
+def server(port):
     from server.channel import Channel
     from server.pogo import Pogo
     import pigpio
     from server.mpu6050 import mpu6050
 
-    gpio = pigpio.pi()
+    gpio = pigpio.pi()        
     mpu = mpu6050(0x68)
     pogo = Pogo(
         gpio=gpio,
@@ -44,17 +45,36 @@ def server(disable_servos):
         update_interval=0.01,
     )
     HOST = os.getenv("HOST")
-    POST = int(os.getenv("POST"))
+    POST = port if port else int(os.getenv("POST"))
 
     def _handle_message(message):
-        if not disable_servos:
-            pogo.update_angle(message)
+        pogo.update_angle(message)
         time.sleep(0.08)
         return pogo.get_data()
 
     channel = Channel(host=HOST, port=POST)
     channel.serve(_handle_message)
-    click.echo(f"Server running on {HOST}:{POST}")
+
+
+@cli.command()
+@click.option('--port', type=int, default=8000)
+def sensor_server(port):
+    from server.channel import Channel
+    from server.mpu6050 import mpu6050
+    from server.pogo import SensorPogo
+
+    mpu = mpu6050(0x68)
+    mpu_mixin = SensorPogo(mpu=mpu, update_interval=0.01)
+    HOST = os.getenv("HOST")
+    POST = port if port else int(os.getenv("POST"))
+
+    def _handle_message(message):
+        # time.sleep(0.08)
+        data = mpu_mixin.get_mpu_data()
+        return data
+
+    channel = Channel(host=HOST, port=POST)
+    channel.serve(_handle_message)
 
 
 @cli.command()

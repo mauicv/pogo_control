@@ -3,3 +3,6 @@ python-dotenv
 numpy
 scipy
 simple-pid
+opencv-python
+pigpio
+smbus2
