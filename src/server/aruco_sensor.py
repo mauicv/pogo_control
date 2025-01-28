@@ -1,14 +1,19 @@
+from filters.butterworth import ButterworthFilter
 from server.loop import Loop
 from server.camera import Camera
 import cv2
-
 
 class ArucoSensorMixin:
     def __init__(
             self,
             camera: Camera,
-            aruco_sensor_update_interval: float = 0.01
+            aruco_sensor_update_interval: float = 0.01,
+            filter: ButterworthFilter = None
         ):
+        if not filter:
+            self.filter = ButterworthFilter(num_components=3)
+        else:
+            self.filter = filter
         self.markerSizeInCM = 10
         self.camera = camera
         self.aruco_dict = cv2.aruco.Dictionary_get(
@@ -31,14 +36,17 @@ class ArucoSensorMixin:
         corners, ids, rejected = self.detector.detectMarkers(
             frame.data
         )
+        d_xyz = 0
         if ids is not None:
-            rvec , tvec, _ = cv2.aruco.estimatePoseSingleMarkers(
+            _ , tvec, _ = cv2.aruco.estimatePoseSingleMarkers(
                 corners,
                 self.markerSizeInCM,
                 self.camera.camera_matrix,
                 self.camera.dist_coeff,
             )
-            self.pos = tvec[0,0].tolist()
+            d_xyz += tvec[0,0].tolist()
+        # self._pos = self.filter(d_xyz/len(ids))
+        self._pos = d_xyz/len(ids)
 
     def get_pos(self):
         """Returns the most recent posistion data"""
