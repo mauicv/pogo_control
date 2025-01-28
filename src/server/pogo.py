@@ -71,8 +71,6 @@ class SensorPogo(MPU6050Mixin, ArucoSensorMixin):
         )
 
     def get_data(self):
-        print(self.get_mpu_data())
-        print(self.get_pos())
         return self.get_mpu_data() + self.get_pos()
     
     def deinit(self):

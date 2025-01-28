@@ -81,23 +81,15 @@ class VelocityDataArray:
 
 @dataclass
 class DistanceDataArray:
-    x: list[float] = field(default_factory=list)
-    y: list[float] = field(default_factory=list)
-    z: list[float] = field(default_factory=list)
+    d: list[float] = field(default_factory=list)
 
     def __post_init__(self):
-        self.x.append(0)
-        self.y.append(0)
-        self.z.append(0)
+        self.d.append(0)
 
-    def update(self, x, y, z):
-        self.x.append(x)
-        self.y.append(y)
-        self.z.append(z)
+    def update(self, d):
+        self.d.append(d)
 
     def get_data(self, limit=100):
         return (
-            self.x[-limit:],
-            self.y[-limit:],
-            self.z[-limit:],
+            self.d[-limit:],
         )

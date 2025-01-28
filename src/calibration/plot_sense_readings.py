@@ -198,11 +198,7 @@ def plot_d_readings(client: Client):
     fig, ax = plt.subplots()
     xs = np.arange(100)
     init_ys = np.zeros(100)
-    distance_data = DistanceDataArray(
-        x=init_ys.tolist(),
-        y=init_ys.tolist(),
-        z=init_ys.tolist()
-    )
+    distance_data = DistanceDataArray(d=init_ys.tolist())
 
     # x_plot, = ax.plot(xs, init_ys)
     # y_plot, = ax.plot(xs, init_ys)
@@ -212,10 +208,10 @@ def plot_d_readings(client: Client):
 
     def animate(i, client, distance_data: DistanceDataArray):
         data = client.send_data({})
-        x, y, z = data[8:11]
-        distance_data.update(x, y, z)
-        x_array, y_array, z_array = distance_data.get_data()
-        z_plot.set_ydata(z_array)
+        d = data[8]
+        distance_data.update(d)
+        dist = distance_data.get_data()
+        z_plot.set_ydata(dist)
 
     ani = animation.FuncAnimation(fig, animate, fargs=(client, distance_data, ), interval=25)
     plt.show()
