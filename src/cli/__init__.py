@@ -62,15 +62,17 @@ def sensor_server(port):
     from server.channel import Channel
     from server.mpu6050 import mpu6050
     from server.pogo import SensorPogo
+    from server.camera import Camera
 
     mpu = mpu6050(0x68)
-    mpu_mixin = SensorPogo(mpu=mpu, update_interval=0.01)
+    camera = Camera()
+    sensor_pogo = SensorPogo(mpu=mpu, camera=camera, update_interval=0.01)
     HOST = os.getenv("HOST")
     POST = port if port else int(os.getenv("POST"))
 
     def _handle_message(message):
         # time.sleep(0.08)
-        data = mpu_mixin.get_mpu_data()
+        data = sensor_pogo.get_data()
         return data
 
     channel = Channel(host=HOST, port=POST)
