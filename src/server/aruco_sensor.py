@@ -42,9 +42,9 @@ class ArucoSensorMixin:
                 self.camera.camera_matrix,
                 self.camera.dist_coeff,
             )
-            d_xyz += tvec[0,0].tolist()
+            d_xyz += tvec[0,0]
         # self._pos = self.filter(d_xyz/len(ids))
-        self._pos = d_xyz/len(ids)
+        self._pos = (d_xyz/len(ids)).tolist()
 
     def get_pos(self):
         """Returns the most recent posistion data"""
