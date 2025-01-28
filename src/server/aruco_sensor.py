@@ -26,7 +26,7 @@ class ArucoSensorMixin:
             self.aruco_dict,
             self.parameters
         )
-        self._pos = [0, 0, 0]
+        self._pos = 0.0
         self.aruco_sensor_update_loop = Loop(
             interval=aruco_sensor_update_interval,
             func=self._compute_distance
@@ -38,7 +38,6 @@ class ArucoSensorMixin:
         corners, ids, rejected = self.detector.detectMarkers(
             frame.data
         )
-        d_xyz = np.array([0, 0, 0], dtype='float64')
         if ids is not None:
             _ , tvec, _ = cv2.aruco.estimatePoseSingleMarkers(
                 corners,
@@ -46,13 +45,11 @@ class ArucoSensorMixin:
                 self.camera.camera_matrix,
                 self.camera.dist_coeff,
             )
-            d_xyz += tvec[0,0]
-        # self._pos = self.filter(d_xyz/len(ids))
-        self._pos = (d_xyz/len(ids)).tolist()
+            self._pos = np.mean(tvec[:, :, 2], axis=0)[0]
 
     def get_pos(self):
         """Returns the most recent posistion data"""
-        return self._pos
+        return [self._pos]
 
     def deinit_aruco_sensor(self):
         """Clean up resources"""

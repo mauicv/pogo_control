@@ -208,12 +208,11 @@ def plot_d_readings(client: Client):
     # y_plot, = ax.plot(xs, init_ys)
     z_plot, = ax.plot(xs, init_ys)
     ax.set_title("distances")
-    ax.set_ylim(-100, 100)
+    ax.set_ylim(-2, 300)
 
     def animate(i, client, distance_data: DistanceDataArray):
         data = client.send_data({})
-        print(data)
-        x, y, z = data[9:11]
+        x, y, z = data[8:11]
         distance_data.update(x, y, z)
         x_array, y_array, z_array = distance_data.get_data()
         z_plot.set_ydata(z_array)
