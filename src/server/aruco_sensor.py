@@ -26,7 +26,7 @@ class ArucoSensorMixin:
         self._vel = 0.0
         self._t_prev = 0.0
 
-        self.v_filter = _ButterworthFilter(order=2, cutoff=2.0, fs=50.0, num_components=3)
+        self.v_filter = _ButterworthFilter(order=2, cutoff=2.0, fs=50.0)
 
         self.aruco_sensor_update_loop = Loop(
             interval=aruco_sensor_update_interval,
