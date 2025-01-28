@@ -28,7 +28,8 @@ server = [
     "simple-pid",
     "pigpio",
     "smbus2",
-    "opencv-python"
+    "opencv-python",
+    "opencv-contrib-python"
 ]
 client = [
     "google-cloud-storage",

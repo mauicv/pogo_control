@@ -10,16 +10,14 @@ class ArucoSensorMixin:
             aruco_sensor_update_interval: float = 0.01,
             filter: ButterworthFilter = None
         ):
-        if not filter:
-            self.filter = ButterworthFilter(num_components=3)
-        else:
-            self.filter = filter
+        # if not filter:
+        #     self.filter = ButterworthFilter(num_components=3)
+        # else:
+        #     self.filter = filter
         self.markerSizeInCM = 10
         self.camera = camera
-        self.aruco_dict = cv2.aruco.Dictionary_get(
-            cv2.aruco.DICT_6X6_250
-        )
-        self.parameters = cv2.aruco.DetectorParameters_create()
+        self.aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_6X6_250)
+        self.parameters = cv2.aruco.DetectorParameters()
         self.detector = cv2.aruco.ArucoDetector(
             self.aruco_dict,
             self.parameters

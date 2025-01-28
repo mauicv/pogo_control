@@ -4,7 +4,7 @@ import numpy as np
 from client.client import Client
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-from calibration.data import SensorDataArray, PitchRollDataArray, VelocityDataArray
+from calibration.data import SensorDataArray, PitchRollDataArray, VelocityDataArray, DistanceDataArray
 from filters.complementary import ComplementaryFilter
 from filters.simple_velocity import SimpleVelocityFilter
 import random
@@ -191,4 +191,31 @@ def plot_v_readings(client: Client):
         ay_plot.set_ydata(ay)
 
     ani = animation.FuncAnimation(fig, animate, fargs=(client, v_data, a_data, sensor_data, ), interval=25)
+    plt.show()
+
+
+def plot_d_readings(client: Client):
+    fig, ax = plt.subplots()
+    xs = np.arange(100)
+    init_ys = np.zeros(100)
+    distance_data = DistanceDataArray(
+        x=init_ys.tolist(),
+        y=init_ys.tolist(),
+        z=init_ys.tolist()
+    )
+
+    # x_plot, = ax.plot(xs, init_ys)
+    # y_plot, = ax.plot(xs, init_ys)
+    z_plot, = ax.plot(xs, init_ys)
+    ax.set_title("distances")
+    ax.set_ylim(-100, 100)
+
+    def animate(i, client, distance_data: DistanceDataArray):
+        data = client.send_data({})
+        x, y, z = data[9:11]
+        distance_data.update(x, y, z)
+        x_array, y_array, z_array = distance_data.get_data()
+        z_plot.set_ydata(z_array)
+
+    ani = animation.FuncAnimation(fig, animate, fargs=(client, distance_data, ), interval=25)
     plt.show()
