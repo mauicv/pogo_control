@@ -27,6 +27,10 @@ class ArucoSensorMixin:
             self.parameters
         )
         self._pos = 0.0
+        self._pos_prev = 0.0
+        self._vel = 0.0
+        self._t_prev = 0.0
+
         self.aruco_sensor_update_loop = Loop(
             interval=aruco_sensor_update_interval,
             func=self._compute_distance
@@ -46,6 +50,12 @@ class ArucoSensorMixin:
                 self.camera.dist_coeff,
             )
             self._pos = np.mean(tvec[:, :, 2], axis=0)[0]
+            t_diff = self._t_prev - frame.timestamp
+            self._vel = (self._pos - self._pos_prev) / t_diff
+            self._pos_prev = self._pos
+            self._t_prev = frame.timestamp
+
+        return [self._pos, self._vel]
 
     def get_pos(self):
         """Returns the most recent posistion data"""
