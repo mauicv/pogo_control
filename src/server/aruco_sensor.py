@@ -48,7 +48,7 @@ class ArucoSensorMixin:
             )
             self._pos = np.mean(tvec[:, :, 2], axis=0)[0]
             t_diff = self._t_prev - frame.timestamp
-            self._vel = self.v_filter(
+            self._vel = self.v_filter.filter(
                 (self._pos - self._pos_prev) / t_diff
             )
             self._pos_prev = self._pos
