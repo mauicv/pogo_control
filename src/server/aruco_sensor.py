@@ -2,14 +2,18 @@ from filters.butterworth import ButterworthFilter
 from server.loop import Loop
 from server.camera import Camera
 import cv2
+import numpy as np
+
 
 class ArucoSensorMixin:
     def __init__(
             self,
             camera: Camera,
             aruco_sensor_update_interval: float = 0.01,
-            filter: ButterworthFilter = None
+            filter: ButterworthFilter = None,
+            **kwargs
         ):
+        super().__init__(**kwargs)
         # if not filter:
         #     self.filter = ButterworthFilter(num_components=3)
         # else:
@@ -22,7 +26,7 @@ class ArucoSensorMixin:
             self.aruco_dict,
             self.parameters
         )
-        self._pos = None
+        self._pos = [0, 0, 0]
         self.aruco_sensor_update_loop = Loop(
             interval=aruco_sensor_update_interval,
             func=self._compute_distance
@@ -34,7 +38,7 @@ class ArucoSensorMixin:
         corners, ids, rejected = self.detector.detectMarkers(
             frame.data
         )
-        d_xyz = 0
+        d_xyz = np.array([0, 0, 0])
         if ids is not None:
             _ , tvec, _ = cv2.aruco.estimatePoseSingleMarkers(
                 corners,

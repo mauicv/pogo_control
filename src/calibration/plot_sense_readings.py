@@ -212,6 +212,7 @@ def plot_d_readings(client: Client):
 
     def animate(i, client, distance_data: DistanceDataArray):
         data = client.send_data({})
+        print(data)
         x, y, z = data[9:11]
         distance_data.update(x, y, z)
         x_array, y_array, z_array = distance_data.get_data()
