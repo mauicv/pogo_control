@@ -38,7 +38,7 @@ class ArucoSensorMixin:
         corners, ids, rejected = self.detector.detectMarkers(
             frame.data
         )
-        d_xyz = np.array([0, 0, 0])
+        d_xyz = np.array([0, 0, 0], dtype='float64')
         if ids is not None:
             _ , tvec, _ = cv2.aruco.estimatePoseSingleMarkers(
                 corners,
