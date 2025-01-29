@@ -50,7 +50,7 @@ class Camera:
         self.input_source = input_source
         self.camera_matrix = camera_matrix
         self.dist_coeff = dist_coeff
-        self.input_source=input_source
+        self.input_source = input_source
         self.open()
 
         newcameramtx, roi = cv2.getOptimalNewCameraMatrix(
@@ -120,6 +120,7 @@ class Camera:
         try:
             if self.vc is not None:
                 self.vc.release()
+                cv2.destroyAllWindows()
                 self.vc = None
         except Exception as e:
             print(f"Error deinitializing camera: {e}")

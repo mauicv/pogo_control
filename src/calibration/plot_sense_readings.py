@@ -165,7 +165,7 @@ def plot_d_readings(client: Client):
     d_plot, = axs[0].plot(xs, init_ys)
     v_plot, = axs[1].plot(xs, init_ys)
     r_plot, = axs[2].plot(xs, init_ys)
-    axs[0].set_ylim(-2, 300)
+    axs[0].set_ylim(-2, 50)
     axs[1].set_ylim(-200, 200)
     axs[2].set_ylim(-100, 100)
 

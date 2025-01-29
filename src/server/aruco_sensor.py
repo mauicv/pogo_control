@@ -28,7 +28,7 @@ class ArucoSensorMixin:
 
         self.v_filter = _ButterworthFilter(order=2, cutoff=2.0, fs=50.0)
 
-        self.aruco_sensor_update_interval = max(0.04, aruco_sensor_update_interval)
+        self.aruco_sensor_update_interval = max(0.05, aruco_sensor_update_interval)
         self.aruco_sensor_update_loop = Loop(
             interval=self.aruco_sensor_update_interval,
             func=self._compute_distance
@@ -37,6 +37,8 @@ class ArucoSensorMixin:
 
     def _compute_distance(self):
         frame = self.camera.get_frame()
+        if frame is None:
+            return [0.0, 0.0]
         corners, ids, rejected = self.detector.detectMarkers(
             frame.data
         )
@@ -64,3 +66,4 @@ class ArucoSensorMixin:
     def deinit_aruco_sensor(self):
         """Clean up resources"""
         self.aruco_sensor_update_loop.stop()
+        self.camera.close()
