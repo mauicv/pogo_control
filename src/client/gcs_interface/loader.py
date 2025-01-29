@@ -5,12 +5,15 @@ from tqdm import tqdm
 # import uuid
 
 
-def default_reward_function(state):
+def default_reward_function(states):
     target_speed = 5.0
-    # state is: 8 servo, 3 accelerometer, 3 gyro, pitch, roll, aruco d, aruco v
-    s1, s2, s3, s4, s5, s6, s7, s8, ax, ay, az, wx, wy, wz, pitch, roll, d, v = state
-    v_reward = v if v < target_speed else max(target_speed - v, 0)
-    return -d + 10 * v_reward + 75
+    rewards = []
+    for state in states:
+        # state is: 8 servo, 3 accelerometer, 3 gyro, pitch, roll, aruco d, aruco v
+        s1, s2, s3, s4, s5, s6, s7, s8, ax, ay, az, wx, wy, wz, pitch, roll, d, v = state
+        v_reward = v if v < target_speed else max(target_speed - v, 0)
+        rewards.append(-d + 10 * v_reward + 75)
+    return torch.tensor(rewards)[:, None]
 
 
 class DataLoader:
