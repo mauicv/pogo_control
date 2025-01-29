@@ -1,4 +1,4 @@
-from filters.butterworth import ButterworthFilter
+from filters.butterworth import _ButterworthFilter
 from server.loop import Loop
 from server.camera import Camera
 import cv2
@@ -10,14 +10,9 @@ class ArucoSensorMixin:
             self,
             camera: Camera,
             aruco_sensor_update_interval: float = 0.01,
-            filter: ButterworthFilter = None,
             **kwargs
         ):
         super().__init__(**kwargs)
-        # if not filter:
-        #     self.filter = ButterworthFilter(num_components=3)
-        # else:
-        #     self.filter = filter
         self.markerSizeInCM = 10
         self.camera = camera
         self.aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_6X6_250)
@@ -27,6 +22,12 @@ class ArucoSensorMixin:
             self.parameters
         )
         self._pos = 0.0
+        self._pos_prev = 0.0
+        self._vel = 0.0
+        self._t_prev = 0.0
+
+        self.v_filter = _ButterworthFilter(order=2, cutoff=2.0, fs=50.0)
+
         self.aruco_sensor_update_loop = Loop(
             interval=aruco_sensor_update_interval,
             func=self._compute_distance
@@ -46,10 +47,18 @@ class ArucoSensorMixin:
                 self.camera.dist_coeff,
             )
             self._pos = np.mean(tvec[:, :, 2], axis=0)[0]
+            t_diff = self._t_prev - frame.timestamp
+            self._vel = self.v_filter.filter(
+                (self._pos - self._pos_prev) / t_diff
+            )
+            self._pos_prev = self._pos
+            self._t_prev = frame.timestamp
+
+        return [self._pos, self._vel]
 
     def get_pos(self):
         """Returns the most recent posistion data"""
-        return [self._pos]
+        return [self._pos, self._vel]
 
     def deinit_aruco_sensor(self):
         """Clean up resources"""
