@@ -213,12 +213,15 @@ def move_robot(front_left_bottom, front_left_top, front_right_bottom, front_righ
     from server.pogo import Pogo
     import pigpio
     from server.mpu6050 import mpu6050
+    from server.camera import Camera
 
+    camera = Camera(input_source=-1)
     gpio = pigpio.pi()
     mpu = mpu6050(0x68)
     pogo = Pogo(
         gpio=gpio,
         mpu=mpu,
+        camera=camera,
         update_interval=0.01,
     )
 

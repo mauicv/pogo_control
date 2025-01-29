@@ -28,8 +28,9 @@ class ArucoSensorMixin:
 
         self.v_filter = _ButterworthFilter(order=2, cutoff=2.0, fs=50.0)
 
+        self.aruco_sensor_update_interval = max(0.04, aruco_sensor_update_interval)
         self.aruco_sensor_update_loop = Loop(
-            interval=aruco_sensor_update_interval,
+            interval=self.aruco_sensor_update_interval,
             func=self._compute_distance
         )
         self.aruco_sensor_update_loop.start()
