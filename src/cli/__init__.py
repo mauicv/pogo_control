@@ -92,7 +92,8 @@ def create(name):
         model_limits=4
     )
 
-    state_dim = 6 + 8
+    # 8 servo, 3 accelerometer, 3 gyro, pitch, roll, aruco d, aruco v
+    state_dim = 8 + 3 + 3 + 2 + 2
     action_dim = 8
 
     encoder = DenseModel(

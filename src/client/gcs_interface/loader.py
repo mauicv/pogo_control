@@ -5,6 +5,13 @@ from tqdm import tqdm
 # import uuid
 
 
+def default_reward_function(state):
+    target_speed = 1.0
+    # state is: 8 servo, 3 accelerometer, 3 gyro, pitch, roll, aruco d, aruco v
+    s1, s2, s3, s4, s5, s6, s7, s8, ax, ay, az, wx, wy, wz, pitch, roll, d, v = state
+    return -d + abs(target_speed - v)
+
+
 class DataLoader:
     def __init__(
             self,
@@ -14,14 +21,8 @@ class DataLoader:
             num_runs=0,
             state_dim=14,
             action_dim=8,
-            reward_function=None
+            reward_function=default_reward_function
         ) -> None:
-        if not reward_function:
-            # in pogos case the mpu6050 is mounted so that the negative direction of the 
-            # y axis points forward. This is the forward acceleration. The following
-            # reward function is the cumulative sum of the forward acceleration. 
-            # This is a proxy for the forward velocity.
-            reward_function = lambda x: torch.cumsum(-x[:, [1]], dim=0)
         self.reward_function = reward_function
         self.bucket = bucket
         self.experiment_name = experiment_name
