@@ -7,6 +7,7 @@ import matplotlib.animation as animation
 from calibration.data import SensorDataArray, PitchRollDataArray, VelocityDataArray, StateDataArray
 from filters.complementary import ComplementaryFilter
 from filters.simple_velocity import SimpleVelocityFilter
+from client.gcs_interface.loader import default_reward_function
 import random
 
 
@@ -57,50 +58,6 @@ def plot_base_sense_readings(client: Client):
     ani = animation.FuncAnimation(fig, animate, fargs=(client, sensor_data, ), interval=25)
     plt.show()
 
-
-# def plot_pitch_roll_readings(client: Client):
-#     fig, ax = plt.subplots()
-#     xs = np.arange(100)
-#     init_ys = np.zeros(100)
-#     sensor_data = PitchRollDataArray(
-#         roll=init_ys.tolist(),
-#         pitch=init_ys.tolist()
-#     )
-
-#     acc_sensor_data = PitchRollDataArray(
-#         roll=init_ys.tolist(),
-#         pitch=init_ys.tolist()
-#     )
-
-#     filter = ComplementaryFilter()
-
-#     pitch_plot, = ax.plot(xs, init_ys)
-#     roll_plot, = ax.plot(xs, init_ys)
-#     acc_pitch_plot, = ax.plot(xs, init_ys)
-#     acc_roll_plot, = ax.plot(xs, init_ys)
-#     ax.set_title("Pitch/Roll")
-#     ax.set_ylim(-100, 100)
-
-#     def animate(i, client, pitch_roll_data: PitchRollDataArray):
-#         data = client.send_data({})
-#         acc_data = data[0:3]
-#         gyro_data = data[3:6]
-#         filter.update(acc_data, gyro_data)
-
-#         pitch_roll_data.update(filter.pitch, filter.roll)
-#         pitch, roll = pitch_roll_data.get_data()
-
-#         acc_sensor_data.update(filter.a_pitch, filter.a_roll)
-#         acc_pitch, acc_roll = acc_sensor_data.get_data()
-
-#         pitch_plot.set_ydata(pitch)
-#         roll_plot.set_ydata(roll)
-
-#         acc_pitch_plot.set_ydata(acc_pitch)
-#         acc_roll_plot.set_ydata(acc_roll)
-
-#     ani = animation.FuncAnimation(fig, animate, fargs=(client, sensor_data, ), interval=25)
-#     plt.show()
 
 def plot_pitch_roll_readings(client: Client):
     fig, ax = plt.subplots()
@@ -195,28 +152,37 @@ def plot_v_readings(client: Client):
 
 
 def plot_d_readings(client: Client):
-    fig, axs = plt.subplots(ncols=2)
+    fig, axs = plt.subplots(ncols=3)
     xs = np.arange(100)
     init_ys = np.zeros(100)
     distance_data = StateDataArray(
         d=init_ys.tolist(),
-        v=init_ys.tolist()
+        v=init_ys.tolist(),
+        r=init_ys.tolist()
     )
 
     axs[0].set_title("distances")
     axs[1].set_title("velocities")
+    axs[2].set_title("rewards")
     d_plot, = axs[0].plot(xs, init_ys)
     v_plot, = axs[1].plot(xs, init_ys)
+    r_plot, = axs[2].plot(xs, init_ys)
     axs[0].set_ylim(-2, 300)
     axs[1].set_ylim(-200, 200)
+    axs[2].set_ylim(-100, 100)
 
     def animate(i, client, distance_data: StateDataArray):
         data = client.send_data({})
         d, v = data[8:10]
-        distance_data.update(d, v)
-        dist, vel = distance_data.get_data()
+        a = [0] * 8
+        r = default_reward_function(a + data)
+
+        distance_data.update(d, v, r)
+        dist, vel, r = distance_data.get_data()
         d_plot.set_ydata(dist)
         v_plot.set_ydata(vel)
+        r_plot.set_ydata(r)
+
 
     ani = animation.FuncAnimation(fig, animate, fargs=(client, distance_data, ), interval=25)
     plt.show()
