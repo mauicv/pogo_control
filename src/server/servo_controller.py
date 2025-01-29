@@ -1,5 +1,6 @@
 from server.servo import Servo
 from server.loop import Loop
+import time
 
 
 class ServoController:
@@ -16,6 +17,7 @@ class ServoController:
         if not self.gpio.connected:
             raise Exception("Failed to connect to gpio")
 
+        time.sleep(2)
         self.servo_update_loop = Loop(
             interval=self.servo_update_interval,
             func=self._update_angle

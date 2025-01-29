@@ -64,41 +64,54 @@ class Camera:
         self.roi = roi
 
     def get_frame(self):
-        if self.vc is None:
-            return None
-        if self.vc.isOpened():
-            ret, frame = self.vc.read()
-            if ret:
-                frame = cv2.undistort(
-                    frame,
-                    c_params['camera_matrix'],
-                    c_params['dist_coeff'],
-                    None,
-                    self.newcameramtx
-                )
-                x, y, w, h = self.roi
-                frame = frame[y:y+h, x:x+w]
-                frame = cv2.cvtColor(
-                    frame,
-                    cv2.COLOR_BGR2GRAY
-                )
-                return Frame(
-                    data=frame,
-                    timestamp=time.time()
-                )
-            else:
-                time.sleep(0.1)
-                self.open()
-                return self.get_frame()
-        else:
-            return None
+        if self.vc is None or not self.vc.isOpened():
+            print("Camera not initialized or opened. Attempting to reopen...")
+            self.open()
+            if self.vc is None or not self.vc.isOpened():
+                return None
+            
+        ret, frame = self.vc.read()
+        if not ret:
+            print("Failed to read frame. Attempting to reopen camera...")
+            time.sleep(0.1)
+            self.open()
+            return self.get_frame()
+        
+        frame = cv2.undistort(
+            frame,
+            self.camera_matrix,
+            self.dist_coeff,
+            None,
+            self.newcameramtx
+        )
+        x, y, w, h = self.roi
+        frame = frame[y:y+h, x:x+w]
+        frame = cv2.cvtColor(
+            frame,
+            cv2.COLOR_BGR2GRAY
+        )
+        return Frame(
+            data=frame,
+            timestamp=time.time()
+        )
 
     def open(self):
         self.close()
         try:
+            # Check if camera device exists and is accessible
             self.vc = cv2.VideoCapture(self.input_source)
-            self.vc.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('Y', 'U', 'Y', 'V'))
-            self.vc.set(cv2.CAP_PROP_FPS, 30)
+            if not self.vc.isOpened():
+                print(f"Failed to open camera device at input_source={self.input_source}")
+                self.vc = None
+                return
+
+            # Try to set camera properties
+            success_fourcc = self.vc.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('Y', 'U', 'Y', 'V'))
+            success_fps = self.vc.set(cv2.CAP_PROP_FPS, 30)
+            
+            if not (success_fourcc and success_fps):
+                print("Warning: Failed to set some camera properties")
+            
         except Exception as e:
             print(f"Error initializing camera: {e}")
             self.vc = None

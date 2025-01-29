@@ -7,8 +7,6 @@ import matplotlib.animation as animation
 from calibration.data import SensorDataArray, PitchRollDataArray, VelocityDataArray, StateDataArray
 from filters.complementary import ComplementaryFilter
 from filters.simple_velocity import SimpleVelocityFilter
-from client.gcs_interface.loader import default_reward_function
-import random
 
 
 def plot_base_sense_readings(client: Client):
@@ -174,14 +172,13 @@ def plot_d_readings(client: Client):
     def animate(i, client, distance_data: StateDataArray):
         data = client.send_data({})
         d, v = data[8:10]
-        a = [0] * 8
-        r = default_reward_function(a + data)
+        r = -d + 10 * v + 75
 
         distance_data.update(d, v, r)
-        dist, vel, r = distance_data.get_data()
+        dist, vel, reward = distance_data.get_data()
         d_plot.set_ydata(dist)
         v_plot.set_ydata(vel)
-        r_plot.set_ydata(r)
+        r_plot.set_ydata(reward)
 
 
     ani = animation.FuncAnimation(fig, animate, fargs=(client, distance_data, ), interval=25)

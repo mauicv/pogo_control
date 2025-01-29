@@ -34,14 +34,17 @@ def clean(name):
 def server(port):
     from server.channel import Channel
     from server.pogo import Pogo
+    from server.camera import Camera
     import pigpio
     from server.mpu6050 import mpu6050
 
-    gpio = pigpio.pi()        
+    gpio = pigpio.pi()
     mpu = mpu6050(0x68)
+    camera = Camera()
     pogo = Pogo(
         gpio=gpio,
         mpu=mpu,
+        camera=camera,
         update_interval=0.01,
     )
     HOST = os.getenv("HOST")
