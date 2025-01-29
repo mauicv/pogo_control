@@ -50,7 +50,8 @@ class Camera:
         self.input_source = input_source
         self.camera_matrix = camera_matrix
         self.dist_coeff = dist_coeff
-        self.open(input_source=input_source)
+        self.input_source=input_source
+        self.open()
 
         newcameramtx, roi = cv2.getOptimalNewCameraMatrix(
             self.camera_matrix,
@@ -92,10 +93,10 @@ class Camera:
         else:
             return None
 
-    def open(self, input_source):
+    def open(self):
         self.close()
         try:
-            self.vc = cv2.VideoCapture(input_source)
+            self.vc = cv2.VideoCapture(self.input_source)
             self.vc.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('Y', 'U', 'Y', 'V'))
             self.vc.set(cv2.CAP_PROP_FPS, 30)
         except Exception as e:

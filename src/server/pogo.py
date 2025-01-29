@@ -32,7 +32,7 @@ class Pogo(ServoController, MPU6050Mixin, ArucoSensorMixin):
             mpu = mpu6050(0x68)
         if not camera:
             from server.camera import Camera
-            camera = Camera()
+            camera = Camera(input_source=-1)
 
         super().__init__(
             servo_update_interval=update_interval,
