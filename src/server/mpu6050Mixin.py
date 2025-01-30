@@ -3,9 +3,11 @@ In order to use multiple sensors we use the the I2C bus plus n pins on the micro
 sensor has the same two addresss 0x68 and 0x69. However, they also have an AD0 pin that toggles between these 
 addresses. By using the AD0 pin we can connect multiple sensors to the same I2C bus.
 """
+import time
 from filters.butterworth import ButterworthFilter
 from filters.complementary import ComplementaryFilter
 from server.loop import Loop
+
 
 class MPU6050Mixin:
     def __init__(
@@ -41,16 +43,29 @@ class MPU6050Mixin:
 
     def _update_mpu_data(self):
         """Background task to continuously update filtered MPU readings"""
-        try:
-            raw_data = [
-                *self.mpu.get_accel_data().values(),
-                *self.mpu.get_gyro_data().values()
-            ]
-            self.c_filter.update(raw_data[:3], raw_data[3:])
-            comp_data = [self.c_filter.roll, self.c_filter.pitch]
-            self._latest_filtered_data = self.filter(raw_data) + comp_data
-        except OSError as e:
-            print(f"Error updating MPU data: {e}")
+        ATTEMPTS = 5
+        for attempt in range(ATTEMPTS):
+            try:
+                raw_data = [
+                    *self.mpu.get_accel_data().values(),
+                    *self.mpu.get_gyro_data().values()
+                ]
+                break
+            except OSError as e:
+                if e.errno == 121:
+                    if attempt == ATTEMPTS - 2:
+                        from server.mpu6050 import mpu6050
+                        self.mpu = mpu6050(0x68)
+                    if attempt == ATTEMPTS - 1:
+                        raise e
+                    print(f"Error updating MPU data: {e}")
+                    time.sleep(0.05)
+                continue
+
+        self.c_filter.update(raw_data[:3], raw_data[3:])
+        comp_data = [self.c_filter.roll, self.c_filter.pitch]
+        self._latest_filtered_data = self.filter(raw_data) + comp_data
+
 
     def get_mpu_data(self):
         """Returns the most recent filtered MPU data"""
