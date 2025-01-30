@@ -41,13 +41,16 @@ class MPU6050Mixin:
 
     def _update_mpu_data(self):
         """Background task to continuously update filtered MPU readings"""
-        raw_data = [
-            *self.mpu.get_accel_data().values(),
-            *self.mpu.get_gyro_data().values()
-        ]
-        self.c_filter.update(raw_data[:3], raw_data[3:])
-        comp_data = [self.c_filter.roll, self.c_filter.pitch]
-        self._latest_filtered_data = self.filter(raw_data) + comp_data
+        try:
+            raw_data = [
+                *self.mpu.get_accel_data().values(),
+                *self.mpu.get_gyro_data().values()
+            ]
+            self.c_filter.update(raw_data[:3], raw_data[3:])
+            comp_data = [self.c_filter.roll, self.c_filter.pitch]
+            self._latest_filtered_data = self.filter(raw_data) + comp_data
+        except OSError as e:
+            print(f"Error updating MPU data: {e}")
 
     def get_mpu_data(self):
         """Returns the most recent filtered MPU data"""

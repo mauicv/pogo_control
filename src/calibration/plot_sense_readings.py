@@ -73,7 +73,11 @@ def plot_pitch_roll_readings(client: Client):
 
     def animate(i, client, pitch_roll_data: PitchRollDataArray):
         data = client.send_data({})
-        pitch, roll = data[6:8]
+        if len(data) > 6 + 2 + 2:
+            h = 8
+        else:
+            h = 0
+        pitch, roll = data[h+6:h+8]
         pitch_roll_data.update(pitch, roll)
         pitch_array, roll_array = pitch_roll_data.get_data()
 
@@ -165,13 +169,17 @@ def plot_d_readings(client: Client):
     d_plot, = axs[0].plot(xs, init_ys)
     v_plot, = axs[1].plot(xs, init_ys)
     r_plot, = axs[2].plot(xs, init_ys)
-    axs[0].set_ylim(-2, 50)
+    axs[0].set_ylim(-2, 200)
     axs[1].set_ylim(-200, 200)
     axs[2].set_ylim(-100, 100)
 
     def animate(i, client, distance_data: StateDataArray):
         data = client.send_data({})
-        d, v = data[8:10]
+        if len(data) > 6 + 2 + 2:
+            h = 8
+        else:
+            h = 0
+        d, v = data[h+8:h+10]
         r = -d + 10 * v + 75
 
         distance_data.update(d, v, r)
