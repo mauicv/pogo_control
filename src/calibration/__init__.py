@@ -50,6 +50,16 @@ def plot_pitch_roll_readings(ctx):
     client.close()
 
 
+# @cli.command()
+# @click.pass_context
+# def plot_v_readings(ctx):
+#     from calibration.plot_sense_readings import plot_v_readings as plot_v_readings_func
+#     client = ctx.obj['client']
+#     client.connect()
+#     plot_v_readings_func(client)
+#     client.close()
+
+
 @cli.command()
 @click.pass_context
 def plot_v_readings(ctx):
@@ -57,16 +67,6 @@ def plot_v_readings(ctx):
     client = ctx.obj['client']
     client.connect()
     plot_v_readings_func(client)
-    client.close()
-
-
-@cli.command()
-@click.pass_context
-def plot_d_readings(ctx):
-    from calibration.plot_sense_readings import plot_d_readings as plot_d_readings_func
-    client = ctx.obj['client']
-    client.connect()
-    plot_d_readings_func(client)
     client.close()
 
 

@@ -153,38 +153,34 @@ def plot_v_readings(client: Client):
     plt.show()
 
 
-def plot_d_readings(client: Client):
-    fig, axs = plt.subplots(ncols=3)
+def plot_v_readings(client: Client):
+    fig, axs = plt.subplots(ncols=2)
     xs = np.arange(100)
     init_ys = np.zeros(100)
     distance_data = StateDataArray(
-        d=init_ys.tolist(),
         v=init_ys.tolist(),
         r=init_ys.tolist()
     )
 
-    axs[0].set_title("distances")
-    axs[1].set_title("velocities")
-    axs[2].set_title("rewards")
-    d_plot, = axs[0].plot(xs, init_ys)
-    v_plot, = axs[1].plot(xs, init_ys)
-    r_plot, = axs[2].plot(xs, init_ys)
-    axs[0].set_ylim(-2, 200)
-    axs[1].set_ylim(-200, 200)
-    axs[2].set_ylim(-20, 75)
-
+    axs[0].set_title("velocities")
+    axs[1].set_title("rewards")
+    v_plot, = axs[0].plot(xs, init_ys)
+    r_plot, = axs[1].plot(xs, init_ys)
+    axs[0].set_ylim(-25, 25)
+    axs[1].set_ylim(-25, 25)
+    TARGET_SPEED = 7.5
     def animate(i, client, distance_data: StateDataArray):
         data = client.send_data({})
         if len(data) > 6 + 2 + 2:
             h = 8
         else:
             h = 0
-        d, v = data[h+8:h+10]
-        r = 0.08 * (-5 * d + 5 * v) + 25
+        v = data[h+8:h+9][0]
+        r = v if v < TARGET_SPEED else max(2*TARGET_SPEED - v, 0)
+        # v_reward = 0.1 * v_reward
 
-        distance_data.update(d, v, r)
-        dist, vel, reward = distance_data.get_data()
-        d_plot.set_ydata(dist)
+        distance_data.update(v, r)
+        vel, reward = distance_data.get_data()
         v_plot.set_ydata(vel)
         r_plot.set_ydata(reward)
 

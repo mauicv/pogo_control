@@ -81,23 +81,19 @@ class VelocityDataArray:
 
 @dataclass
 class StateDataArray:
-    d: list[float] = field(default_factory=list)
     v: list[float] = field(default_factory=list)
     r: list[float] = field(default_factory=list)
 
     def __post_init__(self):
-        self.d.append(0)
         self.v.append(0)
         self.r.append(0)
 
-    def update(self, d, v, r):
-        self.d.append(d)
+    def update(self, v, r):
         self.v.append(v)
         self.r.append(r)
 
     def get_data(self, limit=100):
         return (
-            self.d[-limit:],
             self.v[-limit:],
             self.r[-limit:],
         )

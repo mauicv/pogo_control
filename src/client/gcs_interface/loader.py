@@ -6,13 +6,13 @@ from tqdm import tqdm
 
 
 def default_reward_function(states):
-    target_speed = 3.0
+    TARGET_SPEED = 7.5
     rewards = []
     for state in states:
         # state is: 8 servo, 3 accelerometer, 3 gyro, pitch, roll, aruco v
         s1, s2, s3, s4, s5, s6, s7, s8, ax, ay, az, wx, wy, wz, pitch, roll, v = state
-        v_reward = v if v < target_speed else max(target_speed - v, 0)
-        rewards.append(0.1 * v_reward)
+        r = v if v < TARGET_SPEED else max(2*TARGET_SPEED - v, 0)
+        rewards.append(r)
     return torch.tensor(rewards)[:, None]
 
 
