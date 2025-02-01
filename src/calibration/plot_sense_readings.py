@@ -171,7 +171,7 @@ def plot_d_readings(client: Client):
     r_plot, = axs[2].plot(xs, init_ys)
     axs[0].set_ylim(-2, 200)
     axs[1].set_ylim(-200, 200)
-    axs[2].set_ylim(-100, 100)
+    axs[2].set_ylim(-20, 75)
 
     def animate(i, client, distance_data: StateDataArray):
         data = client.send_data({})
@@ -180,7 +180,7 @@ def plot_d_readings(client: Client):
         else:
             h = 0
         d, v = data[h+8:h+10]
-        r = -d + 10 * v + 75
+        r = 0.08 * (-5 * d + 5 * v) + 25
 
         distance_data.update(d, v, r)
         dist, vel, reward = distance_data.get_data()
