@@ -37,11 +37,11 @@ class ComplementaryFilter:
 
     @property
     def roll(self):
-        return self.rollComp
+        return self.rollComp / 180
 
     @property
     def pitch(self):
-        return self.pitchComp
+        return self.pitchComp / 180
     
     @property
     def g_x(self):
