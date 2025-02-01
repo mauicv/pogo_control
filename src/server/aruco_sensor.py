@@ -63,7 +63,7 @@ class ArucoSensorMixin:
 
     def get_pos(self):
         """Returns the most recent posistion data"""
-        return [self._pos, self._vel]
+        return [self._vel]
 
     def deinit_aruco_sensor(self):
         """Clean up resources"""
