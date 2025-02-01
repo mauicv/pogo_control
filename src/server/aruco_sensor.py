@@ -59,7 +59,7 @@ class ArucoSensorMixin:
         if ids is None:
             self._vel = 0.0
 
-        return [self._pos, self._vel]
+        return [self._vel]
 
     def get_pos(self):
         """Returns the most recent posistion data"""
