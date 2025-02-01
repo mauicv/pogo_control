@@ -126,7 +126,7 @@ def create(name):
 @click.option('--num-steps', type=int, default=250)
 @click.option('--interval', type=float, default=0.1)
 @click.option('--noise', type=float, default=0.0)
-@click.option('--weight-perturbation', type=float, default=0.01)
+@click.option('--weight-perturbation', type=float, default=0.025)
 @click.option('--consecutive-error-limit', type=int, default=10)
 @click.option('--name', type=str, default='pogo_control')
 @click.option('--random-model', is_flag=True)

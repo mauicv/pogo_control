@@ -56,6 +56,8 @@ class ArucoSensorMixin:
             )
             self._pos_prev = self._pos
             self._t_prev = frame.timestamp
+        if ids is None:
+            self._vel = 0.0
 
         return [self._pos, self._vel]
 
