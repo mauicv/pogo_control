@@ -69,7 +69,7 @@ def plot_pitch_roll_readings(client: Client):
     pitch_plot, = ax.plot(xs, init_ys)
     roll_plot, = ax.plot(xs, init_ys)
     ax.set_title("Pitch/Roll")
-    ax.set_ylim(-100, 100)
+    ax.set_ylim(-1, 1)
 
     def animate(i, client, pitch_roll_data: PitchRollDataArray):
         data = client.send_data({})

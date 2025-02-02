@@ -54,7 +54,7 @@ def run_client(
             print('Sampling rollout')
             if random_model:
                 print('Randomizing model')
-                state_dim = 8 + 6 + 2 + 2
+                state_dim = 8 + 6 + 2 + 1
                 action_dim = 8
 
                 encoder = DenseModel(
