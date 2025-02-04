@@ -39,7 +39,7 @@ class ArucoSensorMixin:
     def _compute_height(self, ids, tvec):
         for aruco_id, id_tvec in zip(ids, tvec):
             if aruco_id == 2:
-                self._height = -id_tvec[0, 1]
+                self._height = id_tvec[0, 1]
                 self._height_marker_detected = True
         return None
     

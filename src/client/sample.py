@@ -14,7 +14,7 @@ class Rollout:
     actions: list[list[float]]
     times: list[float]
     conditions: list[list[float]]
-    last_index: int = None
+    end_index: int = None
 
     def to_dict(self):
         return {
@@ -22,7 +22,7 @@ class Rollout:
             "actions": self.actions,
             "times": self.times,
             "conditions": self.conditions,
-            "last_index": self.last_index
+            "end_index": self.end_index
         }
 
     def append(self, state, action, time, conditions):
@@ -38,7 +38,7 @@ class Rollout:
         self.actions.append(action)
         self.times.append(time)
         self.conditions.append(conditions)
-        self.last_index = len(self.states) - 1
+        self.end_index = len(self.states) - 1
 
 
 class ConditionCounter:

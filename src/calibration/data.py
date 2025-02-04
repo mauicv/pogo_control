@@ -49,6 +49,7 @@ class StateDataArray:
     pitch: list[float] = field(default_factory=list)
     roll: list[float] = field(default_factory=list)
     overturned: list[float] = field(default_factory=list)
+    reward: list[float] = field(default_factory=list)
 
     def update(
             self,
@@ -59,7 +60,8 @@ class StateDataArray:
             velocity_marker_detected,
             overturned,
             pitch,
-            roll
+            roll,
+            reward
         ):
         self.velocity.append(velocity)
         self.distance.append(distance)
@@ -69,6 +71,7 @@ class StateDataArray:
         self.overturned.append(overturned)
         self.pitch.append(pitch)
         self.roll.append(roll)
+        self.reward.append(reward)
 
     def get_data(self, limit=100):
         return (
@@ -80,5 +83,6 @@ class StateDataArray:
             self.overturned[-limit:],
             self.pitch[-limit:],
             self.roll[-limit:],
+            self.reward[-limit:],
         )
 

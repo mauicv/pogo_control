@@ -86,21 +86,20 @@ def plot_readings(client: Client):
     axs[0, 2].set_title("roll")
     axs[0, 2].set_ylim(-1, 1)
 
-    overturned_plot, = axs[1, 0].plot(xs, init_ys)
-    axs[1, 0].set_title("overturned")
-    axs[1, 0].set_ylim(-1, 1)
+    axs[1, 0].set_title("reward")
+    r_plot, = axs[1, 0].plot(xs, init_ys)
+    axs[1, 1].set_ylim(-200, 100)
 
     h_plot, = axs[1, 1].plot(xs, init_ys)
     axs[1, 1].set_title("height")
     axs[1, 1].set_ylim(-100, 100)
 
+    axs[1, 2].set_title("Conditions")
+    overturned_plot, = axs[1, 2].plot(xs, init_ys)
     hm_plot, = axs[1, 2].plot(xs, init_ys)
-    axs[1, 2].set_title("height marker detected")
+    vm_plot, = axs[1, 2].plot(xs, init_ys)
     axs[1, 2].set_ylim(-1, 1)
 
-    vm_plot, = axs[1, 2].plot(xs, init_ys)
-    axs[1, 2].set_title("velocity marker detected")
-    axs[1, 2].set_ylim(-1, 1)
 
 
     def animate(i, client, state_data_array: StateDataArray):
@@ -108,6 +107,8 @@ def plot_readings(client: Client):
         if len(data) == 3: data = data[1:]
         data, [distance, height, height_marker_detected, velocity_marker_detected, overturned] = data
         roll, pitch, velocity = data[-3:]
+        # Height reward function
+        reward = height + -50 * (not height_marker_detected) + -100 * overturned
         state_data_array.update(
             velocity,
             distance,
@@ -116,9 +117,11 @@ def plot_readings(client: Client):
             velocity_marker_detected,
             overturned,
             pitch,
-            roll
+            roll,
+            reward
         )
-        vel, dist, height, height_marker_detected, velocity_marker_detected, overturned, pitch, roll = state_data_array.get_data()
+        vel, dist, height, height_marker_detected, velocity_marker_detected, overturned, pitch, roll, reward \
+            = state_data_array.get_data()
         v_plot.set_ydata(vel)
         d_plot.set_ydata(dist)
         h_plot.set_ydata(height)
@@ -127,7 +130,7 @@ def plot_readings(client: Client):
         overturned_plot.set_ydata(overturned)
         pitch_plot.set_ydata(pitch)
         roll_plot.set_ydata(roll)
-
+        r_plot.set_ydata(reward)
 
     ani = animation.FuncAnimation(
         fig,
