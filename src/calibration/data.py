@@ -40,74 +40,45 @@ class SensorDataArray:
 
 
 @dataclass
-class PitchRollDataArray:
-    pitch: list[float] = field(default_factory=list)
-    roll: list[float] = field(default_factory=list)
-
-    def __post_init__(self):
-        self.pitch.append(0)
-        self.roll.append(0)
-
-    def update(self, pitch, roll):
-        self.pitch.append(pitch)
-        self.roll.append(roll)
-
-    def get_data(self, limit=100):
-        return (
-            self.pitch[-limit:],
-            self.roll[-limit:],
-        )
-
-
-@dataclass
-class VelocityDataArray:
-    vx: list[float] = field(default_factory=list)
-    vy: list[float] = field(default_factory=list)
-
-    def __post_init__(self):
-        self.vx.append(0)
-        self.vy.append(0)
-
-    def update(self, vx, vy):
-        self.vx.append(vx)
-        self.vy.append(vy)
-
-    def get_data(self, limit=100):
-        return (
-            self.vx[-limit:],
-            self.vy[-limit:],
-        )
-
-
-@dataclass
 class StateDataArray:
     velocity: list[float] = field(default_factory=list)
     distance: list[float] = field(default_factory=list)
+    height: list[float] = field(default_factory=list)
+    height_marker_detected: list[float] = field(default_factory=list)
+    velocity_marker_detected: list[float] = field(default_factory=list)
     pitch: list[float] = field(default_factory=list)
     roll: list[float] = field(default_factory=list)
     overturned: list[float] = field(default_factory=list)
 
-
-    def __post_init__(self):
-        self.velocity.append(0)
-        self.distance.append(0)
-        self.pitch.append(0)
-        self.roll.append(0)
-        self.overturned.append(0)
-
-    def update(self, velocity, distance, pitch, roll, overturned):
+    def update(
+            self,
+            velocity,
+            distance,
+            height,
+            height_marker_detected,
+            velocity_marker_detected,
+            overturned,
+            pitch,
+            roll
+        ):
         self.velocity.append(velocity)
         self.distance.append(distance)
+        self.height.append(height)
+        self.height_marker_detected.append(height_marker_detected)
+        self.velocity_marker_detected.append(velocity_marker_detected)
+        self.overturned.append(overturned)
         self.pitch.append(pitch)
         self.roll.append(roll)
-        self.overturned.append(overturned)
 
     def get_data(self, limit=100):
         return (
             self.velocity[-limit:],
             self.distance[-limit:],
+            self.height[-limit:],
+            self.height_marker_detected[-limit:],
+            self.velocity_marker_detected[-limit:],
+            self.overturned[-limit:],
             self.pitch[-limit:],
             self.roll[-limit:],
-            self.overturned[-limit:],
         )
 
