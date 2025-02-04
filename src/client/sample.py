@@ -13,15 +13,19 @@ class Rollout:
     states: list[list[float]]
     actions: list[list[float]]
     times: list[float]
+    conditions: list[list[float]]
+    last_index: int = None
 
     def to_dict(self):
         return {
             "states": self.states,
             "actions": self.actions,
-            "times": self.times
+            "times": self.times,
+            "conditions": self.conditions,
+            "last_index": self.last_index
         }
 
-    def append(self, state, action, time):
+    def append(self, state, action, time, conditions):
         if isinstance(state, torch.Tensor):
             state = state.numpy().tolist()
         if isinstance(action, torch.Tensor):
@@ -33,12 +37,33 @@ class Rollout:
         self.states.append(state)
         self.actions.append(action)
         self.times.append(time)
+        self.conditions.append(conditions)
+        self.last_index = len(self.states) - 1
 
 
-def linear_noise_warmup(j, end_i=25):
-    if j < end_i:
-        return j / end_i
-    return 1
+class ConditionCounter:
+    def __init__(self, overturned_iteration_count_limit: int, no_marker_count_limit: int):
+        self.overturned_iteration_count_limit = overturned_iteration_count_limit
+        self.no_marker_count_limit = no_marker_count_limit
+        self.overturned_iteration_count = 0
+        self.no_marker_count = 0
+
+    def update_check(self, conditions: list[float]) -> bool:
+        [_, _, height_marker_detected, _, overturned] = conditions
+        if not height_marker_detected:
+            self.no_marker_count += 1
+        else:
+            self.no_marker_count = 0
+        if self.no_marker_count > self.no_marker_count_limit:
+            return True
+
+        if overturned:
+            self.overturned_iteration_count += 1
+        else:
+            self.overturned_iteration_count = 0
+        if self.overturned_iteration_count > self.overturned_iteration_count_limit:
+            return True
+        return False
 
 
 def sample(
@@ -49,33 +74,37 @@ def sample(
         interval: float = 0.1,
         noise: float = 0.3,
         weight_perturbation: float = 0.01,
-        noise_warmup: int = 25
     ) -> Rollout:
     filter.reset()
     torch.set_grad_enabled(False)
     model.perturb_actor(
         weight_perturbation_size=weight_perturbation
     )
+    counter = ConditionCounter(
+        overturned_iteration_count_limit=20,
+        no_marker_count_limit=20
+    )
     action = torch.tensor(INITIAL_POSITION)
     action = filter(action)
-    state = client.send_data(action)
-    state = torch.tensor(state)
-    rollout = Rollout(states=[], actions=[], times=[])
+    servo_state, world_state, conditions = client.send_data(action)
+    state = torch.tensor(servo_state + world_state)
+    rollout = Rollout(states=[], actions=[], times=[], conditions=[])
     current_time = time.time()
     for i in tqdm(range(num_steps)):
         current_time = time.time()
         action = model(state).numpy()[0, 0]
-        noise_scale = linear_noise_warmup(i, noise_warmup)
-        action = action + np.random.normal(0, noise * noise_scale, size=action.shape)
+        action = action + np.random.normal(0, noise, size=action.shape)
         action = np.clip(action, -1, 1)
         action = filter(action)
         # NOTE: the state, actions stored here are related as the
         # action resulting from the state (not the state resulting
         # from the action)
         state = state.numpy()
-        rollout.append(state, action, current_time)
-        state = client.send_data(action)
-        state = torch.tensor(state)
+        rollout.append(state, action, current_time, conditions)
+        if counter.update_check(conditions):
+            break
+        servo_state, world_state, conditions = client.send_data(action)
+        state = torch.tensor(servo_state + world_state)
 
         elapsed_time = time.time() - current_time
         if elapsed_time < interval:

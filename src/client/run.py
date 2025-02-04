@@ -26,6 +26,30 @@ def set_init_state(
     sleep(4)
 
 
+def create_model(
+        state_dim: int = 8 + 6 + 2 + 1,
+        action_dim: int = 8
+    ):
+    print('Randomizing model')
+    encoder = DenseModel(
+        depth=1,
+        input_dim=state_dim,
+        hidden_dim=256,
+        output_dim=256 * 32,
+    )
+
+    actor = Actor(
+        input_dim=256 * 32,
+        output_dim=action_dim,
+        bound=1,
+    )
+
+    return EncoderActor(
+        encoder=encoder,
+        actor=actor
+    )
+
+
 def run_client(
         gcs: GCS_Interface,
         client: Client,
@@ -53,26 +77,9 @@ def run_client(
 
             print('Sampling rollout')
             if random_model:
-                print('Randomizing model')
-                state_dim = 8 + 6 + 2 + 1
-                action_dim = 8
-
-                encoder = DenseModel(
-                    depth=1,
-                    input_dim=state_dim,
-                    hidden_dim=256,
-                    output_dim=256 * 32,
-                )
-
-                actor = Actor(
-                    input_dim=256 * 32,
-                    output_dim=action_dim,
-                    bound=1,
-                )
-
-                model = EncoderActor(
-                    encoder=encoder,
-                    actor=actor
+                model = create_model(
+                    state_dim=8 + 6 + 2 + 1,
+                    action_dim=8
                 )
 
             sample_start = time()
