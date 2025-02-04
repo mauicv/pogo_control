@@ -5,21 +5,24 @@ from tqdm import tqdm
 # import uuid
 
 
-def default_velocity_reward_function(conditions):
-    TARGET_SPEED = 7.5
-    rewards = []
-    for condition in conditions:
-        [distance, height, height_marker_detected, velocity_marker_detected, overturned] = condition
-        r = v if v < TARGET_SPEED else max(2*TARGET_SPEED - v, 0)
-        rewards.append(r)
-    return torch.tensor(rewards)[:, None]
+# def default_velocity_reward_function(states, conditions):
+#     TARGET_SPEED = 7.5
+#     rewards = []
+#     for condition in conditions:
+#         [distance, height, height_marker_detected, velocity_marker_detected, overturned] = condition
+#         r = v if v < TARGET_SPEED else max(2*TARGET_SPEED - v, 0)
+#         rewards.append(r)
+#     return torch.tensor(rewards)[:, None]
 
 
-def default_height_reward_function(conditions):
+def default_height_reward_function(states, conditions):
     rewards = []
-    for condition in conditions:
-        [distance, height, height_marker_detected, velocity_marker_detected, overturned] = condition
-        reward = height + -50 * (not height_marker_detected) + -100 * overturned
+    min_height = min([condition[1] for condition in conditions])
+    for state, condition in zip(states, conditions):
+        [*_, _, pitch, _] = state
+        [_, height, height_marker_detected, _, overturned] = condition
+        up_pitch = abs(pitch) < 0.01
+        reward = 10 * (height - min_height) * up_pitch + -50 * (not height_marker_detected) + -100 * overturned
         rewards.append(reward)
     return torch.tensor(rewards)[:, None]
 
@@ -96,7 +99,7 @@ class DataLoader:
             self.state_buffer[run_index][:end_index] = states
             actions = torch.tensor(rollout_data['actions'])
             self.action_buffer[run_index][:end_index] = actions
-            rewards = self.reward_function(conditions)
+            rewards = self.reward_function(rollout_data['states'], conditions)
             self.reward_buffer[run_index][:end_index] = rewards
             self.end_index[run_index] = end_index
             self.fetched_rollouts.add(rollout)

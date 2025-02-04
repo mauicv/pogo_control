@@ -68,6 +68,7 @@ def plot_readings(client: Client):
         height=init_ys.tolist(),
         height_marker_detected=init_ys.tolist(),
         velocity_marker_detected=init_ys.tolist(),
+        reward=init_ys.tolist(),
     )  
 
     d_plot, = axs[0, 0].plot(xs, init_ys)
@@ -88,7 +89,7 @@ def plot_readings(client: Client):
 
     axs[1, 0].set_title("reward")
     r_plot, = axs[1, 0].plot(xs, init_ys)
-    axs[1, 1].set_ylim(-200, 100)
+    axs[1, 0].set_ylim(-100, 100)
 
     h_plot, = axs[1, 1].plot(xs, init_ys)
     axs[1, 1].set_title("height")
@@ -108,7 +109,8 @@ def plot_readings(client: Client):
         data, [distance, height, height_marker_detected, velocity_marker_detected, overturned] = data
         roll, pitch, velocity = data[-3:]
         # Height reward function
-        reward = height + -50 * (not height_marker_detected) + -100 * overturned
+        up_pitch = abs(pitch) < 0.01
+        reward = 10 * (height + 13.25288004238466) * up_pitch + -50 * (not height_marker_detected) + -100 * overturned
         state_data_array.update(
             velocity,
             distance,
