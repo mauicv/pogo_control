@@ -190,5 +190,58 @@ def plot_v_readings(client: Client):
 
 
 def plot_readings(client: Client):
-    data = client.send_data({})
-    print(data)
+    fig, axs = plt.subplots(nrows=2, ncols=2)
+    xs = np.arange(100)
+    init_ys = np.zeros(100)
+    state_data_array = StateDataArray(
+        velocity=init_ys.tolist(),
+        distance=init_ys.tolist(),
+        pitch=init_ys.tolist(),
+        roll=init_ys.tolist(),
+        overturned=init_ys.tolist(),
+    )  
+
+    d_plot, = axs[0, 0].plot(xs, init_ys)
+    axs[0, 0].set_title("distance")
+    axs[0, 0].set_ylim(-0, 100)
+
+    v_plot, = axs[0, 1].plot(xs, init_ys)
+    axs[0, 1].set_title("velocity")
+    axs[0, 1].set_ylim(-25, 25)
+
+    pitch_plot, = axs[1, 0].plot(xs, init_ys)
+    axs[1, 0].set_title("pitch")
+    axs[1, 0].set_ylim(-1, 1)
+
+    roll_plot, = axs[1, 0].plot(xs, init_ys)
+    axs[1, 0].set_title("roll")
+    axs[1, 0].set_ylim(-1, 1)
+
+    overturned_plot, = axs[1, 1].plot(xs, init_ys)
+    axs[1, 1].set_title("overturned")
+    axs[1, 1].set_ylim(-1, 1)
+
+
+    def animate(i, client, state_data_array: StateDataArray):
+        data = client.send_data({})
+        if len(data) == 3:
+            _, data, [dist, overturned] = data
+        else:
+            data, [dist, overturned] = data
+        pitch, roll, velocity = data[-3:]
+        state_data_array.update(velocity, dist, pitch, roll, overturned)
+        vel, dist, pitch, roll, overturned = state_data_array.get_data()
+        v_plot.set_ydata(vel)
+        d_plot.set_ydata(dist)
+        pitch_plot.set_ydata(pitch)
+        roll_plot.set_ydata(roll)
+        overturned_plot.set_ydata(overturned)
+
+
+    ani = animation.FuncAnimation(
+        fig,
+        animate,
+        fargs=(client, state_data_array, ),
+        interval=25
+    )
+    plt.show()

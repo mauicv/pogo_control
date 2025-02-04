@@ -26,7 +26,7 @@ class ArucoSensorMixin:
         self._vel = 0.0
         self._t_prev = 0.0
 
-        self.v_filter = _ButterworthFilter(order=2, cutoff=2.0, fs=50.0)
+        # self.v_filter = _ButterworthFilter(order=2, cutoff=2.0, fs=50.0)
 
         self.aruco_sensor_update_interval = max(0.05, aruco_sensor_update_interval)
         self.aruco_sensor_update_loop = Loop(
@@ -51,9 +51,10 @@ class ArucoSensorMixin:
             )
             self._pos = np.mean(tvec[:, :, 2], axis=0)[0]
             t_diff = self._t_prev - frame.timestamp
-            self._vel = self.v_filter.filter(
-                (self._pos - self._pos_prev) / t_diff
-            )
+            self._vel = (self._pos - self._pos_prev) / t_diff
+            # self._vel = self.v_filter.filter(
+            #     (self._pos - self._pos_prev) / t_diff
+            # )
             self._pos_prev = self._pos
             self._t_prev = frame.timestamp
         if ids is None:

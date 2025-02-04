@@ -81,19 +81,33 @@ class VelocityDataArray:
 
 @dataclass
 class StateDataArray:
-    v: list[float] = field(default_factory=list)
-    r: list[float] = field(default_factory=list)
+    velocity: list[float] = field(default_factory=list)
+    distance: list[float] = field(default_factory=list)
+    pitch: list[float] = field(default_factory=list)
+    roll: list[float] = field(default_factory=list)
+    overturned: list[float] = field(default_factory=list)
+
 
     def __post_init__(self):
-        self.v.append(0)
-        self.r.append(0)
+        self.velocity.append(0)
+        self.distance.append(0)
+        self.pitch.append(0)
+        self.roll.append(0)
+        self.overturned.append(0)
 
-    def update(self, v, r):
-        self.v.append(v)
-        self.r.append(r)
+    def update(self, velocity, distance, pitch, roll, overturned):
+        self.velocity.append(velocity)
+        self.distance.append(distance)
+        self.pitch.append(pitch)
+        self.roll.append(roll)
+        self.overturned.append(overturned)
 
     def get_data(self, limit=100):
         return (
-            self.v[-limit:],
-            self.r[-limit:],
+            self.velocity[-limit:],
+            self.distance[-limit:],
+            self.pitch[-limit:],
+            self.roll[-limit:],
+            self.overturned[-limit:],
         )
+
