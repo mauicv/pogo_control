@@ -80,5 +80,15 @@ def measure_mpu_offsets(ctx):
     client.close()
 
 
+@cli.command()
+@click.pass_context
+def plot_readings(ctx):
+    from calibration.plot_sense_readings import plot_readings as plot_readings_func
+    client = ctx.obj['client']
+    client.connect()
+    plot_readings_func(client)
+    client.close()
+
+
 if __name__ == "__main__":
     cli()

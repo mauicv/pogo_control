@@ -45,7 +45,6 @@ class Pogo(ServoController, MPU6050Mixin, ArucoSensorMixin):
 
     def get_data(self):
         state_data = [
-            *self.get_servo_data(),
             *self.latest_filtered_data,
             self.c_filter.roll,
             self.c_filter.pitch,
@@ -55,7 +54,7 @@ class Pogo(ServoController, MPU6050Mixin, ArucoSensorMixin):
             self.aruco_position,
             self.c_filter.overturned,
         ]
-        return [state_data, ext_data]
+        return [self.get_servo_data(), state_data, ext_data]
     
     def deinit(self):
         self.deinit_servo_controller()

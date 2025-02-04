@@ -187,3 +187,8 @@ def plot_v_readings(client: Client):
 
     ani = animation.FuncAnimation(fig, animate, fargs=(client, distance_data, ), interval=25)
     plt.show()
+
+
+def plot_readings(client: Client):
+    data = client.send_data({})
+    print(data)
