@@ -22,7 +22,9 @@ def default_height_reward_function(states, conditions):
         [*_, _, pitch, _] = state
         [_, height, height_marker_detected, _, overturned] = condition
         up_pitch = abs(pitch) < 0.01
-        reward = 10 * (height - min_height) * up_pitch + -50 * (not height_marker_detected) + -100 * overturned
+        marker_rewards = -50 * (not height_marker_detected) + -100 * overturned
+        height_reward = 10 * (min_height + (height - min_height) * up_pitch)
+        reward = height_reward + marker_rewards
         rewards.append(reward)
     return torch.tensor(rewards)[:, None]
 
@@ -96,12 +98,12 @@ class DataLoader:
             end_index = rollout_data['end_index']
             conditions = rollout_data['conditions']
             states = torch.tensor(rollout_data['states'])
-            self.state_buffer[run_index][:end_index] = states
+            self.state_buffer[run_index][:end_index+1] = states
             actions = torch.tensor(rollout_data['actions'])
-            self.action_buffer[run_index][:end_index] = actions
+            self.action_buffer[run_index][:end_index+1] = actions
             rewards = self.reward_function(rollout_data['states'], conditions)
-            self.reward_buffer[run_index][:end_index] = rewards
-            self.end_index[run_index] = end_index
+            self.reward_buffer[run_index][:end_index+1] = rewards
+            self.end_index[run_index] = end_index + 1
             self.fetched_rollouts.add(rollout)
             self.rollout_ind += 1
 
