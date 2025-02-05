@@ -50,6 +50,7 @@ class ConditionCounter:
 
     def update_check(self, conditions: list[float]) -> bool:
         [_, _, height_marker_detected, _, overturned] = conditions
+        print(overturned)
         if not height_marker_detected:
             self.no_marker_count += 1
         else:
@@ -81,7 +82,7 @@ def sample(
         weight_perturbation_size=weight_perturbation
     )
     counter = ConditionCounter(
-        overturned_iteration_count_limit=20,
+        overturned_iteration_count_limit=4,
         no_marker_count_limit=20
     )
     action = torch.tensor(INITIAL_POSITION)
