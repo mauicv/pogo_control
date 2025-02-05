@@ -5,8 +5,8 @@ from scipy.signal import butter, lfilter
 class ButterworthFilter:
     def __init__(
             self,
-            order: int = 2,
-            cutoff: float = 2.0,
+            order: int = 5,
+            cutoff: float = 5.0,
             fs: float = 50.0,
             num_components: int = 6
         ):

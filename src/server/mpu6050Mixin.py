@@ -26,7 +26,12 @@ class MPU6050Mixin:
             self.mpu = mpu
 
         if filter is None:
-            self.filter = ButterworthFilter(num_components=6)
+            self.filter = ButterworthFilter(
+                num_components=6,
+                cutoff=5.0,
+                fs=50.0,
+                order=5
+            )
         else:
             self.filter = filter
 
