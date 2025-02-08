@@ -18,12 +18,19 @@ from tqdm import tqdm
 def default_height_reward_function(states, conditions):
     rewards = []
     min_height = min([condition[1] for condition in conditions])
+    marker_detection_fail_count = 0
+    marker_detection_fail_count_limit = 25
+    marker_detection_fail_punishment = 2
     for state, condition in zip(states, conditions):
         [*_, _, pitch, _] = state
         [_, height, height_marker_detected, _, overturned] = condition
         up_pitch = abs(pitch) < 0.01
-        marker_rewards = -50 * (not height_marker_detected) + -100 * overturned
-        height_reward = 10 * (min_height + (height - min_height) * up_pitch)
+        marker_detection_fail_count += 1 if not height_marker_detected else 0
+        punishment = marker_detection_fail_punishment * marker_detection_fail_count
+        if marker_detection_fail_count > marker_detection_fail_count_limit:
+            punishment = marker_detection_fail_count_limit * marker_detection_fail_punishment
+        marker_rewards = - punishment + -100 * overturned
+        height_reward = 10 * ((height - min_height) * up_pitch) + min_height
         reward = height_reward + marker_rewards
         rewards.append(reward)
     return torch.tensor(rewards)[:, None]

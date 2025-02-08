@@ -101,16 +101,25 @@ def plot_readings(client: Client):
     vm_plot, = axs[1, 2].plot(xs, init_ys)
     axs[1, 2].set_ylim(-1, 1)
 
+    values = {
+        "marker_detection_fail_count": 0,
+        "min_height": 0,
+    }
 
-
-    def animate(i, client, state_data_array: StateDataArray):
+    def animate(i, client, state_data_array: StateDataArray, values: dict):
         data = client.send_data({})
         if len(data) == 3: data = data[1:]
         data, [distance, height, height_marker_detected, velocity_marker_detected, overturned] = data
+        values["min_height"] = min(height, values["min_height"])
         roll, pitch, velocity = data[-3:]
         # Height reward function
         up_pitch = abs(pitch) < 0.01
-        reward = 10 * (height + 13.25288004238466) * up_pitch + -50 * (not height_marker_detected) + -100 * overturned
+        values["marker_detection_fail_count"] = values["marker_detection_fail_count"] + 1 if not height_marker_detected else 0
+        punishment = min(values["marker_detection_fail_count"], 25) * 2
+        marker_rewards = - punishment + -100 * overturned
+        height_reward = 10 * ((height - values["min_height"]) * up_pitch) + values["min_height"]
+        reward = height_reward + marker_rewards
+
         state_data_array.update(
             velocity,
             distance,
@@ -137,7 +146,7 @@ def plot_readings(client: Client):
     ani = animation.FuncAnimation(
         fig,
         animate,
-        fargs=(client, state_data_array, ),
+        fargs=(client, state_data_array, values),
         interval=25
     )
     plt.show()
