@@ -5,14 +5,16 @@ from tqdm import tqdm
 # import uuid
 
 
-# def default_velocity_reward_function(states, conditions):
-#     TARGET_SPEED = 7.5
-#     rewards = []
-#     for condition in conditions:
-#         [distance, height, height_marker_detected, velocity_marker_detected, overturned] = condition
-#         r = v if v < TARGET_SPEED else max(2*TARGET_SPEED - v, 0)
-#         rewards.append(r)
-#     return torch.tensor(rewards)[:, None]
+def default_velocity_reward_function(states, conditions):
+    TARGET_SPEED = 5
+    rewards = []
+    for state, condition in zip(states, conditions):
+        [*_, velocity_marker_detected, overturned] = condition
+        [*_, v] = state
+        velocity_reward = min(TARGET_SPEED, v)
+        marker_rewards = + velocity_marker_detected - 100 * overturned
+        rewards.append(velocity_reward + marker_rewards)
+    return torch.tanh(torch.tensor(rewards)[:, None])
 
 
 def default_height_reward_function(states, conditions):
@@ -29,11 +31,11 @@ def default_height_reward_function(states, conditions):
         punishment = marker_detection_fail_punishment * marker_detection_fail_count
         if marker_detection_fail_count > marker_detection_fail_count_limit:
             punishment = marker_detection_fail_count_limit * marker_detection_fail_punishment
-        marker_rewards = - punishment + -100 * overturned
+        marker_rewards = - punishment - 100 * overturned
         height_reward = 10 * ((height - min_height) * up_pitch) + min_height
         reward = height_reward + marker_rewards
         rewards.append(reward)
-    return torch.tensor(rewards)[:, None]
+    return torch.tanh(torch.tensor(rewards)[:, None])
 
 
 class DataLoader:
@@ -45,7 +47,7 @@ class DataLoader:
             num_runs=0,
             state_dim=14,
             action_dim=8,
-            reward_function=default_height_reward_function
+            reward_function=default_velocity_reward_function
         ) -> None:
         self.reward_function = reward_function
         self.bucket = bucket

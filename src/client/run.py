@@ -23,7 +23,6 @@ def set_init_state(
         target_position: list[float]=(-0.4, -0.4, -0.4, -0.4, -0.4, -0.4, -0.4, -0.4)
     ):
     client.send_data(target_position)
-    sleep(4)
 
 
 def create_model(
@@ -104,6 +103,7 @@ def run_client(
             if not random_model:
                 model = gcs.model.load_model()
             consecutive_errors = 0
+            sleep(10)
         except Exception as e:
             # print(e)
             raise e
