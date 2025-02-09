@@ -11,10 +11,10 @@ def default_velocity_reward_function(states, conditions):
     for state, condition in zip(states, conditions):
         [*_, velocity_marker_detected, overturned] = condition
         [*_, v] = state
-        velocity_reward = min(TARGET_SPEED, v)
-        marker_rewards = + velocity_marker_detected - 100 * overturned
+        velocity_reward = min(TARGET_SPEED, v) * velocity_marker_detected
+        marker_rewards = 0.5 * velocity_marker_detected - 100 * overturned
         rewards.append(velocity_reward + marker_rewards)
-    return torch.tanh(torch.tensor(rewards)[:, None])
+    return torch.tanh(0.25 * torch.tensor(rewards)[:, None])
 
 
 def default_height_reward_function(states, conditions):
