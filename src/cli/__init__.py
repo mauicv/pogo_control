@@ -52,7 +52,7 @@ def server(port):
 
     def _handle_message(message):
         pogo.update_angle(message)
-        time.sleep(0.08)
+        time.sleep(0.23)
         return pogo.get_data()
 
     channel = Channel(host=HOST, port=POST)
