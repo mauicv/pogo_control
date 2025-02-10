@@ -58,13 +58,26 @@ class Mock_mpu6050:
         return self.data
 
 
+class Mock_camera:
+    def __init__(self):
+        pass
+    
+    def get_frame(self):
+        return None
+    
+    def close(self):
+        pass
+
+
 if __name__ == "__main__":
     mock_pigpio = MockPIGPIO()
     mock_mpu = Mock_mpu6050()
+    mock_camera = Mock_camera()
     pogo = Pogo(
         update_interval=0.01,
         gpio=mock_pigpio,
         mpu=mock_mpu,
+        camera=mock_camera
     )
 
     for action in tqdm(rollout['actions']):

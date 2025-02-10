@@ -1,4 +1,8 @@
-import cv2
+try:
+    import cv2
+except ImportError:
+    print("Error importing cv2")
+
 import time
 import numpy as np
 from dataclasses import dataclass

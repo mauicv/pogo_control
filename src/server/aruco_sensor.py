@@ -1,7 +1,11 @@
 from filters.butterworth import _ButterworthFilter
 from server.loop import Loop
 from server.camera import Camera
-import cv2
+
+try:
+    import cv2
+except ImportError:
+    print("Error importing cv2")
 import numpy as np
 
 
@@ -15,12 +19,15 @@ class ArucoSensorMixin:
         super().__init__(**kwargs)
         self.markerSizeInCM = 15
         self.camera = camera
-        self.aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_6X6_250)
-        self.parameters = cv2.aruco.DetectorParameters()
-        self.detector = cv2.aruco.ArucoDetector(
-            self.aruco_dict,
-            self.parameters
-        )
+        try:
+            self.aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_6X6_250)
+            self.parameters = cv2.aruco.DetectorParameters()
+            self.detector = cv2.aruco.ArucoDetector(
+                self.aruco_dict,
+                self.parameters
+            )
+        except:
+            print("Error initializing aruco detector")
         self._distance = 0.0
         self._distance_prev = 0.0
         self._vel = 0.0

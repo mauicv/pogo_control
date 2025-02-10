@@ -124,7 +124,7 @@ def create(name):
 
 @cli.command()
 @click.option('--num-steps', type=int, default=250)
-@click.option('--interval', type=float, default=0.1)
+@click.option('--interval', type=float, default=0.25)
 @click.option('--noise', type=float, default=0.0)
 @click.option('--weight-perturbation', type=float, default=0.06)
 @click.option('--consecutive-error-limit', type=int, default=10)
