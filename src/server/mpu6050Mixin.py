@@ -26,14 +26,19 @@ class MPU6050Mixin:
             self.mpu = mpu
 
         if filter is None:
-            self.filter = ButterworthFilter(num_components=6)
+            self.filter = ButterworthFilter(
+                num_components=6,
+                cutoff=5.0,
+                fs=50.0,
+                order=5
+            )
         else:
             self.filter = filter
 
         self.c_filter = ComplementaryFilter(alpha=0.95)
 
         # 3 for acc, 3 for gyro, 2 for comp
-        self._latest_filtered_data = [0] * (6 + 2)
+        self.latest_filtered_data = [0] * (6 + 2)
 
         self.mpu_update_loop = Loop(
             interval=mpu_update_interval,
@@ -63,13 +68,16 @@ class MPU6050Mixin:
                 continue
 
         self.c_filter.update(raw_data[:3], raw_data[3:])
-        comp_data = [self.c_filter.roll, self.c_filter.pitch]
-        self._latest_filtered_data = self.filter(raw_data) + comp_data
-
+        self.latest_filtered_data = self.filter(raw_data)
 
     def get_mpu_data(self):
         """Returns the most recent filtered MPU data"""
-        return self._latest_filtered_data
+        return [
+            *self.latest_filtered_data,
+            self.c_filter.roll,
+            self.c_filter.pitch,
+            self.c_filter.overturned
+        ]
 
     def deinit_mpu(self):
         """Clean up resources"""

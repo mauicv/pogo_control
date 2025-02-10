@@ -5,15 +5,37 @@ from tqdm import tqdm
 # import uuid
 
 
-def default_reward_function(states):
-    TARGET_SPEED = 7.5
+def default_velocity_reward_function(states, conditions):
+    TARGET_SPEED = 5
     rewards = []
-    for state in states:
-        # state is: 8 servo, 3 accelerometer, 3 gyro, pitch, roll, aruco v
-        s1, s2, s3, s4, s5, s6, s7, s8, ax, ay, az, wx, wy, wz, pitch, roll, v = state
-        r = v if v < TARGET_SPEED else max(2*TARGET_SPEED - v, 0)
-        rewards.append(r)
-    return torch.tensor(rewards)[:, None]
+    for state, condition in zip(states, conditions):
+        [*_, velocity_marker_detected, overturned] = condition
+        [*_, v] = state
+        velocity_reward = min(TARGET_SPEED, v) * velocity_marker_detected
+        marker_rewards = 0.5 * velocity_marker_detected - 100 * overturned
+        rewards.append(velocity_reward + marker_rewards)
+    return torch.tanh(0.25 * torch.tensor(rewards)[:, None])
+
+
+def default_height_reward_function(states, conditions):
+    rewards = []
+    min_height = min([condition[1] for condition in conditions])
+    marker_detection_fail_count = 0
+    marker_detection_fail_count_limit = 25
+    marker_detection_fail_punishment = 2
+    for state, condition in zip(states, conditions):
+        [*_, _, pitch, _] = state
+        [_, height, height_marker_detected, _, overturned] = condition
+        up_pitch = abs(pitch) < 0.01
+        marker_detection_fail_count += 1 if not height_marker_detected else 0
+        punishment = marker_detection_fail_punishment * marker_detection_fail_count
+        if marker_detection_fail_count > marker_detection_fail_count_limit:
+            punishment = marker_detection_fail_count_limit * marker_detection_fail_punishment
+        marker_rewards = - punishment - 100 * overturned
+        height_reward = 10 * ((height - min_height) * up_pitch) + min_height
+        reward = height_reward + marker_rewards
+        rewards.append(reward)
+    return torch.tanh(torch.tensor(rewards)[:, None])
 
 
 class DataLoader:
@@ -25,7 +47,7 @@ class DataLoader:
             num_runs=0,
             state_dim=14,
             action_dim=8,
-            reward_function=default_reward_function
+            reward_function=default_velocity_reward_function
         ) -> None:
         self.reward_function = reward_function
         self.bucket = bucket
@@ -49,6 +71,11 @@ class DataLoader:
         self.reward_buffer = torch.zeros(
             (self.num_runs, self.rollout_length, 1),
             dtype=torch.float32
+        )
+
+        self.end_index = torch.zeros(
+            self.num_runs,
+            dtype=torch.int
         )
 
         self.fetched_rollouts = set()
@@ -77,12 +104,15 @@ class DataLoader:
             run_index = self.rollout_ind % self.num_runs
             with self.bucket.blob(rollout).open('r') as f:
                 rollout_data = json.load(f)
+            end_index = rollout_data['end_index']
+            conditions = rollout_data['conditions']
             states = torch.tensor(rollout_data['states'])
-            self.state_buffer[run_index] = states
+            self.state_buffer[run_index][:end_index+1] = states
             actions = torch.tensor(rollout_data['actions'])
-            self.action_buffer[run_index] = actions
-            rewards = self.reward_function(states)
-            self.reward_buffer[run_index] = rewards
+            self.action_buffer[run_index][:end_index+1] = actions
+            rewards = self.reward_function(rollout_data['states'], conditions)
+            self.reward_buffer[run_index][:end_index+1] = rewards
+            self.end_index[run_index] = end_index + 1
             self.fetched_rollouts.add(rollout)
             self.rollout_ind += 1
 
@@ -116,11 +146,14 @@ class DataLoader:
 
         max_index = min(self.rollout_ind, self.num_runs)
         b_inds = torch.randint(0, max_index, (batch_size, 1))
+        end_inds = self.end_index[b_inds]
         t_inds = []
         if from_start:
             t_inds = torch.zeros(batch_size, dtype=torch.int)
         else:
-            t_inds.append(torch.randint(0, (self.rollout_length - num_time_steps), (1, )))
+            for end_ind in end_inds:
+                t_ind = torch.randint(0, (end_ind - num_time_steps), (1, ))
+                t_inds.append(t_ind)
             t_inds = torch.cat(t_inds, dim=0)
         t_inds = t_inds[:, None] + torch.arange(0, num_time_steps)
         return (

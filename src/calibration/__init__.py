@@ -42,41 +42,21 @@ def plot_base_readings(ctx):
 
 @cli.command()
 @click.pass_context
-def plot_pitch_roll_readings(ctx):
-    from calibration.plot_sense_readings import plot_pitch_roll_readings as plot_pitch_roll_readings_func
-    client = ctx.obj['client']
-    client.connect()
-    plot_pitch_roll_readings_func(client)
-    client.close()
-
-
-# @cli.command()
-# @click.pass_context
-# def plot_v_readings(ctx):
-#     from calibration.plot_sense_readings import plot_v_readings as plot_v_readings_func
-#     client = ctx.obj['client']
-#     client.connect()
-#     plot_v_readings_func(client)
-#     client.close()
-
-
-@cli.command()
-@click.pass_context
-def plot_v_readings(ctx):
-    from calibration.plot_sense_readings import plot_v_readings as plot_v_readings_func
-    client = ctx.obj['client']
-    client.connect()
-    plot_v_readings_func(client)
-    client.close()
-
-
-@cli.command()
-@click.pass_context
 def measure_mpu_offsets(ctx):
     from calibration.measurement import measure_mpu_offsets as measure_mpu_offsets_func
     client = ctx.obj['client']
     client.connect()
     measure_mpu_offsets_func(client)
+    client.close()
+
+
+@cli.command()
+@click.pass_context
+def plot_readings(ctx):
+    from calibration.plot_sense_readings import plot_readings as plot_readings_func
+    client = ctx.obj['client']
+    client.connect()
+    plot_readings_func(client)
     client.close()
 
 

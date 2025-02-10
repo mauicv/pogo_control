@@ -96,7 +96,7 @@ def create(name):
     )
 
     # 8 servo, 3 accelerometer, 3 gyro, pitch, roll, aruco d, aruco v
-    state_dim = 8 + 3 + 3 + 2 + 1
+    state_dim = 8 + 6 + 2 + 1
     action_dim = 8
 
     encoder = DenseModel(
@@ -167,8 +167,8 @@ def client(
     )
     client.connect()
     butterworth_filter = ButterworthFilter(
-        order=4,
-        cutoff=2.0,
+        order=5,
+        cutoff=5.0,
         fs=50.0,
         num_components=8 # 8 servo motors
     )
