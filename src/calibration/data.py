@@ -2,6 +2,31 @@ from dataclasses import dataclass, field
 
 
 @dataclass
+class PoseDataArray:
+    xs: list[float] = field(default_factory=list)
+    ys: list[float] = field(default_factory=list)
+    zs: list[float] = field(default_factory=list)
+
+    def __post_init__(self):
+        self.xs.append(0)
+        self.ys.append(0)
+        self.zs.append(0)
+
+    def update(self, data: list[float]):
+        x, y, z = data[0:3]
+        self.xs.append(x)
+        self.ys.append(y)
+        self.zs.append(z)
+
+    def get_data(self, limit=100):
+        return (
+            self.xs[-limit:],
+            self.ys[-limit:],
+            self.zs[-limit:],
+        )
+
+
+@dataclass
 class SensorDataArray:
     acc_xs: list[float] = field(default_factory=list)
     acc_ys: list[float] = field(default_factory=list)

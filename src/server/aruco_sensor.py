@@ -22,8 +22,8 @@ class ArucoSensorMixin:
             self.aruco_dict,
             self.parameters
         )
-        self._delta_tvec = None
-        self._delta_rvec = None
+        self._delta_tvec = np.array([0, 0, 0])
+        self._delta_rvec = np.array([0, 0, 0])
         self._last_detection_ts = None
         self.source_marker_id = source_marker_id
         self.target_marker_id = target_marker_id 
@@ -53,7 +53,7 @@ class ArucoSensorMixin:
         target_index = ids.index(self.target_marker_id)
         
 
-        _ , tvec, _ = cv2.aruco.estimatePoseSingleMarkers(
+        rvec , tvec, _ = cv2.aruco.estimatePoseSingleMarkers(
             corners,
             self.markerSizeInCM,
             self.camera.camera_matrix,
