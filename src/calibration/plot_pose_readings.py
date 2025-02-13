@@ -8,24 +8,28 @@ from calibration.data import PoseDataArray
 
 
 def plot_pose_readings(client: Client):
-    fig, axs = plt.subplots()
-    sensor_data = PoseDataArray()
+    fig, axs = plt.subplots(ncols=2)
+    pose_data = PoseDataArray()
 
-    xs, ys, zs = sensor_data.get_data()
-    plot, = axs.plot(xs, ys, '-')
+    xs, ys, zs, speeds = pose_data.get_data()
+    plot, = axs[0].plot(xs, ys, '-')
 
-    axs.set_title("Location")
-    plt.xlim(-100,100)
-    plt.ylim(-100,100)
+    axs[0].set_title("Location")
+    axs[0].set_xlim(-100,100)
+    axs[0].set_ylim(-100,100)
+
+    axs[1].set_title("Speed")
+    axs[1].set_xlim(0,100)
 
     def animate(i, client, pose_data: PoseDataArray):
         [data, _] = client.send_data({})
-        tvec, rvec, ts = data
-        pose_data.update(tvec[0])
-        xs, ys, zs = pose_data.get_data()
+        tvec, rvec, velocity, speed, ts = data
+        pose_data.update(tvec[0], speed)
+        xs, ys, zs, speeds = pose_data.get_data()
         print(xs[-1], ys[-1])
         plot.set_data(xs, ys)
+        axs[1].plot(speeds, '-')
 
-    ani = animation.FuncAnimation(fig, animate, fargs=(client, sensor_data, ), interval=25)
+    ani = animation.FuncAnimation(fig, animate, fargs=(client, pose_data, ), interval=25)
     plt.show()
 

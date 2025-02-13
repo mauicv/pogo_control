@@ -6,23 +6,27 @@ class PoseDataArray:
     xs: list[float] = field(default_factory=list)
     ys: list[float] = field(default_factory=list)
     zs: list[float] = field(default_factory=list)
+    speeds: list[float] = field(default_factory=list)
 
     def __post_init__(self):
         self.xs.append(0)
         self.ys.append(0)
         self.zs.append(0)
+        self.speeds.append(0)
 
-    def update(self, data: list[float]):
+    def update(self, data: list[float], speed: float):
         x, y, z = data[0:3]
         self.xs.append(x)
         self.ys.append(y)
         self.zs.append(z)
+        self.speeds.append(speed)
 
     def get_data(self, limit=100):
         return (
             self.xs[-limit:],
             self.ys[-limit:],
             self.zs[-limit:],
+            self.speeds[-limit:],
         )
 
 

@@ -1,4 +1,5 @@
 from server.aruco_sensor import ArucoSensorMixin
+import numpy as np
 
 class PoseSensor(ArucoSensorMixin):
     def __init__(
@@ -20,6 +21,8 @@ class PoseSensor(ArucoSensorMixin):
         state_data = [
             self.delta_tvec,
             self.delta_rvec,
+            self.velocity,
+            self.speed,
             self.last_detection_ts,
         ]
         return [state_data, []]

@@ -24,7 +24,12 @@ class ArucoSensorMixin:
         )
         self._delta_tvec = np.array([0, 0, 0])
         self._delta_rvec = np.array([0, 0, 0])
-        self._last_detection_ts = None
+        self._last_delta_tvec = np.array([0, 0, 0])
+        self._last_delta_rvec = np.array([0, 0, 0])
+        self._t_delta = 0
+        self._velocity = np.array([0, 0, 0])
+        self._speed = 0
+        self._last_detection_ts = 0
         self.source_marker_id = source_marker_id
         self.target_marker_id = target_marker_id 
 
@@ -62,7 +67,15 @@ class ArucoSensorMixin:
 
         self._delta_tvec = tvec[target_index] - tvec[source_index]
         self._delta_rvec = rvec[target_index] - rvec[source_index]
+        self._t_delta = frame.timestamp - self._last_detection_ts
         self._last_detection_ts = frame.timestamp
+        
+        diff = self._delta_tvec - self._last_delta_tvec
+        self._velocity = diff / self._t_delta
+        self._speed = np.linalg.norm(self._velocity)
+        
+        self._last_delta_tvec = self._delta_tvec
+        self._last_delta_rvec = self._delta_rvec
 
     def deinit_aruco_sensor(self):
         """Clean up resources"""
@@ -81,3 +94,14 @@ class ArucoSensorMixin:
     def last_detection_ts(self):
         return self._last_detection_ts
 
+    @property
+    def t_delta(self):
+        return self._t_delta
+    
+    @property
+    def velocity(self):
+        return self._velocity.tolist()
+    
+    @property
+    def speed(self):
+        return self._speed
