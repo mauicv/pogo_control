@@ -56,7 +56,6 @@ class ArucoSensorMixin:
 
         source_index = ids.index(self.source_marker_id)
         target_index = ids.index(self.target_marker_id)
-        
 
         rvec , tvec, _ = cv2.aruco.estimatePoseSingleMarkers(
             corners,
@@ -72,8 +71,10 @@ class ArucoSensorMixin:
         
         diff = self._delta_tvec - self._last_delta_tvec
         self._velocity = diff / self._t_delta
-        self._speed = np.linalg.norm(self._velocity)
-        
+        a = np.linalg.norm(self._delta_tvec)
+        b = np.linalg.norm(self._last_delta_tvec)
+        self._speed = (a - b) / self._t_delta
+
         self._last_delta_tvec = self._delta_tvec
         self._last_delta_rvec = self._delta_rvec
 
