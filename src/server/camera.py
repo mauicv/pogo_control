@@ -2,9 +2,9 @@ import cv2
 import time
 import numpy as np
 from dataclasses import dataclass
-
-
+from picamera2 import Picamera2
 import numpy as np
+
 
 c_params = {
     'camera_matrix': np.array([
@@ -31,7 +31,6 @@ class Frame:
 class Camera:
     def __init__(
             self,
-            input_source=-1,
             camera_matrix=c_params['camera_matrix'],
             dist_coeff=c_params['dist_coeff'],
             height=480,
@@ -47,11 +46,8 @@ class Camera:
         self.fy = fy
         self.cx = cx
         self.cy = cy
-        self.input_source = input_source
         self.camera_matrix = camera_matrix
         self.dist_coeff = dist_coeff
-        self.input_source = input_source
-        self.open()
 
         newcameramtx, roi = cv2.getOptimalNewCameraMatrix(
             self.camera_matrix,
@@ -64,18 +60,9 @@ class Camera:
         self.roi = roi
 
     def get_frame(self):
-        if self.vc is None or not self.vc.isOpened():
-            print("Camera not initialized or opened. Attempting to reopen...")
-            self.open()
-            if self.vc is None or not self.vc.isOpened():
-                return None
-            
-        ret, frame = self.vc.read()
-        if not ret:
-            print("Failed to read frame. Attempting to reopen camera...")
-            time.sleep(0.1)
-            self.open()
-            return self.get_frame()
+        frame = self.capture()
+        if frame is None:
+            return None
         
         frame = cv2.undistort(
             frame,
@@ -94,6 +81,43 @@ class Camera:
             data=frame,
             timestamp=time.time()
         )
+
+    def capture(self):
+        raise NotImplementedError("Capture method not implemented")
+
+    def open(self):
+        raise NotImplementedError("Open method not implemented")
+
+    def close(self):
+        raise NotImplementedError("Close method not implemented")
+
+
+class Cv2Camera(Camera):
+    def __init__(
+            self,
+            input_source=-1,
+            camera_matrix=c_params['camera_matrix'],
+            dist_coeff=c_params['dist_coeff'],
+            height=480,
+            width=640,
+            fx=580.0,
+            fy=580.0,
+            cx=345.0,
+            cy=244.0,
+        ):
+        super().__init__(
+            camera_matrix,
+            dist_coeff,
+            height,
+            width,
+            fx,
+            fy,
+            cx,
+            cy,
+        )
+        self.input_source = input_source
+        self.vc = None
+        self.open()
 
     def open(self):
         self.close()
@@ -116,6 +140,20 @@ class Camera:
             print(f"Error initializing camera: {e}")
             self.vc = None
 
+    def capture(self):
+        if self.vc is None or not self.vc.isOpened():
+            print("Camera not initialized or opened. Attempting to reopen...")
+            self.open()
+            if self.vc is None or not self.vc.isOpened():
+                return None
+            
+        ret, frame = self.vc.read()
+        if not ret:
+            print("Failed to read frame. Attempting to reopen camera...")
+            time.sleep(0.1)
+            self.open()
+            return self.capture()
+
     def close(self):
         try:
             if self.vc is not None:
@@ -124,3 +162,43 @@ class Camera:
                 self.vc = None
         except Exception as e:
             print(f"Error deinitializing camera: {e}")
+
+
+class Picamera2Camera(Camera):
+    def __init__(
+            self,
+            input_source="main",
+            camera_matrix=c_params['camera_matrix'],
+            dist_coeff=c_params['dist_coeff'],
+            height=480,
+            width=640,
+            fx=580.0,
+            fy=580.0,
+            cx=345.0,
+            cy=244.0,
+        ):
+        super().__init__(
+            camera_matrix,
+            dist_coeff,
+            height,
+            width,
+            fx,
+            fy,
+            cx,
+            cy,
+        )
+        self.input_source = input_source
+        self.vc = Picamera2()
+        self.open()
+
+    def open(self):
+        self.vc.start()
+
+    def capture(self):
+        try:
+            return self.vc.capture_array(self.input_source)
+        except Exception as e:
+            return None
+
+    def close(self):
+        self.vc.close()

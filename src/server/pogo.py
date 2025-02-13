@@ -10,7 +10,7 @@ generic_values = {
 }
 
 
-class Pogo(ServoController, MPU6050Mixin, ArucoSensorMixin):
+class Pogo(ServoController, MPU6050Mixin):
     servos: list[Servo] = [
         Servo(name="front_right_top", pin_id=0, pin=4, pin_limits=(-0.3, 0.9), init_value=-0.4, offset=0.0, **generic_values),
         Servo(name="front_right_bottom", pin_id=1, pin=18, pin_limits=(-0.9, 0.9), init_value=-0.4, offset=0.0, **generic_values),
@@ -22,7 +22,12 @@ class Pogo(ServoController, MPU6050Mixin, ArucoSensorMixin):
         Servo(name="back_left_bottom", pin_id=7, pin=6, pin_limits=(-0.9, 0.9), init_value=-0.4, offset=0.0, reverse=True, **generic_values),
     ]
 
-    def __init__(self, update_interval: float = 0.01, gpio=None, mpu=None, camera=None):
+    def __init__(
+            self,
+            update_interval: float = 0.01,
+            gpio=None,
+            mpu=None,
+        ):
 
         if not gpio:
             import pigpio
@@ -30,17 +35,12 @@ class Pogo(ServoController, MPU6050Mixin, ArucoSensorMixin):
         if not mpu:
             from server.mpu6050 import mpu6050
             mpu = mpu6050(0x68)
-        if not camera:
-            from server.camera import Camera
-            camera = Camera(input_source=-1)
 
         super().__init__(
             servo_update_interval=update_interval,
             mpu_update_interval=update_interval,
-            aruco_sensor_update_interval=update_interval,
             gpio=gpio,
             mpu=mpu,
-            camera=camera
         )
 
     def get_data(self):
@@ -48,13 +48,8 @@ class Pogo(ServoController, MPU6050Mixin, ArucoSensorMixin):
             *self.latest_filtered_data,
             self.c_filter.roll,
             self.c_filter.pitch,
-            self.aruco_velocity,
         ]
         extra_data = [
-            self.aruco_distance,
-            self.aruco_height,
-            self.aruco_height_marker_detected,
-            self.aruco_velocity_marker_detected,
             self.c_filter.overturned,
         ]
         return [
@@ -66,25 +61,22 @@ class Pogo(ServoController, MPU6050Mixin, ArucoSensorMixin):
     def deinit(self):
         self.deinit_servo_controller()
         self.deinit_mpu()
-        self.deinit_aruco_sensor()
 
 
-class SensorPogo(MPU6050Mixin, ArucoSensorMixin):
+class SensorPogo(MPU6050Mixin):
     servos: list[Servo] = []
 
-    def __init__(self, update_interval: float = 0.01, mpu=None, camera=None):
+    def __init__(self,
+            update_interval: float = 0.01,
+            mpu=None,
+        ):
         if not mpu:
             from server.mpu6050 import mpu6050
             mpu = mpu6050(0x68)
-        if not camera:
-            from server.camera import Camera
-            camera = Camera(input_source=-1)
 
         super().__init__(
             mpu_update_interval=update_interval,
-            aruco_sensor_update_interval=update_interval,
             mpu=mpu,
-            camera=camera
         )
 
     def get_data(self):
@@ -92,13 +84,8 @@ class SensorPogo(MPU6050Mixin, ArucoSensorMixin):
             *self.latest_filtered_data,
             self.c_filter.roll,
             self.c_filter.pitch,
-            self.aruco_velocity,
         ]
         extra_data = [
-            self.aruco_distance,
-            self.aruco_height,
-            self.aruco_height_marker_detected,
-            self.aruco_velocity_marker_detected,
             self.c_filter.overturned,
         ]
         return [
@@ -108,4 +95,3 @@ class SensorPogo(MPU6050Mixin, ArucoSensorMixin):
     
     def deinit(self):
         self.deinit_mpu()
-        self.deinit_aruco_sensor()

@@ -31,20 +31,17 @@ def clean(name):
 
 @cli.command()
 @click.option('--port', type=int, default=8000)
-def server(port):
+def pogo_server(port):
     from server.channel import Channel
     from server.pogo import Pogo
-    from server.camera import Camera
     import pigpio
     from server.mpu6050 import mpu6050
 
     gpio = pigpio.pi()
     mpu = mpu6050(0x68)
-    camera = Camera()
     pogo = Pogo(
         gpio=gpio,
         mpu=mpu,
-        camera=camera,
         update_interval=0.01,
     )
     HOST = os.getenv("HOST")
@@ -61,7 +58,28 @@ def server(port):
 
 @cli.command()
 @click.option('--port', type=int, default=8000)
-def sensor_server(port):
+def camera_sensor_server(port):
+    from server.channel import Channel
+    from server.pose_sensor import PoseSensor
+    from server.camera import Picamera2Camera as Camera
+
+    camera = Camera()
+    pose_sensor = PoseSensor(camera=camera, update_interval=0.01)
+    HOST = os.getenv("HOST")
+    POST = port if port else int(os.getenv("POST"))
+
+    def _handle_message(message):
+        # time.sleep(0.08)
+        data = pose_sensor.get_data()
+        return data
+
+    channel = Channel(host=HOST, port=POST)
+    channel.serve(_handle_message)
+
+
+@cli.command()
+@click.option('--port', type=int, default=8000)
+def pogo_sensor_server(port):
     from server.channel import Channel
     from server.mpu6050 import mpu6050
     from server.pogo import SensorPogo

@@ -9,10 +9,11 @@ class ArucoSensorMixin:
     def __init__(
             self,
             camera: Camera,
+            source_marker_id: int = 1,
+            target_marker_id: int = 2,
             aruco_sensor_update_interval: float = 0.01,
             **kwargs
         ):
-        super().__init__(**kwargs)
         self.markerSizeInCM = 15
         self.camera = camera
         self.aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_6X6_250)
@@ -21,13 +22,11 @@ class ArucoSensorMixin:
             self.aruco_dict,
             self.parameters
         )
-        self._distance = 0.0
-        self._distance_prev = 0.0
-        self._vel = 0.0
-        self._t_prev = 0.0
-        self._height = 0.0
-        self._height_marker_detected = False
-        self._velocity_marker_detected = False
+        self._delta_tvec = None
+        self._delta_rvec = None
+        self._last_detection_ts = None
+        self.source_marker_id = source_marker_id
+        self.target_marker_id = target_marker_id 
 
         self.aruco_sensor_update_interval = max(0.05, aruco_sensor_update_interval)
         self.aruco_sensor_update_loop = Loop(
@@ -36,41 +35,23 @@ class ArucoSensorMixin:
         )
         self.aruco_sensor_update_loop.start()
 
-    def _compute_height(self, ids, tvec):
-        for aruco_id, id_tvec in zip(ids, tvec):
-            if aruco_id == 2:
-                self._height = id_tvec[0, 1]
-                self._height_marker_detected = True
-        return None
-    
-    def _compute_distance_and_velocity(self, ids, tvec, ts):
-        self._distance = np.mean(tvec[:, :, 2], axis=0)[0]
-        t_diff = self._t_prev - ts
-        self._vel = (self._distance - self._distance_prev) / t_diff
-        self._distance_prev = self._distance
-        self._t_prev = ts
-        self._velocity_marker_detected = True
-        return None
-
     def _compute_distance(self):
         frame = self.camera.get_frame()
-        if frame is None:
-            return
+        if frame is None: return
+
         corners, ids, rejected = self.detector.detectMarkers(
             frame.data
         )
-        self._height_marker_detected = False
-        self._velocity_marker_detected = False
         
         if ids is None: return
         ids = [id[0] for id in ids]
+        if (self.source_marker_id not in ids) \
+                or (self.target_marker_id not in ids):
+            return
+
+        source_index = ids.index(self.source_marker_id)
+        target_index = ids.index(self.target_marker_id)
         
-        # start testing code
-        if 2 in ids:
-            i = ids.index(2)
-            corners = [corners[i]]
-            ids = [ids[i]]
-        # end testing code
 
         _ , tvec, _ = cv2.aruco.estimatePoseSingleMarkers(
             corners,
@@ -79,31 +60,24 @@ class ArucoSensorMixin:
             self.camera.dist_coeff,
         )
 
-        self._compute_distance_and_velocity(ids, tvec, frame.timestamp)
-        self._compute_height(ids, tvec)
-
-    @property
-    def aruco_velocity(self):
-        return self._vel
-    
-    @property
-    def aruco_distance(self):
-        return self._distance
-    
-    @property
-    def aruco_height(self):
-        return self._height
-    
-    @property
-    def aruco_height_marker_detected(self):
-        return self._height_marker_detected
-    
-    @property
-    def aruco_velocity_marker_detected(self):
-        return self._velocity_marker_detected
-
+        self._delta_tvec = tvec[target_index] - tvec[source_index]
+        self._delta_rvec = rvec[target_index] - rvec[source_index]
+        self._last_detection_ts = frame.timestamp
 
     def deinit_aruco_sensor(self):
         """Clean up resources"""
         self.aruco_sensor_update_loop.stop()
         self.camera.close()
+
+    @property
+    def delta_tvec(self):
+        return self._delta_tvec.tolist()
+    
+    @property
+    def delta_rvec(self):
+        return self._delta_rvec.tolist()
+
+    @property
+    def last_detection_ts(self):
+        return self._last_detection_ts
+
