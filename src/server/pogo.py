@@ -3,8 +3,15 @@ from server.servo_controller import ServoController
 from server.aruco_sensor import ArucoSensorMixin
 from server.servo import Servo
 
+# generic_values = {
+#     "kp": 0.1,
+#     "ki": 0.01,
+#     "kd": 0.001,
+# }
+
+0
 generic_values = {
-    "kp": 0.1,
+    "kp": 0.025,
     "ki": 0.01,
     "kd": 0.001,
 }

@@ -31,33 +31,6 @@ def clean(name):
 
 @cli.command()
 @click.option('--port', type=int, default=8000)
-def pogo_server(port):
-    from server.channel import Channel
-    from server.pogo import Pogo
-    import pigpio
-    from server.mpu6050 import mpu6050
-
-    gpio = pigpio.pi()
-    mpu = mpu6050(0x68)
-    pogo = Pogo(
-        gpio=gpio,
-        mpu=mpu,
-        update_interval=0.01,
-    )
-    HOST = os.getenv("HOST")
-    POST = port if port else int(os.getenv("POST"))
-
-    def _handle_message(message):
-        pogo.update_angle(message)
-        time.sleep(0.08)
-        return pogo.get_data()
-
-    channel = Channel(host=HOST, port=POST)
-    channel.serve(_handle_message)
-
-
-@cli.command()
-@click.option('--port', type=int, default=8000)
 def camera_sensor_server(port):
     from server.channel import Channel
     from server.pose_sensor import PoseSensor
@@ -79,15 +52,40 @@ def camera_sensor_server(port):
 
 @cli.command()
 @click.option('--port', type=int, default=8000)
+def pogo_server(port):
+    from server.channel import Channel
+    from server.pogo import Pogo
+    import pigpio
+    from server.mpu6050 import mpu6050
+
+    gpio = pigpio.pi()
+    mpu = mpu6050(0x68)
+    pogo = Pogo(
+        gpio=gpio,
+        mpu=mpu,
+        update_interval=0.01,
+    )
+    HOST = os.getenv("HOST")
+    POST = port if port else int(os.getenv("POST"))
+
+    def _handle_message(message):
+        pogo.update_angle(message)
+        time.sleep(0.23)
+        return pogo.get_data()
+
+    channel = Channel(host=HOST, port=POST)
+    channel.serve(_handle_message)
+
+
+@cli.command()
+@click.option('--port', type=int, default=8000)
 def pogo_sensor_server(port):
     from server.channel import Channel
     from server.mpu6050 import mpu6050
     from server.pogo import SensorPogo
-    from server.camera import Camera
 
     mpu = mpu6050(0x68)
-    camera = Camera()
-    sensor_pogo = SensorPogo(mpu=mpu, camera=camera, update_interval=0.01)
+    sensor_pogo = SensorPogo(mpu=mpu, update_interval=0.01)
     HOST = os.getenv("HOST")
     POST = port if port else int(os.getenv("POST"))
 
@@ -142,7 +140,7 @@ def create(name):
 
 @cli.command()
 @click.option('--num-steps', type=int, default=250)
-@click.option('--interval', type=float, default=0.1)
+@click.option('--interval', type=float, default=0.25)
 @click.option('--noise', type=float, default=0.0)
 @click.option('--weight-perturbation', type=float, default=0.06)
 @click.option('--consecutive-error-limit', type=int, default=10)
