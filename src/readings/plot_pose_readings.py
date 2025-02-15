@@ -24,8 +24,8 @@ def plot_pose_readings(client: Client):
     plot, = axs[0].plot(init_xs, init_ys, '-')
 
     axs[0].set_title("Location")
-    axs[0].set_xlim(-100,100)
-    axs[0].set_ylim(-100,100)
+    axs[0].set_xlim(-50,50)
+    axs[0].set_ylim(-80,0)
 
     speed_plot, = axs[1].plot(init_xs, init_speeds, '-')
     avg_speed_plot, = axs[1].plot(init_xs, init_speeds, '-')
@@ -41,6 +41,6 @@ def plot_pose_readings(client: Client):
         speed_plot.set_ydata(speeds)
         avg_speed_plot.set_ydata(avg_speeds)
 
-    ani = animation.FuncAnimation(fig, animate, fargs=(client, pose_data, ), interval=25)
+    ani = animation.FuncAnimation(fig, animate, fargs=(client, pose_data, ), interval=90)
     plt.show()
 
