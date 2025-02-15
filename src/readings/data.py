@@ -8,14 +8,16 @@ class PoseDataArray:
     zs: list[float] = field(default_factory=list)
     speeds: list[float] = field(default_factory=list)
     avg_speeds: list[float] = field(default_factory=list)
+    distances: list[float] = field(default_factory=list)
 
-    def update(self, data: list[float], speed: float):
+    def update(self, data: list[float], speed: float, d: float):
         x, y, z = data[0:3]
         self.xs.append(x)
         self.ys.append(y)
         self.zs.append(z)
         self.speeds.append(speed)
         self.avg_speeds.append(self.get_avg_speed())
+        self.distances.append(d)
 
     def get_data(self, limit=100):
         return (
@@ -24,6 +26,7 @@ class PoseDataArray:
             self.zs[-limit:],
             self.speeds[-limit:],
             self.avg_speeds[-limit:],
+            self.distances[-limit:],
         )
 
     def get_avg_speed(self, limit=10):
