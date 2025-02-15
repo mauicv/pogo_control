@@ -4,7 +4,7 @@ import numpy as np
 from client.client import Client
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-from calibration.data import SensorDataArray, StateDataArray
+from readings.data import SensorDataArray, StateDataArray
 
 
 def plot_base_sense_readings(client: Client):

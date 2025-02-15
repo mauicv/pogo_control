@@ -3,6 +3,7 @@ from server.loop import Loop
 from server.camera import Camera
 import cv2
 import numpy as np
+import time
 
 
 class ArucoSensorMixin:
@@ -11,10 +12,10 @@ class ArucoSensorMixin:
             camera: Camera,
             source_marker_id: int = 1,
             target_marker_id: int = 2,
-            aruco_sensor_update_interval: float = 0.01,
+            aruco_sensor_update_interval: float = 0.05,
             **kwargs
         ):
-        self.markerSizeInCM = 15
+        self.markerSizeInCM = 4.5
         self.camera = camera
         self.aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_6X6_250)
         self.parameters = cv2.aruco.DetectorParameters()
@@ -33,7 +34,7 @@ class ArucoSensorMixin:
         self.source_marker_id = source_marker_id
         self.target_marker_id = target_marker_id 
 
-        self.aruco_sensor_update_interval = max(0.05, aruco_sensor_update_interval)
+        self.aruco_sensor_update_interval = max(0.01, aruco_sensor_update_interval)
         self.aruco_sensor_update_loop = Loop(
             interval=self.aruco_sensor_update_interval,
             func=self._compute_distance
@@ -41,6 +42,7 @@ class ArucoSensorMixin:
         self.aruco_sensor_update_loop.start()
 
     def _compute_distance(self):
+        start = time.time()
         frame = self.camera.get_frame()
         if frame is None: return
 
@@ -68,15 +70,15 @@ class ArucoSensorMixin:
         self._delta_rvec = rvec[target_index] - rvec[source_index]
         self._t_delta = frame.timestamp - self._last_detection_ts
         self._last_detection_ts = frame.timestamp
-        
         diff = self._delta_tvec - self._last_delta_tvec
         self._velocity = diff / self._t_delta
         a = np.linalg.norm(self._delta_tvec)
         b = np.linalg.norm(self._last_delta_tvec)
         self._speed = (a - b) / self._t_delta
-
         self._last_delta_tvec = self._delta_tvec
         self._last_delta_rvec = self._delta_rvec
+        end = time.time()
+        # print(f"Pose computation time: {end - start}")
 
     def deinit_aruco_sensor(self):
         """Clean up resources"""

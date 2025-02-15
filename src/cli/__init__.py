@@ -3,10 +3,28 @@ import logging
 import dotenv
 import os
 import time
+import numpy as np
+import json
+import pprint
 
 dotenv.load_dotenv()
 
 logger = logging.getLogger(__name__)
+
+c_params = {
+    "camera_matrix": np.array([
+        [2085.4159146805323, 0.0, 1148.4264238731403],
+        [0.0, 2081.546003047629, 790.0377744644074],
+        [0.0, 0.0, 1.0]
+    ]),
+    "dist_coeff": np.array([[
+        0.020513211878008017,
+        -0.38588468516917407,
+        0.005600115703970824,
+        0.012111562135710205,
+        2.66038039807393
+    ]])
+}
 
 
 @click.group()
@@ -31,12 +49,26 @@ def clean(name):
 
 @cli.command()
 @click.option('--port', type=int, default=8000)
-def camera_sensor_server(port):
+@click.option('--camera-matrix-file', type=str, default='camera_calibration_files/picamera-module-3.json')
+def camera_sensor_server(port, camera_matrix_file):
     from server.channel import Channel
     from server.pose_sensor import PoseSensor
     from server.camera import Picamera2Camera as Camera
 
-    camera = Camera()
+    with open(camera_matrix_file, 'r') as f:
+        c_params = json.load(f)
+        pprint.pprint(c_params)
+
+    camera_matrix = np.array(c_params['camera_matrix'])
+    dist_coeff = np.array(c_params['dist_coeff'])
+
+    camera = Camera(
+        input_source="main",
+        height=1536,
+        width=2048,
+        camera_matrix=camera_matrix,
+        dist_coeff=dist_coeff,
+    )
     pose_sensor = PoseSensor(camera=camera, update_interval=0.01)
     HOST = os.getenv("HOST")
     POST = port if port else int(os.getenv("POST"))

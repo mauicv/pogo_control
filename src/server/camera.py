@@ -3,24 +3,10 @@ import time
 import numpy as np
 from dataclasses import dataclass
 from picamera2 import Picamera2
+from libcamera import controls
 import numpy as np
-
-
-c_params = {
-    'camera_matrix': np.array([
-        [581.5776347427477, 0.0, 345.120325167835],
-        [0.0, 580.6905120295608, 244.63647666611948],
-        [0.0, 0.0, 1.0]
-    ]),
-    'dist_coeff': np.array([[
-        -0.2634978333836847,
-        -0.540562680385177,
-        -0.00021971548190154595,
-        -0.0029920783484676796,
-        1.835011346570344
-    ]])
-}
-
+import pprint
+import time
 
 @dataclass
 class Frame:
@@ -31,21 +17,15 @@ class Frame:
 class Camera:
     def __init__(
             self,
-            camera_matrix=c_params['camera_matrix'],
-            dist_coeff=c_params['dist_coeff'],
+            camera_matrix,
+            dist_coeff,
             height=480,
             width=640,
-            fx=580.0,
-            fy=580.0,
-            cx=345.0,
-            cy=244.0,
+            undistort=False,
         ):
+        self.undistort = undistort
         self.height = height
         self.width = width
-        self.fx = fx
-        self.fy = fy
-        self.cx = cx
-        self.cy = cy
         self.camera_matrix = camera_matrix
         self.dist_coeff = dist_coeff
 
@@ -59,24 +39,33 @@ class Camera:
         self.newcameramtx = newcameramtx
         self.roi = roi
 
+        self.mapx, self.mapy = cv2.initUndistortRectifyMap(
+            self.camera_matrix,
+            self.dist_coeff,
+            None,
+            self.newcameramtx,
+            (self.width, self.height),
+            5
+        )
+
     def get_frame(self):
         frame = self.capture()
         if frame is None:
             return None
+        if self.undistort:
+            frame = cv2.remap(
+                frame,
+                self.mapx,
+                self.mapy,
+                cv2.INTER_LINEAR,
+            )
+            x, y, w, h = self.roi
+            frame = frame[y:y+h, x:x+w]
         
-        frame = cv2.undistort(
-            frame,
-            self.camera_matrix,
-            self.dist_coeff,
-            None,
-            self.newcameramtx
-        )
-        x, y, w, h = self.roi
-        frame = frame[y:y+h, x:x+w]
-        frame = cv2.cvtColor(
-            frame,
-            cv2.COLOR_BGR2GRAY
-        )
+            frame = cv2.cvtColor(
+                frame,
+                cv2.COLOR_BGR2GRAY
+            )
         return Frame(
             data=frame,
             timestamp=time.time()
@@ -95,25 +84,17 @@ class Camera:
 class Cv2Camera(Camera):
     def __init__(
             self,
+            camera_matrix,
+            dist_coeff,
             input_source=-1,
-            camera_matrix=c_params['camera_matrix'],
-            dist_coeff=c_params['dist_coeff'],
             height=480,
             width=640,
-            fx=580.0,
-            fy=580.0,
-            cx=345.0,
-            cy=244.0,
         ):
         super().__init__(
             camera_matrix,
             dist_coeff,
             height,
             width,
-            fx,
-            fy,
-            cx,
-            cy,
         )
         self.input_source = input_source
         self.vc = None
@@ -167,28 +148,33 @@ class Cv2Camera(Camera):
 class Picamera2Camera(Camera):
     def __init__(
             self,
+            camera_matrix,
+            dist_coeff,
             input_source="main",
-            camera_matrix=c_params['camera_matrix'],
-            dist_coeff=c_params['dist_coeff'],
             height=480,
             width=640,
-            fx=580.0,
-            fy=580.0,
-            cx=345.0,
-            cy=244.0,
         ):
         super().__init__(
             camera_matrix,
             dist_coeff,
             height,
             width,
-            fx,
-            fy,
-            cx,
-            cy,
         )
         self.input_source = input_source
         self.vc = Picamera2()
+        config = self.vc.create_video_configuration(
+            main={
+                "size": (width, height),
+            },
+            controls={
+                "AfMode": controls.AfModeEnum.Continuous,
+            }
+        )
+        self.vc.configure(config)
+        self.vc.set_controls({
+            "FrameRate": 40,
+        })
+        pprint.pprint(self.vc.controls)
         self.open()
 
     def open(self):
@@ -196,7 +182,8 @@ class Picamera2Camera(Camera):
 
     def capture(self):
         try:
-            return self.vc.capture_array(self.input_source)
+            frame = self.vc.capture_array(self.input_source)
+            return frame
         except Exception as e:
             return None
 

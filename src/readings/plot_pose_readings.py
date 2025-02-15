@@ -4,7 +4,7 @@ import numpy as np
 from client.client import Client
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-from calibration.data import PoseDataArray
+from readings.data import PoseDataArray
 
 
 

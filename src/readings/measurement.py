@@ -4,7 +4,7 @@ dotenv.load_dotenv()
 import numpy as np
 from client.client import Client
 from tqdm import tqdm
-from calibration.data import SensorDataArray
+from readings.data import SensorDataArray
 
 
 def measure_mpu_offsets(client: Client):
