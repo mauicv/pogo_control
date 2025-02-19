@@ -30,6 +30,7 @@ server = [
     "smbus2",
     "opencv-python",
     "opencv-contrib-python"
+    "filterpy"
 ]
 client = [
     "google-cloud-storage",

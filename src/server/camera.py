@@ -62,10 +62,10 @@ class Camera:
             x, y, w, h = self.roi
             frame = frame[y:y+h, x:x+w]
         
-            frame = cv2.cvtColor(
-                frame,
-                cv2.COLOR_BGR2GRAY
-            )
+        frame = cv2.cvtColor(
+            frame,
+            cv2.COLOR_BGR2GRAY
+        )
         return Frame(
             data=frame,
             timestamp=time.time()
@@ -163,12 +163,8 @@ class Picamera2Camera(Camera):
         self.input_source = input_source
         self.vc = Picamera2()
         config = self.vc.create_video_configuration(
-            main={
-                "size": (width, height),
-            },
-            controls={
-                "AfMode": controls.AfModeEnum.Continuous,
-            }
+            main={"size": (width, height)},
+            controls={"AfMode": controls.AfModeEnum.Continuous}
         )
         self.vc.configure(config)
         self.vc.set_controls({

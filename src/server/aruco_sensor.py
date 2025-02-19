@@ -32,8 +32,7 @@ class ArucoSensorMixin:
         self._speed = 0
         self._last_detection_ts = 0
         self.source_marker_id = source_marker_id
-        self.target_marker_id = target_marker_id 
-
+        self.target_marker_id = target_marker_id
         self.aruco_sensor_update_interval = max(0.01, aruco_sensor_update_interval)
         self.aruco_sensor_update_loop = Loop(
             interval=self.aruco_sensor_update_interval,
@@ -78,7 +77,7 @@ class ArucoSensorMixin:
         self._last_delta_tvec = self._delta_tvec
         self._last_delta_rvec = self._delta_rvec
         end = time.time()
-        # print(f"Pose computation time: {end - start}")
+        # print(f"Time taken: {end - start}")
 
     def deinit_aruco_sensor(self):
         """Clean up resources"""
