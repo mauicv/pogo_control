@@ -10,7 +10,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from client.sample import sample
 from tests.mock_client import MockClient
 from filters.butterworth import ButterworthFilter
-from client.gcs_interface import GCS_Interface
+from storage import GCS_Interface
 
 
 def test_sample():

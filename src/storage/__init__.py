@@ -1,7 +1,7 @@
 from google.cloud import storage
-from client.gcs_interface.model import GCSModel
-from client.gcs_interface.rollout import GCSRollout
-from client.gcs_interface.loader import DataLoader
+from storage.model import GCSModel
+from storage.rollout import GCSRollout
+from storage.loader import DataLoader
 
 
 class GCS_Interface:

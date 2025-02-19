@@ -115,7 +115,7 @@ def plot_pose_readings(client: Client):
             client,
             pose_data,
         ),
-        interval=200
+        interval=250
     )
     plt.show()
 

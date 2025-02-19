@@ -36,7 +36,7 @@ def cli(debug):
 @cli.command()
 @click.option('--name', type=str, default='pogo_control')
 def clean(name):
-    from client.gcs_interface import GCS_Interface
+    from storage import GCS_Interface
     gcs = GCS_Interface(
         experiment_name=name,
         credentials='world-model-rl-01a513052a8a.json',
@@ -133,7 +133,7 @@ def pogo_sensor_server(port):
 @cli.command()
 @click.option('--name', type=str, default='pogo_control')
 def create(name):
-    from client.gcs_interface import GCS_Interface
+    from storage import GCS_Interface
     from client.model import Actor, EncoderActor, DenseModel
         
     gcs = GCS_Interface(
@@ -191,7 +191,7 @@ def client(
     ): 
     from client.client import Client
     from filters.butterworth import ButterworthFilter
-    from client.gcs_interface import GCS_Interface
+    from storage import GCS_Interface
     from client.run import run_client
     import torch
     torch.set_grad_enabled(False)

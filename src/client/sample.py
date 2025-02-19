@@ -42,21 +42,12 @@ class Rollout:
 
 
 class ConditionCounter:
-    def __init__(self, overturned_iteration_count_limit: int, no_marker_count_limit: int):
+    def __init__(self, overturned_iteration_count_limit: int):
         self.overturned_iteration_count_limit = overturned_iteration_count_limit
-        # self.no_marker_count_limit = no_marker_count_limit
         self.overturned_iteration_count = 0
-        # self.no_marker_count = 0
 
     def update_check(self, conditions: list[float]) -> bool:
-        [_, _, height_marker_detected, _, overturned] = conditions
-        # if not height_marker_detected:
-        #     self.no_marker_count += 1
-        # else:
-        #     self.no_marker_count = 0
-        # if self.no_marker_count > self.no_marker_count_limit:
-        #     return True
-
+        (overturned, ) = conditions
         if overturned:
             self.overturned_iteration_count += 1
         else:

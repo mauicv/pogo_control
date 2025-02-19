@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from client.gcs_interface import GCS_Interface
+from storage import GCS_Interface
 from client.model import Actor
 
 

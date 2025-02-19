@@ -1,6 +1,6 @@
 from client.client import Client
 from filters.butterworth import ButterworthFilter
-from client.gcs_interface import GCS_Interface
+from storage import GCS_Interface
 from client.sample import sample
 from client.model import Actor, EncoderActor, DenseModel
 import torch
