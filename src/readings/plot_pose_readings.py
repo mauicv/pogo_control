@@ -5,23 +5,32 @@ from client.client import Client
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from readings.data import PoseDataArray
-from filterpy.kalman import KalmanFilter
+from filters.kalman import make_ds_filter, make_xv_kalman_filter
 
 
 def extract_dv(data):
     [data, _] = data
     tvec, _, _, speed, ts = data
     d = np.linalg.norm(tvec)
-    return tvec[0], d, speed
+    x, y, _ = tvec[0]
+    return -x, y, d, speed
+
 
 def plot_pose_readings(client: Client):
-    fig, axs = plt.subplots(ncols=3)
-    tvec, d, speed = extract_dv(client.send_data({}))
+    fig, axs = plt.subplot_mosaic(
+        [
+            ['location', 'distance'],
+            ['location', 'filtered_speed']
+        ],
+        layout='constrained'
+    )
+
+    x, y, d, speed = extract_dv(client.send_data({}))
     init_xs = np.arange(100)
     init_pos_x = np.empty(100)
-    init_pos_x.fill(tvec[0])
+    init_pos_x.fill(x)
     init_pos_y = np.empty(100)
-    init_pos_y.fill(tvec[1])
+    init_pos_y.fill(y)
     init_speeds = np.empty(100)
     init_speeds.fill(speed)
     init_distances = np.empty(100)
@@ -33,35 +42,80 @@ def plot_pose_readings(client: Client):
         speeds=init_speeds.tolist(),
         avg_speeds=init_speeds.tolist(),
         distances=init_distances.tolist(),
+        filtered_speeds=init_speeds.tolist(),
+        filtered_distances=init_distances.tolist(),
     )
 
-    plot, = axs[0].plot(init_pos_x, init_pos_y, '-')
 
-    axs[0].set_title("Location")
-    axs[0].set_xlim(-50,50)
-    axs[0].set_ylim(-80,0)
+    plot, = axs['location'].plot(init_pos_x, init_pos_y, '-')
+    filtered_plot, = axs['location'].plot(init_pos_x, init_pos_y, '-')
+    axs['location'].set_title("Location")
+    axs['location'].set_xlim(-40,40)
+    axs['location'].set_ylim(-80,0)
 
-    speed_plot, = axs[1].plot(init_xs, init_speeds, '-')
-    avg_speed_plot, = axs[1].plot(init_xs, init_speeds, '-')
-    axs[1].set_title("Speed")
-    axs[1].set_ylim(-50,50)
+    filtered_speed_plot, = axs['filtered_speed'].plot(init_xs, init_speeds, '-')
+    axs['filtered_speed'].set_title("Speed")
+    axs['filtered_speed'].set_ylim(-10, 10)
 
-    distance_plot, = axs[2].plot(init_xs, init_distances, '-')
-    axs[2].set_title("Distance")
-    axs[2].set_ylim(0,100) 
+    distance_plot, = axs['distance'].plot(init_xs, init_distances, '-')
+    filtered_distance_plot, = axs['distance'].plot(init_xs, init_distances, '-')
+    axs['distance'].set_title("Distance")
+    axs['distance'].set_ylim(0,100) 
 
-    # KalmanFilter(dim_x=2, dim_z=1)
+    ds_filter = make_ds_filter(d, speed)
+    xv_filter = make_xv_kalman_filter(x, y, 0, 0)
 
-    def animate(i, client, pose_data: PoseDataArray):
-        tvec, d, speed = extract_dv(client.send_data({}))
-        print(tvec, d, speed)
-        pose_data.update(tvec, speed, d)
-        xs, ys, zs, speeds, avg_speeds, distances = pose_data.get_data()
+    def animate(
+            i,
+            client,
+            pose_data: PoseDataArray,
+        ):
+        x, y, d, speed = extract_dv(client.send_data({}))
+
+        ds_filter.predict()
+        ds_filter.update(np.array([d]))
+
+        xv_filter.predict()
+        xv_filter.update(np.array([x, y]))
+
+        pose_data.update(
+            x,
+            y,
+            xv_filter.x[0],
+            xv_filter.x[1],
+            speed,
+            d,
+            ds_filter.x[1],
+            ds_filter.x[0]
+        )
+        (
+            xs,
+            ys,
+            filtered_xs,
+            filtered_ys,
+            speeds,
+            avg_speeds,
+            distances,
+            filtered_speeds,
+            filtered_distances
+        ) = pose_data.get_data()
+
         plot.set_data(xs, ys)
-        speed_plot.set_ydata(speeds)
-        avg_speed_plot.set_ydata(avg_speeds)
-        distance_plot.set_ydata(distances)
+        filtered_plot.set_data(filtered_xs, filtered_ys)
 
-    ani = animation.FuncAnimation(fig, animate, fargs=(client, pose_data, ), interval=90)
+        filtered_speed_plot.set_ydata(filtered_speeds)
+
+        distance_plot.set_ydata(distances)
+        filtered_distance_plot.set_ydata(filtered_distances)
+
+    ani = animation.FuncAnimation(
+        fig,
+        animate,
+        fargs=(
+            client,
+            pose_data,
+        ),
+        interval=200
+    )
     plt.show()
 

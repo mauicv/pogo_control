@@ -44,18 +44,18 @@ class Rollout:
 class ConditionCounter:
     def __init__(self, overturned_iteration_count_limit: int, no_marker_count_limit: int):
         self.overturned_iteration_count_limit = overturned_iteration_count_limit
-        self.no_marker_count_limit = no_marker_count_limit
+        # self.no_marker_count_limit = no_marker_count_limit
         self.overturned_iteration_count = 0
-        self.no_marker_count = 0
+        # self.no_marker_count = 0
 
     def update_check(self, conditions: list[float]) -> bool:
         [_, _, height_marker_detected, _, overturned] = conditions
-        if not height_marker_detected:
-            self.no_marker_count += 1
-        else:
-            self.no_marker_count = 0
-        if self.no_marker_count > self.no_marker_count_limit:
-            return True
+        # if not height_marker_detected:
+        #     self.no_marker_count += 1
+        # else:
+        #     self.no_marker_count = 0
+        # if self.no_marker_count > self.no_marker_count_limit:
+        #     return True
 
         if overturned:
             self.overturned_iteration_count += 1
@@ -69,7 +69,8 @@ class ConditionCounter:
 def sample(
         model: torch.nn.Module,
         filter: ButterworthFilter,
-        client: Client,
+        pogo_client: Client,
+        camera_client: Client,
         num_steps: int = 100,
         interval: float = 0.1,
         noise: float = 0.3,
@@ -86,7 +87,8 @@ def sample(
     )
     action = torch.tensor(INITIAL_POSITION)
     action = filter(action)
-    servo_state, world_state, conditions = client.send_data(action)
+    servo_state, world_state, conditions = pogo_client.send_data(action)
+    # camera_state, camera_conditions = camera_client.send_data(action)
     state = torch.tensor(servo_state + world_state)
     rollout = Rollout(states=[], actions=[], times=[], conditions=[])
     current_time = time.time()
@@ -103,7 +105,7 @@ def sample(
         if counter.update_check(conditions):
             break
         filtered_action = filter(true_action)
-        servo_state, world_state, conditions = client.send_data(filtered_action)
+        servo_state, world_state, conditions = pogo_client.send_data(filtered_action)
         state = torch.tensor(servo_state + world_state)
 
         elapsed_time = time.time() - current_time
