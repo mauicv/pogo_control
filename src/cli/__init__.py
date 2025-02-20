@@ -189,7 +189,7 @@ def client(
         random_model,
         test
     ): 
-    from client.client import Client
+    from client.multi_client import MultiClientInterface
     from filters.butterworth import ButterworthFilter
     from storage import GCS_Interface
     from client.run import run_client
@@ -206,12 +206,15 @@ def client(
         bucket='pogo_wmrl',
         model_limits=4
     )
-    host = os.getenv("HOST")
-    port = int(os.getenv("POST"))
-
-    client = Client(
-        host=host,
-        port=port
+    pogo_host = os.getenv("POGO_HOST")
+    pogo_port = int(os.getenv("POGO_POST"))
+    camera_host = os.getenv("CAMERA_HOST")
+    camera_port = int(os.getenv("CAMERA_POST"))
+    client = MultiClientInterface(
+        pogo_host=pogo_host,
+        pogo_port=pogo_port,
+        camera_host=camera_host,
+        camera_port=camera_port
     )
     client.connect()
     butterworth_filter = ButterworthFilter(

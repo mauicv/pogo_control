@@ -1,6 +1,5 @@
 from server.mpu6050Mixin import MPU6050Mixin
 from server.servo_controller import ServoController
-from server.aruco_sensor import ArucoSensorMixin
 from server.servo import Servo
 
 # generic_values = {

@@ -31,6 +31,7 @@ class ServoController:
     def update_angle(self, values: list[float]):
         for servo, value in zip(self.servos, values):
             servo.update_setpoint(value)
+        self.last_servo_set_ts = time.time()
 
     def _update_angle(self):
         for servo in self.servos:
@@ -38,7 +39,6 @@ class ServoController:
                 servo.pin,
                 servo.get_pwm()
             )
-        self.last_servo_set_ts = time.time()
 
     def deinit_servo_controller(self):
         self.servo_update_loop.stop()

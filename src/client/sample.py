@@ -61,9 +61,11 @@ class ConditionCounter:
         if self.overturned_iteration_count > self.overturned_iteration_count_limit:
             return True
 
+        print('------------------------------------------------------')
         print(f"last_mpus6050_sample_ts: {last_mpus6050_sample_ts}")
         print(f"last_servo_set_ts: {last_servo_set_ts}")
         print(f"last_detection_ts: {last_detection_ts}")
+        print('------------------------------------------------------')
         return False
 
 
@@ -83,7 +85,6 @@ def sample(
     )
     counter = ConditionCounter(
         overturned_iteration_count_limit=3,
-        no_marker_count_limit=20
     )
     action = torch.tensor(INITIAL_POSITION)
     action = filter(action)

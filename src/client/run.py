@@ -26,7 +26,7 @@ def set_init_state(
 
 
 def create_model(
-        state_dim: int = 8 + 6 + 2 + 1,
+        state_dim: int = 8 + 6 + 2 + 2 + 2,
         action_dim: int = 8
     ):
     print('Randomizing model')
@@ -77,7 +77,7 @@ def run_client(
             print('Sampling rollout')
             if random_model:
                 model = create_model(
-                    state_dim=8 + 6 + 2 + 1,
+                    state_dim=8 + 6 + 2 + 2 + 2,
                     action_dim=8
                 )
 

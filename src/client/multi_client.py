@@ -13,22 +13,24 @@ class MultiClientInterface:
             host=pogo_host,
             port=pogo_port
         )
-        self.pogo_client.connect()
         self.camera_client = Client(
             host=camera_host,
             port=camera_port
         )
+
+    def connect(self):
+        self.pogo_client.connect()
         self.camera_client.connect()
 
     def send_data(self, actions):
-        servo_state, world_state, pogo_conditions \
+        servo_state, (ax, ay, az, gvx, gvy, gvz, pitch, roll), (overturned, last_mpus6050_sample_ts, last_servo_set_ts) \
             = self.pogo_client.send_data(actions)
-        camera_state, camera_conditions \
+        (position, distance, velocity, speed, yaw), (last_detection_ts,) \
             = self.camera_client.send_data({})
         return (
             servo_state,
-            world_state + camera_state,
-            pogo_conditions + camera_conditions
+            [ax, ay, az, gvx, gvy, gvz, pitch, roll] + velocity + [speed] + [yaw],
+            [overturned, last_mpus6050_sample_ts, last_servo_set_ts] + [last_detection_ts]
         )
 
     def close(self):
