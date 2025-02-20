@@ -10,21 +10,21 @@ from filters.kalman import make_ds_filter, make_xv_kalman_filter
 
 def extract_dv(data):
     [data, _] = data
-    position, distance,  _, speed = data
+    position, distance,  _, speed, yaw = data
     x, y = position
-    return -x, y, distance, speed
+    return -x, y, distance, speed, yaw
 
 
 def plot_pose_readings(client: Client):
     fig, axs = plt.subplot_mosaic(
         [
             ['location', 'distance'],
-            ['location', 'speed']
+            ['yaw', 'speed']
         ],
         layout='constrained'
     )
 
-    x, y, d, speed = extract_dv(client.send_data({}))
+    x, y, d, speed, yaw = extract_dv(client.send_data({}))
     init_xs = np.arange(100)
     init_pos_x = np.empty(100)
     init_pos_x.fill(x)
@@ -35,11 +35,15 @@ def plot_pose_readings(client: Client):
     init_distances = np.empty(100)
     init_distances.fill(d)
 
+    init_yaw = np.zeros((100))
+    init_yaw.fill(yaw)
+
     pose_data = PoseDataArray(
         xs=init_pos_x.tolist(),
         ys=init_pos_y.tolist(),
         speeds=init_speeds.tolist(),
         distances=init_distances.tolist(),
+        yaws=init_yaw.tolist()
     )
 
     plot, = axs['location'].plot(init_pos_x, init_pos_y, '-')
@@ -55,30 +59,36 @@ def plot_pose_readings(client: Client):
     axs['distance'].set_title("Distance")
     axs['distance'].set_ylim(0,100)
 
+    yaw_plot, = axs['yaw'].plot(init_xs, init_yaw, '-')
+    axs['yaw'].set_title("yaw")
+    axs['yaw'].set_ylim(0, 1)
+
     def animate(
             i,
             client,
             pose_data: PoseDataArray,
         ):
-        x, y, d, speed = extract_dv(client.send_data({}))
-        print(speed)
+        x, y, d, speed, yaw = extract_dv(client.send_data({}))
 
         pose_data.update(
             x,
             y,
             speed,
             d,
+            yaw
         )
         (
             xs,
             ys,
             speeds,
             distances,
+            yaws,
         ) = pose_data.get_data()
 
         plot.set_data(xs, ys)
         speed_plot.set_ydata(speeds)
         distance_plot.set_ydata(distances)
+        yaw_plot.set_ydata(yaws)
 
     ani = animation.FuncAnimation(
         fig,

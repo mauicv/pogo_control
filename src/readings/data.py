@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+import numpy as np
 
 
 @dataclass
@@ -7,13 +8,14 @@ class PoseDataArray:
     ys: list[float] = field(default_factory=list)
     speeds: list[float] = field(default_factory=list)
     distances: list[float] = field(default_factory=list)
+    yaws: list[float] = field(default_factory=list)
 
-    def update(self, x: float, y: float, speed: float, d: float):
+    def update(self, x: float, y: float, speed: float, d: float, yaw: list[float]):
         self.xs.append(x)
         self.ys.append(y)
         self.speeds.append(speed)
         self.distances.append(d)
-
+        self.yaws.append(yaw)
 
     def get_data(self, limit=100):
         return (
@@ -21,10 +23,8 @@ class PoseDataArray:
             self.ys[-limit:],
             self.speeds[-limit:],
             self.distances[-limit:],
+            self.yaws[-limit:],
         )
-
-    def get_avg_speed(self, limit=10):
-        return sum(self.speeds[-limit:]) / limit
 
 @dataclass
 class SensorDataArray:
