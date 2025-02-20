@@ -1,4 +1,4 @@
-from filters.kalman import KalmanDSFilter, KalmanXVFilter
+from filters.kalman import KalmanDSFilter, KalmanXVFilter, KalmanYawFilter
 from server.loop import Loop
 from server.camera import Camera
 import cv2
@@ -28,6 +28,7 @@ class ArucoSensorMixin:
         if self.use_kalman_filter:
             self.ds_filter = KalmanDSFilter(0)
             self.xv_filter = KalmanXVFilter(0, 0)
+            self.yaw_filter = KalmanYawFilter(0)
         else:
             self._delta_tvec = np.array([0, 0, 0])
             self._delta_rvec = np.array([0, 0, 0])
@@ -37,13 +38,14 @@ class ArucoSensorMixin:
             self._velocity = np.array([0, 0, 0])
             self._speed = 0
             self._distance = 0
+        self._yaw = 0
         self._last_detection_ts = 0
         self.source_marker_id = source_marker_id
         self.target_marker_id = target_marker_id
         self.aruco_sensor_update_interval = max(0.01, aruco_sensor_update_interval)
         self.aruco_sensor_update_loop = Loop(
             interval=self.aruco_sensor_update_interval,
-            func=self._compute_distance
+            func=self._read
         )
         self.aruco_sensor_update_loop.start()
 
@@ -52,7 +54,8 @@ class ArucoSensorMixin:
         distance = np.linalg.norm(delta_tvec)
         self.ds_filter(distance)
         self.xv_filter(x, y)
-    
+        self.yaw_filter(self._yaw)
+
     def _update_raw(self, frame, delta_tvec):
         self._delta_tvec = delta_tvec
         self._t_delta = frame.timestamp - self._last_detection_ts
@@ -65,7 +68,7 @@ class ArucoSensorMixin:
         self._last_delta_tvec = self._delta_tvec
         self._distance = a
 
-    def _compute_distance(self):
+    def _read(self):
         # start = time.time()
         frame = self.camera.get_frame()
         if frame is None: return
@@ -96,6 +99,7 @@ class ArucoSensorMixin:
         else:
             self._update_raw(frame, self._delta_tvec)
 
+        self._yaw = np.abs(rvec[target_index][0, 1])
         # end = time.time()
         # print(f"Time taken: {end - start}")
 
@@ -139,3 +143,10 @@ class ArucoSensorMixin:
             return self.ds_filter.x[1]
         else:
             return self._speed
+        
+    @property
+    def yaw(self):
+        if self.use_kalman_filter:
+            return self.yaw_filter.x[0]/np.pi
+        else:
+            return self._yaw/np.pi

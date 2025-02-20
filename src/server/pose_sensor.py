@@ -23,6 +23,7 @@ class PoseSensor(ArucoSensorMixin):
             self.distance,
             self.velocity,
             self.speed,
+            self.yaw,
         ]
         conditions_data = [
             self.last_detection_ts,

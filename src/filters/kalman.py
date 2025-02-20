@@ -67,3 +67,28 @@ class KalmanXVFilter:
     @property
     def x(self):
         return self.filter.x
+
+
+def make_1D_kalman_filter(val):
+    filter = KalmanFilter(dim_x=1, dim_z=1)
+    filter.x = np.array([val])
+    filter.F = np.array([[1]])
+    filter.H = np.array([[1]])
+    filter.P = np.eye(1) * 1000
+    filter.R = np.eye(1) * 5
+    filter.Q = np.array([[1]])
+    return filter
+
+
+class KalmanYawFilter:
+    def __init__(self, init_yaw):
+        self.filter = make_1D_kalman_filter(init_yaw)
+    
+    def __call__(self, yaw):
+        self.filter.predict()
+        self.filter.update(np.array([yaw]))
+        return self.filter.x[0]
+
+    @property
+    def x(self):
+        return self.filter.x
