@@ -4,38 +4,23 @@ from dataclasses import dataclass, field
 @dataclass
 class PoseDataArray:
     xs: list[float] = field(default_factory=list)
-    f_xs: list[float] = field(default_factory=list)
     ys: list[float] = field(default_factory=list)
-    f_ys: list[float] = field(default_factory=list)
-
     speeds: list[float] = field(default_factory=list)
-    filtered_speeds: list[float] = field(default_factory=list)
-    avg_speeds: list[float] = field(default_factory=list)
     distances: list[float] = field(default_factory=list)
-    filtered_distances: list[float] = field(default_factory=list)
 
-    def update(self, x: float, y: float, filtered_x: float, filtered_y: float, speed: float, d: float, filtered_speed: float, filtered_d: float):
+    def update(self, x: float, y: float, speed: float, d: float):
         self.xs.append(x)
-        self.f_xs.append(filtered_x)
         self.ys.append(y)
-        self.f_ys.append(filtered_y)
         self.speeds.append(speed)
-        self.avg_speeds.append(self.get_avg_speed())
         self.distances.append(d)
-        self.filtered_distances.append(filtered_d)
-        self.filtered_speeds.append(filtered_speed)
+
 
     def get_data(self, limit=100):
         return (
             self.xs[-limit:],
             self.ys[-limit:],
-            self.f_xs[-limit:],
-            self.f_ys[-limit:],
             self.speeds[-limit:],
-            self.avg_speeds[-limit:],
             self.distances[-limit:],
-            self.filtered_speeds[-limit:],
-            self.filtered_distances[-limit:],
         )
 
     def get_avg_speed(self, limit=10):
