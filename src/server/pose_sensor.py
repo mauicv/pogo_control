@@ -19,8 +19,8 @@ class PoseSensor(ArucoSensorMixin):
 
     def get_data(self):
         state_data = [
-            self.delta_tvec,
-            self.delta_rvec,
+            self.position,
+            self.distance,
             self.velocity,
             self.speed,
         ]

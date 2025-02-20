@@ -24,6 +24,10 @@ class KalmanDSFilter:
         self.filter.predict()
         self.filter.update(np.array([d]))
         return self.filter.x[0], self.filter.x[1]
+    
+    @property
+    def x(self):
+        return self.filter.x
 
 
 def make_xv_kalman_filter(init_x, init_y, init_vx, init_vy):
@@ -54,8 +58,12 @@ class KalmanXVFilter:
     def __init__(self, init_x, init_y):
         self.filter = make_xv_kalman_filter(init_x, init_y, 0, 0)
 
-    def __call__(self, x, y, vx, vy):
+    def __call__(self, x, y):
         self.filter.predict()
         self.filter.update(np.array([x, y]))
         x, y, vx, vy = self.filter.x
         return (x, y), (vx, vy)
+
+    @property
+    def x(self):
+        return self.filter.x

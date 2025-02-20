@@ -164,7 +164,7 @@ class Picamera2Camera(Camera):
         self.vc = Picamera2()
         config = self.vc.create_video_configuration(
             main={"size": (width, height)},
-            controls={"AfMode": controls.AfModeEnum.Continuous}
+            # controls={"AfMode": controls.AfModeEnum.Continuous}
         )
         self.vc.configure(config)
         self.vc.set_controls({
@@ -178,8 +178,7 @@ class Picamera2Camera(Camera):
 
     def capture(self):
         try:
-            frame = self.vc.capture_array(self.input_source)
-            return frame
+            return self.vc.capture_array(self.input_source)
         except Exception as e:
             return None
 

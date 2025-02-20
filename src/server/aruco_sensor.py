@@ -1,4 +1,3 @@
-from filters.butterworth import _ButterworthFilter
 from filters.kalman import KalmanDSFilter, KalmanXVFilter
 from server.loop import Loop
 from server.camera import Camera
@@ -14,7 +13,7 @@ class ArucoSensorMixin:
             source_marker_id: int = 1,
             target_marker_id: int = 2,
             aruco_sensor_update_interval: float = 0.05,
-            use_kalman_filter: bool = False,
+            use_kalman_filter: bool = True,
             **kwargs
         ):
         self.markerSizeInCM = 4.5
@@ -37,6 +36,7 @@ class ArucoSensorMixin:
             self._t_delta = 0
             self._velocity = np.array([0, 0, 0])
             self._speed = 0
+            self._distance = 0
         self._last_detection_ts = 0
         self.source_marker_id = source_marker_id
         self.target_marker_id = target_marker_id
@@ -63,6 +63,7 @@ class ArucoSensorMixin:
         b = np.linalg.norm(self._last_delta_tvec)
         self._speed = (a - b) / self._t_delta
         self._last_delta_tvec = self._delta_tvec
+        self._distance = a
 
     def _compute_distance(self):
         # start = time.time()
@@ -104,8 +105,18 @@ class ArucoSensorMixin:
         self.camera.close()
 
     @property
-    def delta_tvec(self):
-        return self._delta_tvec.tolist()
+    def position(self):
+        if self.use_kalman_filter:
+            return [self.xv_filter.x[0], self.xv_filter.x[1]]
+        else:
+            return self._delta_tvec.tolist()
+    
+    @property
+    def distance(self):
+        if self.use_kalman_filter:
+            return self.ds_filter.x[0]
+        else:
+            return self._distance
 
     @property
     def last_detection_ts(self):
@@ -117,8 +128,14 @@ class ArucoSensorMixin:
     
     @property
     def velocity(self):
-        return self._velocity.tolist()
+        if self.use_kalman_filter:
+            return self.xv_filter.x[2:].tolist()
+        else:
+            return self._velocity.tolist()
     
     @property
     def speed(self):
-        return self._speed
+        if self.use_kalman_filter:
+            return self.ds_filter.x[1]
+        else:
+            return self._speed
