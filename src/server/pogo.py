@@ -56,13 +56,15 @@ class Pogo(ServoController, MPU6050Mixin):
             self.c_filter.roll,
             self.c_filter.pitch,
         ]
-        extra_data = [
+        conditions_data = [
             self.c_filter.overturned,
+            self.last_mpus6050_sample_ts,
+            self.last_servo_set_ts
         ]
         return [
             self.get_servo_data(),
             state_data,
-            extra_data
+            conditions_data
         ]
     
     def deinit(self):
@@ -92,12 +94,13 @@ class SensorPogo(MPU6050Mixin):
             self.c_filter.roll,
             self.c_filter.pitch,
         ]
-        extra_data = [
+        conditions_data = [
             self.c_filter.overturned,
+            self.last_mpus6050_sample_ts,
         ]
         return [
             state_data,
-            extra_data
+            conditions_data
         ]
     
     def deinit(self):

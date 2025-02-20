@@ -2,7 +2,7 @@ import torch
 import time
 from tqdm import tqdm
 from dataclasses import dataclass
-from client.client import Client
+from client.multi_client import MultiClientInterface
 from filters.butterworth import ButterworthFilter
 import numpy as np
 
@@ -47,21 +47,30 @@ class ConditionCounter:
         self.overturned_iteration_count = 0
 
     def update_check(self, conditions: list[float]) -> bool:
-        (overturned, ) = conditions
+        (
+            overturned,
+            last_mpus6050_sample_ts,
+            last_servo_set_ts,
+            last_detection_ts
+        ) = conditions
+
         if overturned:
             self.overturned_iteration_count += 1
         else:
             self.overturned_iteration_count = 0
         if self.overturned_iteration_count > self.overturned_iteration_count_limit:
             return True
+
+        print(f"last_mpus6050_sample_ts: {last_mpus6050_sample_ts}")
+        print(f"last_servo_set_ts: {last_servo_set_ts}")
+        print(f"last_detection_ts: {last_detection_ts}")
         return False
 
 
 def sample(
         model: torch.nn.Module,
         filter: ButterworthFilter,
-        pogo_client: Client,
-        camera_client: Client,
+        client: MultiClientInterface,
         num_steps: int = 100,
         interval: float = 0.1,
         noise: float = 0.3,
@@ -78,15 +87,20 @@ def sample(
     )
     action = torch.tensor(INITIAL_POSITION)
     action = filter(action)
-    servo_state, world_state, conditions = pogo_client.send_data(action)
-    # camera_state, camera_conditions = camera_client.send_data(action)
+    servo_state, world_state, conditions = client.send_data(action)
     state = torch.tensor(servo_state + world_state)
-    rollout = Rollout(states=[], actions=[], times=[], conditions=[])
+    rollout = Rollout(
+        states=[],
+        actions=[],
+        times=[],
+        conditions=[]
+    )
     current_time = time.time()
     for i in tqdm(range(num_steps)):
         current_time = time.time()
         true_action = model(state).numpy()[0, 0]
-        true_action = true_action + np.random.normal(0, noise, size=true_action.shape)
+        action_noise = np.random.normal(0, noise, size=true_action.shape)
+        true_action = true_action + action_noise
         true_action = np.clip(true_action, -1, 1)
         # NOTE: the state, actions stored here are related as the
         # action resulting from the state (not the state resulting
@@ -96,7 +110,7 @@ def sample(
         if counter.update_check(conditions):
             break
         filtered_action = filter(true_action)
-        servo_state, world_state, conditions = pogo_client.send_data(filtered_action)
+        servo_state, world_state, conditions = client.send_data(filtered_action)
         state = torch.tensor(servo_state + world_state)
 
         elapsed_time = time.time() - current_time

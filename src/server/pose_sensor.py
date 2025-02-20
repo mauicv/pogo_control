@@ -23,9 +23,11 @@ class PoseSensor(ArucoSensorMixin):
             self.delta_rvec,
             self.velocity,
             self.speed,
+        ]
+        conditions_data = [
             self.last_detection_ts,
         ]
-        return [state_data, []]
+        return [state_data, conditions_data]
 
     def deinit(self):
         self.deinit_aruco_sensor()

@@ -26,21 +26,3 @@ class Client:
 
     def close(self):
         self.s.close()
-
-
-class MultiClientInterface:
-    def __init__(self):
-        self.pogo_client = Client(host='192.168.1.100', port=5000)
-        self.pogo_client.connect()
-        self.camera_client = Client(host='192.168.1.100', port=5001)
-        self.camera_client.connect()
-
-    def send_data(self, data):
-        pogo_data, camera_data = data
-        pogo_data = self.pogo_client.send_data(pogo_data)
-        camera_data = self.camera_client.send_data(camera_data)
-        return pogo_data, camera_data
-
-    def close(self):
-        self.pogo_client.close()
-        self.camera_client.close()

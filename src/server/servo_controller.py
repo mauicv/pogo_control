@@ -23,6 +23,7 @@ class ServoController:
             func=self._update_angle
         )
         self.servo_update_loop.start()
+        self.last_servo_set_ts = time.time()
 
     def get_servo_data(self):
         return [servo._value for servo in self.servos]
@@ -37,6 +38,7 @@ class ServoController:
                 servo.pin,
                 servo.get_pwm()
             )
+        self.last_servo_set_ts = time.time()
 
     def deinit_servo_controller(self):
         self.servo_update_loop.stop()

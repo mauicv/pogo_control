@@ -1,4 +1,5 @@
 from filters.butterworth import _ButterworthFilter
+from filters.kalman import KalmanDSFilter, KalmanXVFilter
 from server.loop import Loop
 from server.camera import Camera
 import cv2
@@ -13,6 +14,7 @@ class ArucoSensorMixin:
             source_marker_id: int = 1,
             target_marker_id: int = 2,
             aruco_sensor_update_interval: float = 0.05,
+            use_kalman_filter: bool = False,
             **kwargs
         ):
         self.markerSizeInCM = 4.5
@@ -23,13 +25,18 @@ class ArucoSensorMixin:
             self.aruco_dict,
             self.parameters
         )
-        self._delta_tvec = np.array([0, 0, 0])
-        self._delta_rvec = np.array([0, 0, 0])
-        self._last_delta_tvec = np.array([0, 0, 0])
-        self._last_delta_rvec = np.array([0, 0, 0])
-        self._t_delta = 0
-        self._velocity = np.array([0, 0, 0])
-        self._speed = 0
+        self.use_kalman_filter = use_kalman_filter
+        if self.use_kalman_filter:
+            self.ds_filter = KalmanDSFilter(0)
+            self.xv_filter = KalmanXVFilter(0, 0)
+        else:
+            self._delta_tvec = np.array([0, 0, 0])
+            self._delta_rvec = np.array([0, 0, 0])
+            self._last_delta_tvec = np.array([0, 0, 0])
+            self._last_delta_rvec = np.array([0, 0, 0])
+            self._t_delta = 0
+            self._velocity = np.array([0, 0, 0])
+            self._speed = 0
         self._last_detection_ts = 0
         self.source_marker_id = source_marker_id
         self.target_marker_id = target_marker_id
@@ -40,8 +47,25 @@ class ArucoSensorMixin:
         )
         self.aruco_sensor_update_loop.start()
 
+    def _update_kalman_filter(self, delta_tvec):
+        x, y, _ = delta_tvec[0]
+        distance = np.linalg.norm(delta_tvec)
+        self.ds_filter(distance)
+        self.xv_filter(x, y)
+    
+    def _update_raw(self, frame, delta_tvec):
+        self._delta_tvec = delta_tvec
+        self._t_delta = frame.timestamp - self._last_detection_ts
+        self._last_detection_ts = frame.timestamp
+        diff = self._delta_tvec - self._last_delta_tvec
+        self._velocity = diff / self._t_delta
+        a = np.linalg.norm(self._delta_tvec)
+        b = np.linalg.norm(self._last_delta_tvec)
+        self._speed = (a - b) / self._t_delta
+        self._last_delta_tvec = self._delta_tvec
+
     def _compute_distance(self):
-        start = time.time()
+        # start = time.time()
         frame = self.camera.get_frame()
         if frame is None: return
 
@@ -66,17 +90,12 @@ class ArucoSensorMixin:
         )
 
         self._delta_tvec = tvec[target_index] - tvec[source_index]
-        self._delta_rvec = rvec[target_index] - rvec[source_index]
-        self._t_delta = frame.timestamp - self._last_detection_ts
-        self._last_detection_ts = frame.timestamp
-        diff = self._delta_tvec - self._last_delta_tvec
-        self._velocity = diff / self._t_delta
-        a = np.linalg.norm(self._delta_tvec)
-        b = np.linalg.norm(self._last_delta_tvec)
-        self._speed = (a - b) / self._t_delta
-        self._last_delta_tvec = self._delta_tvec
-        self._last_delta_rvec = self._delta_rvec
-        end = time.time()
+        if self.use_kalman_filter:
+            self._update_kalman_filter(self._delta_tvec)
+        else:
+            self._update_raw(frame, self._delta_tvec)
+
+        # end = time.time()
         # print(f"Time taken: {end - start}")
 
     def deinit_aruco_sensor(self):
@@ -87,10 +106,6 @@ class ArucoSensorMixin:
     @property
     def delta_tvec(self):
         return self._delta_tvec.tolist()
-    
-    @property
-    def delta_rvec(self):
-        return self._delta_rvec.tolist()
 
     @property
     def last_detection_ts(self):

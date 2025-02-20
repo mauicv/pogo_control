@@ -39,6 +39,7 @@ class MPU6050Mixin:
 
         # 3 for acc, 3 for gyro, 2 for comp
         self.latest_filtered_data = [0] * (6 + 2)
+        self.last_mpus6050_sample_ts = time.time()
 
         self.mpu_update_loop = Loop(
             interval=mpu_update_interval,
@@ -69,6 +70,7 @@ class MPU6050Mixin:
 
         self.c_filter.update(raw_data[:3], raw_data[3:])
         self.latest_filtered_data = self.filter(raw_data)
+        self.last_mpus6050_sample_ts = time.time()
 
     def get_mpu_data(self):
         """Returns the most recent filtered MPU data"""
@@ -76,7 +78,8 @@ class MPU6050Mixin:
             *self.latest_filtered_data,
             self.c_filter.roll,
             self.c_filter.pitch,
-            self.c_filter.overturned
+            self.c_filter.overturned,
+            self.last_mpus6050_sample_ts
         ]
 
     def deinit_mpu(self):

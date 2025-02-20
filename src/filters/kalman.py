@@ -16,6 +16,16 @@ def make_ds_filter(d, speed):
     return filter
 
 
+class KalmanDSFilter:
+    def __init__(self, d):
+        self.filter = make_ds_filter(d, 0)
+
+    def __call__(self, d):
+        self.filter.predict()
+        self.filter.update(np.array([d]))
+        return self.filter.x[0], self.filter.x[1]
+
+
 def make_xv_kalman_filter(init_x, init_y, init_vx, init_vy):
     filter = KalmanFilter(dim_x=4, dim_z=2)
     filter.x = np.array([init_x, init_y, init_vx, init_vy])
@@ -38,3 +48,14 @@ def make_xv_kalman_filter(init_x, init_y, init_vx, init_vy):
         [0, 0, 0, 25]
     ])
     return filter
+
+
+class KalmanXVFilter:
+    def __init__(self, init_x, init_y):
+        self.filter = make_xv_kalman_filter(init_x, init_y, 0, 0)
+
+    def __call__(self, x, y, vx, vy):
+        self.filter.predict()
+        self.filter.update(np.array([x, y]))
+        x, y, vx, vy = self.filter.x
+        return (x, y), (vx, vy)
