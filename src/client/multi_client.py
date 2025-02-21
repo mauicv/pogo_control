@@ -27,10 +27,12 @@ class MultiClientInterface:
             = self.pogo_client.send_data(actions)
         (position, distance, velocity, speed, yaw), (last_detection_ts,) \
             = self.camera_client.send_data({})
+        world_state = [ax, ay, az, gvx, gvy, gvz, pitch, roll] + velocity + [speed] + [yaw]
+        conditions = [overturned, last_mpus6050_sample_ts, last_servo_set_ts] + [last_detection_ts]
         return (
             servo_state,
-            [ax, ay, az, gvx, gvy, gvz, pitch, roll] + velocity + [speed] + [yaw],
-            [overturned, last_mpus6050_sample_ts, last_servo_set_ts] + [last_detection_ts]
+            world_state,
+            conditions
         )
 
     def close(self):
