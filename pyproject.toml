@@ -29,7 +29,7 @@ server = [
     "pigpio",
     "smbus2",
     "opencv-python",
-    "opencv-contrib-python"
+    "opencv-contrib-python",
     "filterpy"
 ]
 client = [
