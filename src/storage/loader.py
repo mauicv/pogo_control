@@ -18,10 +18,10 @@ def default_velocity_reward_function(states, conditions):
 
 def make_mask(detection_ts):
     # if timesteps are the same set mask to 0 else 1
-    mask = torch.ones(len(detection_ts))
+    mask = torch.ones(len(detection_ts), 1)
     for i in range(1, len(detection_ts)):
         if detection_ts[i] == detection_ts[i-1]:
-            mask[i] = 0
+            mask[i, 0] = 0
     return mask
 
 
@@ -151,8 +151,10 @@ class DataLoader:
                 t_inds.append(t_ind)
             t_inds = torch.cat(t_inds, dim=0)
         t_inds = t_inds[:, None] + torch.arange(0, num_time_steps)
+
         return (
             self.state_buffer[b_inds, t_inds].detach(),
             self.action_buffer[b_inds, t_inds].detach(),
             self.reward_buffer[b_inds, t_inds].detach(),
+            self.dropout_mask[b_inds, t_inds].detach()
         )
