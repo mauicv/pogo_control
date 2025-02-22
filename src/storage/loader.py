@@ -60,7 +60,7 @@ class DataLoader:
             dtype=torch.float32
         )
 
-        self.dropout_mask = torch.zeros(
+        self.dropout_mask = torch.ones(
             (self.num_runs, self.rollout_length, 1),
             dtype=torch.float32
         )
