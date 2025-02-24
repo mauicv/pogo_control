@@ -11,6 +11,7 @@ def default_velocity_reward_function(states, conditions):
     for state, condition in zip(states, conditions):
         [overturned, *_,] = condition
         [*_, speed, _] = state
+        speed = - speed # The speed is relative to the camera.
         speed_reward = min(TARGET_SPEED, speed)
         rewards.append(speed_reward + - 100 * overturned)
     return torch.tanh(0.25 * torch.tensor(rewards)[:, None])
