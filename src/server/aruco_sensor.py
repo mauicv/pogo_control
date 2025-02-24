@@ -49,9 +49,10 @@ class ArucoSensorMixin:
         )
         self.aruco_sensor_update_loop.start()
 
-    def _update_kalman_filter(self, delta_tvec):
+    def _update_kalman_filter(self, frame, delta_tvec):
         x, y, _ = delta_tvec[0]
         distance = np.linalg.norm(delta_tvec)
+        self._last_detection_ts = frame.timestamp
         self.ds_filter(distance)
         self.xv_filter(x, y)
         self.yaw_filter(self._yaw)
@@ -95,7 +96,7 @@ class ArucoSensorMixin:
 
         self._delta_tvec = tvec[target_index] - tvec[source_index]
         if self.use_kalman_filter:
-            self._update_kalman_filter(self._delta_tvec)
+            self._update_kalman_filter(frame, self._delta_tvec)
         else:
             self._update_raw(frame, self._delta_tvec)
 
