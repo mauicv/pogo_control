@@ -10,7 +10,7 @@ from server.servo import Servo
 
 0
 generic_values = {
-    "kp": 0.025,
+    "kp": 0.01,
     "ki": 0.01,
     "kd": 0.001,
 }

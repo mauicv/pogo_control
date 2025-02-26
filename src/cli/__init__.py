@@ -174,7 +174,7 @@ def create(name):
 @click.option('--num-steps', type=int, default=250)
 @click.option('--interval', type=float, default=0.25)
 @click.option('--noise', type=float, default=0.0)
-@click.option('--weight-perturbation', type=float, default=0.06)
+@click.option('--weight-perturbation', type=float, default=0.03)
 @click.option('--consecutive-error-limit', type=int, default=10)
 @click.option('--name', type=str, default='pogo_control')
 @click.option('--random-model', is_flag=True)
@@ -190,7 +190,7 @@ def client(
         test
     ): 
     from client.multi_client import MultiClientInterface
-    from filters.butterworth import ButterworthFilter
+    from filters.identity import IdentityFilter
     from storage import GCS_Interface
     from client.run import run_client
     import torch
@@ -217,16 +217,11 @@ def client(
         camera_port=camera_port
     )
     client.connect()
-    butterworth_filter = ButterworthFilter(
-        order=5,
-        cutoff=5.0,
-        fs=50.0,
-        num_components=8 # 8 servo motors
-    )
+    filter = IdentityFilter()
     run_client(
         gcs,
         client,
-        butterworth_filter,
+        filter,
         num_steps=num_steps,
         interval=interval,
         noise=noise,
