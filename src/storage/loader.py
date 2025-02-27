@@ -2,18 +2,30 @@ from google.cloud import storage
 import torch
 import json
 from tqdm import tqdm
-# import uuid
 
 
 def default_velocity_reward_function(states, conditions):
-    TARGET_SPEED = 3
     rewards = []
-    for state, condition in zip(states, conditions):
-        [overturned, *_,] = condition
-        [*_, speed, _] = state
-        speed = - speed # The speed is relative to the camera.
-        speed_reward = min(TARGET_SPEED, speed)
-        rewards.append(speed_reward + - 100 * overturned)
+    last_distance = None
+
+    for condition in conditions:
+        [*_, distance] = condition
+        if last_distance is None:
+            last_distance = distance
+        distance_delta = distance - last_distance
+        last_distance = distance
+        rewards.append(-distance_delta)
+
+    overturned_reward = 0
+    for i, condition in zip(range(len(conditions) - 1, -1, -1), reversed(conditions)):
+        [overturned, *_] = condition
+        if overturned:
+            overturned_reward = -100
+            rewards[i] = overturned_reward
+        else:
+            overturned_reward = overturned_reward * 0.5
+            rewards[i] += overturned_reward
+
     return torch.tanh(0.25 * torch.tensor(rewards)[:, None])
 
 

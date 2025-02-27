@@ -28,7 +28,7 @@ class MultiClientInterface:
         (position, distance, velocity, speed, yaw), (last_detection_ts,) \
             = self.camera_client.send_data({})
         world_state = [ax, ay, az, gvx, gvy, gvz, pitch, roll] + velocity + [speed] + [yaw]
-        conditions = [overturned, last_mpus6050_sample_ts, last_servo_set_ts] + [last_detection_ts]
+        conditions = [overturned, last_mpus6050_sample_ts, last_servo_set_ts] + [last_detection_ts] + position + [distance]
         return (
             servo_state,
             world_state,

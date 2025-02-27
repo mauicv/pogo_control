@@ -51,7 +51,10 @@ class ConditionCounter:
             overturned,
             last_mpus6050_sample_ts,
             last_servo_set_ts,
-            last_detection_ts
+            last_detection_ts,
+            x_position,
+            y_position,
+            distance
         ) = conditions
 
         if overturned:
@@ -86,9 +89,9 @@ def sample(
     counter = ConditionCounter(
         overturned_iteration_count_limit=3,
     )
-    action = torch.tensor(INITIAL_POSITION)
-    action = filter(action)
-    servo_state, world_state, conditions = client.send_data(action)
+    true_action = torch.tensor(INITIAL_POSITION)
+    filtered_action = filter(true_action)
+    servo_state, world_state, conditions = client.send_data(filtered_action)
     state = torch.tensor(servo_state + world_state)
     rollout = Rollout(
         states=[],
@@ -96,23 +99,30 @@ def sample(
         times=[],
         conditions=[]
     )
+    # states = []
+    # world_states = []
     current_time = time.time()
     for i in tqdm(range(num_steps)):
         current_time = time.time()
-        true_action = model(state).numpy()[0, 0]
-        action_noise = np.random.normal(0, noise, size=true_action.shape)
-        true_action = true_action + action_noise
-        true_action = np.clip(true_action, -1, 1)
-        # NOTE: the state, actions stored here are related as the
-        # action resulting from the state (not the state resulting
-        # from the action)
-        state = state.numpy()
-        rollout.append(state, true_action, current_time, conditions)
+        if i % 2 == 0:
+            true_action = model(state).numpy()[0, 0]
+            action_noise = np.random.normal(0, noise, size=true_action.shape)
+            true_action = true_action + action_noise
+            true_action = np.clip(true_action, -1, 1)
+            # NOTE: the state, actions stored here are related as the
+            # action resulting from the state (not the state resulting
+            # from the action)
+            state = state.numpy()
+            filtered_action = filter(true_action)
+            rollout.append(state, true_action, current_time, conditions)
+            # states = []
+            # world_states = []
         if counter.update_check(conditions):
             break
-        filtered_action = filter(true_action)
         servo_state, world_state, conditions = client.send_data(filtered_action)
         state = torch.tensor(servo_state + world_state)
+        # states.append(state)
+        # world_states.append(world_state)
 
         elapsed_time = time.time() - current_time
         if elapsed_time < interval:
