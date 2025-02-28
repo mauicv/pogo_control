@@ -47,8 +47,10 @@ class DataLoader:
             num_runs=0,
             state_dim=14,
             action_dim=8,
+            num_time_steps=25,
             reward_function=default_velocity_reward_function
         ) -> None:
+        self.num_time_steps = num_time_steps
         self.reward_function = reward_function
         self.bucket = bucket
         self.experiment_name = experiment_name
@@ -110,6 +112,10 @@ class DataLoader:
             with self.bucket.blob(rollout).open('r') as f:
                 rollout_data = json.load(f)
             end_index = rollout_data['end_index']
+            if end_index < self.num_time_steps:
+                # skip rollouts that are too short
+                self.fetched_rollouts.add(rollout)
+                continue
             conditions = rollout_data['conditions']
             states = torch.tensor(rollout_data['states'])
             self.state_buffer[run_index][:end_index+1] = states
@@ -151,6 +157,10 @@ class DataLoader:
             batch_size = self.batch_size
         if not num_time_steps:
             num_time_steps = self.num_time_steps
+        else:
+            # clamp num_time_steps to the maximum number of time steps in the rollouts
+            print(f'Clamping num_time_steps to {self.num_time_steps}')
+            num_time_steps = min(num_time_steps, self.num_time_steps)
 
         max_index = min(self.rollout_ind, self.num_runs)
         b_inds = torch.randint(0, max_index, (batch_size, 1))

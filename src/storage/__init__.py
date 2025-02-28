@@ -16,6 +16,7 @@ class GCS_Interface:
             rollout_length=100,
             state_dim=14,
             action_dim=8,
+            num_time_steps=25,
         ) -> None:
         if credentials:
             client = storage.Client.from_service_account_json(credentials)
@@ -38,5 +39,6 @@ class GCS_Interface:
             num_runs=num_runs,
             rollout_length=rollout_length,
             state_dim=state_dim,
-            action_dim=action_dim
+            action_dim=action_dim,
+            num_time_steps=num_time_steps
         )
