@@ -70,10 +70,10 @@ class MPU6050Mixin:
     def get_mpu_data(self):
         """Returns the most recent filtered MPU data"""
         gyro_data = [
-            g_data/1000 for g_data in self.mpu.get_gyro_data().values()
+            g_data/1000 for g_data in self.latest_filtered_data[3:]
         ]
         acc_data = [
-            a_data for a_data in self.mpu.get_accel_data().values()
+            a_data for a_data in self.latest_filtered_data[:3]
         ]
         return [
             *acc_data,
