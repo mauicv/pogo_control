@@ -3,6 +3,18 @@ import torch
 import json
 from tqdm import tqdm
 
+def overturned_penalty(states, conditions):
+    rewards = []
+    overturned_reward = 0
+    for i, condition in zip(range(len(conditions) - 1, -1, -1), reversed(conditions)):
+        [overturned, *_] = condition
+        if overturned:
+            overturned_reward = -10
+            rewards[i] = overturned_reward
+        else:
+            overturned_reward = overturned_reward * 0.5
+            rewards[i] += overturned_reward
+    return torch.tensor(rewards)[:, None]
 
 def default_velocity_reward_function(states, conditions):
     rewards = []
@@ -14,20 +26,43 @@ def default_velocity_reward_function(states, conditions):
             last_distance = distance
         distance_delta = distance - last_distance
         last_distance = distance
-        rewards.append(-distance_delta)
+    rewards.append(-distance_delta)
+    velocity_reward = torch.tanh(0.25 * torch.tensor(rewards)[:, None])
+    overturned_reward = overturned_penalty(states, conditions)
+    return velocity_reward + overturned_reward
 
-    overturned_reward = 0
-    for i, condition in zip(range(len(conditions) - 1, -1, -1), reversed(conditions)):
-        [overturned, *_] = condition
-        if overturned:
-            overturned_reward = -100
-            rewards[i] = overturned_reward
-        else:
-            overturned_reward = overturned_reward * 0.5
-            rewards[i] += overturned_reward
-
-    return torch.tanh(0.25 * torch.tensor(rewards)[:, None])
-
+def default_standing_reward(states, conditions):
+    rewards = []
+    for state in states:
+        [
+            front_right_top,
+            front_right_bottom,
+            front_left_top,
+            front_left_bottom,
+            back_right_top,
+            back_right_bottom,
+            back_left_top,
+            back_left_bottom, 
+            *_,
+            roll,
+            pitch,
+        ] = state
+        standing_reward = - (
+            (front_left_bottom - 0.4)**2 +
+            (front_right_bottom - 0.4)**2 +
+            (back_right_bottom - 0.4)**2 +
+            (back_left_bottom - 0.4)**2 +
+            (front_left_top - -0.3)**2 +
+            (front_right_top - -0.3)**2 +
+            (back_right_top - -0.3)**2 +
+            (back_left_top - -0.3)**2 +
+            8*roll**2 +
+            8*pitch**2
+        ) / (8 + 2 * 8)
+        rewards.append(standing_reward)
+    standing_reward = torch.tensor(rewards)[:, None]
+    overturned_reward = overturned_penalty(states, conditions)
+    return standing_reward + overturned_reward
 
 def make_mask(detection_ts):
     # if timesteps are the same set mask to 0 else 1
@@ -48,7 +83,7 @@ class DataLoader:
             state_dim=14,
             action_dim=8,
             num_time_steps=25,
-            reward_function=default_velocity_reward_function
+            reward_function=default_standing_reward
         ) -> None:
         self.num_time_steps = num_time_steps
         self.reward_function = reward_function

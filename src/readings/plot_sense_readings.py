@@ -34,9 +34,9 @@ def plot_base_sense_readings(client: Client):
     axs[1, 1].set_title("Gyroscope Y")
     axs[1, 2].set_title("Gyroscope Z")
 
-    axs[0, 0].set_ylim(-10, 10)
-    axs[0, 1].set_ylim(-10, 10)
-    axs[0, 2].set_ylim(-10, 10)
+    axs[0, 0].set_ylim(-1, 1)
+    axs[0, 1].set_ylim(-1, 1)
+    axs[0, 2].set_ylim(-1, 1)
     axs[1, 0].set_ylim(-1, 1)
     axs[1, 1].set_ylim(-1, 1)
     axs[1, 2].set_ylim(-1, 1)
@@ -64,7 +64,7 @@ def plot_readings(client: Client):
         pitch=init_ys.tolist(),
         roll=init_ys.tolist(),
         overturned=init_ys.tolist(),
-    )  
+    )
 
     pitch_plot, = axs[0].plot(xs, init_ys)
     axs[0].set_title("pitch")
