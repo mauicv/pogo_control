@@ -4,6 +4,7 @@ import json
 from tqdm import tqdm
 
 def overturned_penalty(rewards, conditions):
+    MAX_OVERTURNED_PENALTY = -10
     overturn_index = None
     for i, condition in enumerate(conditions):
         [overturned, *_] = condition
@@ -14,10 +15,12 @@ def overturned_penalty(rewards, conditions):
     if overturn_index is None:
         return torch.zeros(len(rewards))
 
-    overturned_reward = -10
+    overturned_reward = -MAX_OVERTURNED_PENALTY
     for i in range(overturn_index, 0, -1):
         rewards[i] += overturned_reward
         overturned_reward = overturned_reward * 0.75
+    for i in range(overturn_index + 1, len(rewards)):
+        rewards[i] += -MAX_OVERTURNED_PENALTY
     return torch.tensor(rewards)
 
 def default_velocity_reward_function(states, conditions):
