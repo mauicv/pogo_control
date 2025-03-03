@@ -259,6 +259,12 @@ def reset():
 @click.option('--back-right-bottom', type=float, default=0.0)
 @click.option('--back-right-top', type=float, default=0.0)
 def move_robot(front_left_bottom, front_left_top, front_right_bottom, front_right_top, back_left_bottom, back_left_top, back_right_bottom, back_right_top):
+    """
+    Move the robot to the given angles.
+
+    example:
+        pogo move-robot --front-left-bottom=0.4 --front-right-bottom=0.4 --back-right-bottom=0.4 --back-left-bottom=0.4 --front-left-top=-0.3 --front-right-top=-0.3 --back-right-top=-0.3 --back-left-top=-0.3
+    """
     from server.pogo import Pogo
     import pigpio
     from server.mpu6050 import mpu6050

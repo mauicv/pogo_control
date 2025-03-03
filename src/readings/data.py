@@ -66,48 +66,24 @@ class SensorDataArray:
 
 @dataclass
 class StateDataArray:
-    velocity: list[float] = field(default_factory=list)
-    distance: list[float] = field(default_factory=list)
-    height: list[float] = field(default_factory=list)
-    height_marker_detected: list[float] = field(default_factory=list)
-    velocity_marker_detected: list[float] = field(default_factory=list)
     pitch: list[float] = field(default_factory=list)
     roll: list[float] = field(default_factory=list)
     overturned: list[float] = field(default_factory=list)
-    reward: list[float] = field(default_factory=list)
 
     def update(
             self,
-            velocity,
-            distance,
-            height,
-            height_marker_detected,
-            velocity_marker_detected,
             overturned,
             pitch,
             roll,
-            reward
         ):
-        self.velocity.append(velocity)
-        self.distance.append(distance)
-        self.height.append(height)
-        self.height_marker_detected.append(height_marker_detected)
-        self.velocity_marker_detected.append(velocity_marker_detected)
         self.overturned.append(overturned)
         self.pitch.append(pitch)
         self.roll.append(roll)
-        self.reward.append(reward)
 
     def get_data(self, limit=100):
         return (
-            self.velocity[-limit:],
-            self.distance[-limit:],
-            self.height[-limit:],
-            self.height_marker_detected[-limit:],
-            self.velocity_marker_detected[-limit:],
             self.overturned[-limit:],
             self.pitch[-limit:],
             self.roll[-limit:],
-            self.reward[-limit:],
         )
 

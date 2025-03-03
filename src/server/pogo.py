@@ -9,8 +9,8 @@ from server.servo import Servo
 # }
 
 generic_values = {
-    "kp": 0.01,
-    "ki": 0.01,
+    "kp": 0.02,
+    "ki": 0.02,
     "kd": 0.001,
 }
 

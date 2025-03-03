@@ -4,6 +4,7 @@ import numpy as np
 from client.client import Client
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+from filters.kalman import KalmanMPU6050Filter
 from readings.data import SensorDataArray, StateDataArray
 
 
@@ -40,8 +41,19 @@ def plot_base_sense_readings(client: Client):
     axs[1, 1].set_ylim(-10, 10)
     axs[1, 2].set_ylim(-10, 10)
 
+    kalman_filter = KalmanMPU6050Filter(
+        init_ax=0,
+        init_ay=0,
+        init_az=0,
+        init_gx=0,
+        init_gy=0,
+        init_gz=0
+    )
+
     def animate(i, client, sensor_data: SensorDataArray):
-        data = client.send_data({})
+        data, _ = client.send_data({})
+        ax, ay, az, gx, gy, gz, *_ = data
+        data = kalman_filter(ax, ay, az, gx, gy, gz)
         sensor_data.update(data)
         acc_xs, acc_ys, acc_zs, gyro_xs, gyro_ys, gyro_zs = sensor_data.get_data()
         acc_xs_plot.set_ydata(acc_xs)
@@ -56,97 +68,45 @@ def plot_base_sense_readings(client: Client):
 
 
 def plot_readings(client: Client):
-    fig, axs = plt.subplots(nrows=2, ncols=3)
+    fig, axs = plt.subplots(nrows=1, ncols=2)
     xs = np.arange(100)
     init_ys = np.zeros(100)
     state_data_array = StateDataArray(
-        velocity=init_ys.tolist(),
-        distance=init_ys.tolist(),
         pitch=init_ys.tolist(),
         roll=init_ys.tolist(),
         overturned=init_ys.tolist(),
-        height=init_ys.tolist(),
-        height_marker_detected=init_ys.tolist(),
-        velocity_marker_detected=init_ys.tolist(),
-        reward=init_ys.tolist(),
     )  
 
-    d_plot, = axs[0, 0].plot(xs, init_ys)
-    axs[0, 0].set_title("distance")
-    axs[0, 0].set_ylim(-0, 500)
+    pitch_plot, = axs[0].plot(xs, init_ys)
+    axs[0].set_title("pitch")
+    axs[0].set_ylim(-1, 1)
 
-    v_plot, = axs[0, 1].plot(xs, init_ys)
-    axs[0, 1].set_title("velocity")
-    axs[0, 1].set_ylim(-25, 25)
+    roll_plot, = axs[0].plot(xs, init_ys)
+    axs[0].set_title("roll")
+    axs[0].set_ylim(-1, 1)
 
-    pitch_plot, = axs[0, 2].plot(xs, init_ys)
-    axs[0, 2].set_title("pitch")
-    axs[0, 2].set_ylim(-1, 1)
+    axs[1].set_title("Conditions")
+    overturned_plot, = axs[1].plot(xs, init_ys)
+    axs[1].set_ylim(-0.1, 1.1)
 
-    roll_plot, = axs[0, 2].plot(xs, init_ys)
-    axs[0, 2].set_title("roll")
-    axs[0, 2].set_ylim(-1, 1)
-
-    axs[1, 0].set_title("reward")
-    r_plot, = axs[1, 0].plot(xs, init_ys)
-    axs[1, 0].set_ylim(-100, 100)
-
-    h_plot, = axs[1, 1].plot(xs, init_ys)
-    axs[1, 1].set_title("height")
-    axs[1, 1].set_ylim(-100, 100)
-
-    axs[1, 2].set_title("Conditions")
-    overturned_plot, = axs[1, 2].plot(xs, init_ys)
-    hm_plot, = axs[1, 2].plot(xs, init_ys)
-    vm_plot, = axs[1, 2].plot(xs, init_ys)
-    axs[1, 2].set_ylim(-1, 1)
-
-    values = {
-        "marker_detection_fail_count": 0,
-        "min_height": 0,
-    }
-
-    def animate(i, client, state_data_array: StateDataArray, values: dict):
+    def animate(i, client, state_data_array: StateDataArray):
         data = client.send_data({})
-        if len(data) == 3: data = data[1:]
-        data, [distance, height, height_marker_detected, velocity_marker_detected, overturned] = data
-        values["min_height"] = min(height, values["min_height"])
-        roll, pitch, velocity = data[-3:]
-        # Height reward function
-        up_pitch = abs(pitch) < 0.01
-        values["marker_detection_fail_count"] = values["marker_detection_fail_count"] + 1 if not height_marker_detected else 0
-        punishment = min(values["marker_detection_fail_count"], 25) * 2
-        marker_rewards = - punishment + -100 * overturned
-        height_reward = 10 * ((height - values["min_height"]) * up_pitch) + values["min_height"]
-        reward = height_reward + marker_rewards
-
+        data, [overturned, ts] = data
+        roll, pitch = data[-2:]
         state_data_array.update(
-            velocity,
-            distance,
-            height,
-            height_marker_detected,
-            velocity_marker_detected,
             overturned,
             pitch,
             roll,
-            reward
         )
-        vel, dist, height, height_marker_detected, velocity_marker_detected, overturned, pitch, roll, reward \
-            = state_data_array.get_data()
-        v_plot.set_ydata(vel)
-        d_plot.set_ydata(dist)
-        h_plot.set_ydata(height)
-        hm_plot.set_ydata(height_marker_detected)
-        vm_plot.set_ydata(velocity_marker_detected)
+        overturned, pitch, roll = state_data_array.get_data()
         overturned_plot.set_ydata(overturned)
         pitch_plot.set_ydata(pitch)
         roll_plot.set_ydata(roll)
-        r_plot.set_ydata(reward)
 
     ani = animation.FuncAnimation(
         fig,
         animate,
-        fargs=(client, state_data_array, values),
+        fargs=(client, state_data_array),
         interval=25
     )
     plt.show()

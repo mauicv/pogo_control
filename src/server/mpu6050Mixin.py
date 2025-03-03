@@ -4,8 +4,8 @@ sensor has the same two addresss 0x68 and 0x69. However, they also have an AD0 p
 addresses. By using the AD0 pin we can connect multiple sensors to the same I2C bus.
 """
 import time
-from filters.butterworth import ButterworthFilter
 from filters.complementary import ComplementaryFilter
+from filters.kalman import KalmanMPU6050Filter
 from server.loop import Loop
 
 
@@ -26,12 +26,7 @@ class MPU6050Mixin:
             self.mpu = mpu
 
         if filter is None:
-            self.filter = ButterworthFilter(
-                num_components=6,
-                cutoff=5.0,
-                fs=50.0,
-                order=5
-            )
+            self.filter = KalmanMPU6050Filter()
         else:
             self.filter = filter
 

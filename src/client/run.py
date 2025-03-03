@@ -5,6 +5,7 @@ from client.sample import sample
 from client.model import Actor, EncoderActor, DenseModel
 import torch
 from time import sleep, time
+import random
 torch.set_grad_enabled(False)
 
 
@@ -69,6 +70,10 @@ def run_client(
     time_start = time()
     while True:
         count += 1
+        random_weight_perturbation = random.uniform(0.01, 0.03)
+        weight_perturbation = random_weight_perturbation
+        weight_perturbation = 0
+
         try:
             print('==========================================')
             print(f'Count: {count}')

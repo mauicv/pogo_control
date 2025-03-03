@@ -13,9 +13,9 @@ class Servo:
     pin_limits: tuple[float, float]
     init_value: float
     reverse: bool = False
-    kp: float = 0.1
-    ki: float = 0.01
-    kd: float = 0.001
+    kp: float = 0.02
+    ki: float = 0.02
+    kd: float = 0.01
     _value: float = 0.0
     pid_controller: PID = None
     offset: float = 0.0

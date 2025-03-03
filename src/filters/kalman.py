@@ -92,3 +92,34 @@ class KalmanYawFilter:
     @property
     def x(self):
         return self.filter.x
+
+
+def make_mpu6050_filter():
+    filter = KalmanFilter(dim_x=6, dim_z=6)
+    filter.x = np.array([0, 0, 0, 0, 0, 0])
+    filter.F = np.array([
+        [1, 0, 0, 0, 0, 0],
+        [0, 1, 0, 0, 0, 0],
+        [0, 0, 1, 0, 0, 0],
+        [0, 0, 0, 1, 0, 0],
+        [0, 0, 0, 0, 1, 0],
+        [0, 0, 0, 0, 0, 1]
+    ])
+    filter.H = np.eye(6)
+    filter.P = np.eye(6) * 1000
+    filter.R = np.eye(6) * 5
+    filter.Q = np.eye(6) * 1
+    return filter
+
+
+class KalmanMPU6050Filter:
+    def __init__(self, init_ax, init_ay, init_az, init_gx, init_gy, init_gz):
+        self.filter = make_mpu6050_filter(init_ax, init_ay, init_az, init_gx, init_gy, init_gz)
+
+    def __call__(self, ax, ay, az, gx, gy, gz):
+        self.filter.predict()
+        self.filter.update(np.array([ax, ay, az, gx, gy, gz]))
+        return self.filter.x
+    
+
+    
