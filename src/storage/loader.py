@@ -117,7 +117,7 @@ class DataLoader:
             dtype=torch.float32
         )
 
-        self.dropout_mask = torch.ones(
+        self.dropout_mask = torch.zeros(
             (self.num_runs, self.rollout_length, 1),
             dtype=torch.float32
         )
@@ -154,10 +154,6 @@ class DataLoader:
             with self.bucket.blob(rollout).open('r') as f:
                 rollout_data = json.load(f)
             end_index = rollout_data['end_index']
-            if end_index < self.num_time_steps:
-                # skip rollouts that are too short
-                self.fetched_rollouts.add(rollout)
-                continue
             conditions = rollout_data['conditions']
             states = torch.tensor(rollout_data['states'])
             self.state_buffer[run_index][:end_index+1] = states
@@ -168,6 +164,8 @@ class DataLoader:
             self.dropout_mask[run_index][:end_index+1] = 1
             detection_ts = [condition[-1] for condition in conditions]
             self.dropout_mask[run_index][:end_index+1] = make_mask(detection_ts)
+            if end_index < self.num_time_steps:
+                end_index = self.num_time_steps
             self.end_index[run_index] = end_index + 1
             self.fetched_rollouts.add(rollout)
             self.rollout_ind += 1
