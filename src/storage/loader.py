@@ -3,8 +3,7 @@ import torch
 import json
 from tqdm import tqdm
 
-def overturned_penalty(states, conditions):
-    rewards = []
+def overturned_penalty(rewards, conditions):
     overturned_reward = 0
     for i, condition in zip(range(len(conditions) - 1, -1, -1), reversed(conditions)):
         [overturned, *_] = condition
@@ -28,7 +27,7 @@ def default_velocity_reward_function(states, conditions):
         last_distance = distance
     rewards.append(-distance_delta)
     velocity_reward = torch.tanh(0.25 * torch.tensor(rewards)[:, None])
-    overturned_reward = overturned_penalty(states, conditions)
+    overturned_reward = overturned_penalty(rewards, conditions)
     return velocity_reward + overturned_reward
 
 def default_standing_reward(states, conditions):
@@ -61,7 +60,7 @@ def default_standing_reward(states, conditions):
         ) / (8 + 2 * 8)
         rewards.append(standing_reward)
     standing_reward = torch.tensor(rewards)[:, None]
-    overturned_reward = overturned_penalty(states, conditions)
+    overturned_reward = overturned_penalty(rewards, conditions)
     return standing_reward + overturned_reward
 
 def make_mask(detection_ts):
