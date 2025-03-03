@@ -79,7 +79,7 @@ def sample(
         num_steps: int = 100,
         interval: float = 0.1,
         noise: float = 0.3,
-        weight_perturbation: float = 0.01,
+        weight_perturbation: float = 0.0,
     ) -> Rollout:
     filter.reset()
     torch.set_grad_enabled(False)
@@ -87,7 +87,7 @@ def sample(
         weight_perturbation_size=weight_perturbation
     )
     counter = ConditionCounter(
-        overturned_iteration_count_limit=3,
+        overturned_iteration_count_limit=1,
     )
     true_action = torch.tensor(INITIAL_POSITION)
     filtered_action = filter(true_action)

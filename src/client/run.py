@@ -58,7 +58,7 @@ def run_client(
         interval: float = 0.1,
         consecutive_error_limit: int = 3,
         noise: float = 0.3,
-        weight_perturbation: float = 0.01,
+        weight_perturbation: float = 0.00,
         random_model: bool = False,
         test: bool = False
     ):
@@ -72,7 +72,7 @@ def run_client(
         count += 1
         random_weight_perturbation = random.uniform(0.01, 0.03)
         weight_perturbation = random_weight_perturbation
-        weight_perturbation = 0
+        # weight_perturbation = 0
 
         try:
             print('==========================================')
