@@ -47,12 +47,9 @@ class MPU6050Mixin:
         ATTEMPTS = 5
         for attempt in range(ATTEMPTS):
             try:
-                gyro_data = [
-                    g_data/100 for g_data in self.mpu.get_gyro_data().values()
-                ]
                 raw_data = [
                     *self.mpu.get_accel_data().values(),
-                    *gyro_data
+                    *self.mpu.get_gyro_data().values()
                 ]
                 break
             except OSError as e:
@@ -72,8 +69,15 @@ class MPU6050Mixin:
 
     def get_mpu_data(self):
         """Returns the most recent filtered MPU data"""
+        gyro_data = [
+            g_data/100 for g_data in self.mpu.get_gyro_data().values()
+        ]
+        acc_data = [
+            a_data for a_data in self.mpu.get_accel_data().values()
+        ]
         return [
-            *self.latest_filtered_data,
+            *acc_data,
+            *gyro_data,
             self.c_filter.roll,
             self.c_filter.pitch,
             self.c_filter.overturned,

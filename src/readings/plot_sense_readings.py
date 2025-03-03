@@ -37,9 +37,9 @@ def plot_base_sense_readings(client: Client):
     axs[0, 0].set_ylim(-10, 10)
     axs[0, 1].set_ylim(-10, 10)
     axs[0, 2].set_ylim(-10, 10)
-    axs[1, 0].set_ylim(-100, 100)
-    axs[1, 1].set_ylim(-100, 100)
-    axs[1, 2].set_ylim(-100, 100)
+    axs[1, 0].set_ylim(-10, 10)
+    axs[1, 1].set_ylim(-10, 10)
+    axs[1, 2].set_ylim(-10, 10)
 
     def animate(i, client, sensor_data: SensorDataArray):
         data, _ = client.send_data({})
