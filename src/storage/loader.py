@@ -50,21 +50,21 @@ def default_standing_reward(states, conditions):
             back_right_bottom,
             back_left_top,
             back_left_bottom, 
-            *_,
             roll,
             pitch,
+            *_,
         ] = state
         standing_reward = - (
-            max((front_left_bottom - 0.4)**2, 1) +
-            max((front_right_bottom - 0.4)**2, 1) +
-            max((back_right_bottom - 0.4)**2, 1) +
-            max((back_left_bottom - 0.4)**2, 1) +
-            max((front_left_top - -0.3)**2, 1) +
-            max((front_right_top - -0.3)**2, 1) +
-            max((back_right_top - -0.3)**2, 1) +
-            max((back_left_top - -0.3)**2, 1) +
-            max(roll**2, 2) +
-            max(pitch**2, 2)
+            min((front_left_bottom - 0.4)**2, 2) +
+            min((front_right_bottom - 0.4)**2, 2) +
+            min((back_right_bottom - 0.4)**2, 2) +
+            min((back_left_bottom - 0.4)**2, 2) +
+            min((front_left_top - -0.3)**2, 2) +
+            min((front_right_top - -0.3)**2, 2) +
+            min((back_right_top - -0.3)**2, 2) +
+            min((back_left_top - -0.3)**2, 2) +
+            min(roll**2, 2) +
+            min(pitch**2, 2)
         ) / 10
         rewards.append(standing_reward)
     standing_reward = torch.tensor(rewards)
