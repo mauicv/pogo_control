@@ -23,20 +23,6 @@ def overturned_penalty(rewards, conditions):
         rewards[i] = -MAX_OVERTURNED_PENALTY
     return torch.tensor(rewards)
 
-def default_velocity_reward_function(states, conditions):
-    rewards = []
-    last_distance = None
-
-    for condition in conditions:
-        [*_, distance] = condition
-        if last_distance is None:
-            last_distance = distance
-        distance_delta = distance - last_distance
-        last_distance = distance
-    rewards.append(-distance_delta)
-    velocity_reward = torch.tanh(0.25 * torch.tensor(rewards))
-    overturned_reward = overturned_penalty(rewards, conditions)
-    return (velocity_reward + overturned_reward)[:, None]
 
 def default_standing_reward(states, conditions):
     rewards = []
@@ -70,6 +56,23 @@ def default_standing_reward(states, conditions):
     standing_reward = torch.tensor(rewards)
     overturned_reward = overturned_penalty(rewards, conditions)
     return (standing_reward + overturned_reward)[:, None]
+
+
+def default_velocity_reward_function(states, conditions):
+    rewards = []
+    last_distance = None
+
+    for condition in conditions:
+        [*_, distance] = condition
+        if last_distance is None:
+            last_distance = distance
+        distance_delta = distance - last_distance
+        last_distance = distance
+    rewards.append(-distance_delta)
+    velocity_reward = torch.tanh(0.25 * torch.tensor(rewards))
+    overturned_reward = overturned_penalty(rewards, conditions)
+    return (velocity_reward + overturned_reward)[:, None]
+
 
 def make_mask(detection_ts):
     # if timesteps are the same set mask to 0 else 1
@@ -165,6 +168,12 @@ class DataLoader:
             detection_ts = [condition[-1] for condition in conditions]
             self.dropout_mask[run_index][:end_index+1] = make_mask(detection_ts)
             if end_index < self.num_time_steps:
+                for i in range(end_index+1, self.num_time_steps):
+                    # pad the rollout with the last state
+                    self.state_buffer[run_index][i] = self.state_buffer[run_index][end_index]
+                    self.action_buffer[run_index][i] = self.action_buffer[run_index][end_index]
+                    self.reward_buffer[run_index][i] = self.reward_buffer[run_index][end_index]
+                    self.dropout_mask[run_index][i] = self.dropout_mask[run_index][end_index]
                 end_index = self.num_time_steps
             self.end_index[run_index] = end_index + 1
             self.fetched_rollouts.add(rollout)
