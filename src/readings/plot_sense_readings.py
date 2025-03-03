@@ -42,7 +42,7 @@ def plot_base_sense_readings(client: Client):
     axs[1, 2].set_ylim(-100, 100)
 
     def animate(i, client, sensor_data: SensorDataArray):
-        data, _ = client.send_data({})``
+        data, _ = client.send_data({})
         sensor_data.update(data)
         acc_xs, acc_ys, acc_zs, gyro_xs, gyro_ys, gyro_zs = sensor_data.get_data()
         acc_xs_plot.set_ydata(acc_xs)

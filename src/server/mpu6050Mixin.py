@@ -65,19 +65,22 @@ class MPU6050Mixin:
 
         self.c_filter.update(raw_data[:3], raw_data[3:])
         self.latest_filtered_data = self.filter(raw_data)
-        self.last_mpus6050_sample_ts = time.time()
-
-    def get_mpu_data(self):
-        """Returns the most recent filtered MPU data"""
         gyro_data = [
             g_data/1000 for g_data in self.latest_filtered_data[3:]
         ]
         acc_data = [
             a_data for a_data in self.latest_filtered_data[:3]
         ]
-        return [
+        self.latest_filtered_data = [
             *acc_data,
             *gyro_data,
+        ]
+        self.last_mpus6050_sample_ts = time.time()
+
+    def get_mpu_data(self):
+        """Returns the most recent filtered MPU data"""
+        return [
+            *self.latest_filtered_data,
             self.c_filter.roll,
             self.c_filter.pitch,
             self.c_filter.overturned,
