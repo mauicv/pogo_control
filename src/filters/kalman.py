@@ -116,7 +116,8 @@ class KalmanMPU6050Filter:
     def __init__(self, ):
         self.filter = make_mpu6050_filter()
 
-    def __call__(self, ax, ay, az, gx, gy, gz):
+    def __call__(self, data):
+        ax, ay, az, gx, gy, gz = data
         self.filter.predict()
         self.filter.update(np.array([ax, ay, az, gx, gy, gz]))
         return self.filter.x
