@@ -55,17 +55,17 @@ def default_standing_reward(states, conditions):
             pitch,
         ] = state
         standing_reward = - (
-            (front_left_bottom - 0.4)**2 +
-            (front_right_bottom - 0.4)**2 +
-            (back_right_bottom - 0.4)**2 +
-            (back_left_bottom - 0.4)**2 +
-            (front_left_top - -0.3)**2 +
-            (front_right_top - -0.3)**2 +
-            (back_right_top - -0.3)**2 +
-            (back_left_top - -0.3)**2 +
-            8*roll**2 +
-            8*pitch**2
-        ) / (8 + 2 * 8)
+            max((front_left_bottom - 0.4)**2, 1) +
+            max((front_right_bottom - 0.4)**2, 1) +
+            max((back_right_bottom - 0.4)**2, 1) +
+            max((back_left_bottom - 0.4)**2, 1) +
+            max((front_left_top - -0.3)**2, 1) +
+            max((front_right_top - -0.3)**2, 1) +
+            max((back_right_top - -0.3)**2, 1) +
+            max((back_left_top - -0.3)**2, 1) +
+            max(roll**2, 2) +
+            max(pitch**2, 2)
+        ) / 10
         rewards.append(standing_reward)
     standing_reward = torch.tensor(rewards)
     overturned_reward = overturned_penalty(rewards, conditions)
