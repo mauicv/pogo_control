@@ -113,8 +113,8 @@ def make_mpu6050_filter():
 
 
 class KalmanMPU6050Filter:
-    def __init__(self, init_ax, init_ay, init_az, init_gx, init_gy, init_gz):
-        self.filter = make_mpu6050_filter(init_ax, init_ay, init_az, init_gx, init_gy, init_gz)
+    def __init__(self, ):
+        self.filter = make_mpu6050_filter()
 
     def __call__(self, ax, ay, az, gx, gy, gz):
         self.filter.predict()
