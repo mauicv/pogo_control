@@ -12,7 +12,7 @@ def overturned_penalty(rewards, conditions):
             break
     
     if overturn_index is None:
-        return torch.zeros(rewards.shape)
+        return torch.zeros(len(rewards))
 
     overturned_reward = -10
     for i in range(overturn_index, 0, -1):
