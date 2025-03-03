@@ -69,7 +69,7 @@ class MPU6050Mixin:
             g_data/1000 for g_data in self.latest_filtered_data[3:]
         ]
         acc_data = [
-            a_data for a_data in self.latest_filtered_data[:3]
+            a_data/10 for a_data in self.latest_filtered_data[:3]
         ]
         self.latest_filtered_data = [
             *acc_data,
