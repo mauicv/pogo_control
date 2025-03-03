@@ -108,7 +108,7 @@ def make_mpu6050_filter():
     filter.H = np.eye(6)
     filter.P = np.eye(6) * 1000
     filter.R = np.eye(6) * 5
-    filter.Q = np.eye(6) * 1
+    filter.Q = np.eye(6) * 0.5
     return filter
 
 
