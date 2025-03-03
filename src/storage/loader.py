@@ -17,8 +17,8 @@ def overturned_penalty(rewards, conditions):
     overturned_reward = -10
     for i in range(overturn_index, 0, -1):
         rewards[i] += overturned_reward
-        overturned_reward = overturned_reward * 0.5
-    return torch.tensor(rewards)[:, None]
+        overturned_reward = overturned_reward * 0.75
+    return torch.tensor(rewards)
 
 def default_velocity_reward_function(states, conditions):
     rewards = []
@@ -31,9 +31,9 @@ def default_velocity_reward_function(states, conditions):
         distance_delta = distance - last_distance
         last_distance = distance
     rewards.append(-distance_delta)
-    velocity_reward = torch.tanh(0.25 * torch.tensor(rewards)[:, None])
+    velocity_reward = torch.tanh(0.25 * torch.tensor(rewards))
     overturned_reward = overturned_penalty(rewards, conditions)
-    return velocity_reward + overturned_reward
+    return (velocity_reward + overturned_reward)[:, None]
 
 def default_standing_reward(states, conditions):
     rewards = []
@@ -64,9 +64,9 @@ def default_standing_reward(states, conditions):
             8*pitch**2
         ) / (8 + 2 * 8)
         rewards.append(standing_reward)
-    standing_reward = torch.tensor(rewards)[:, None]
+    standing_reward = torch.tensor(rewards)
     overturned_reward = overturned_penalty(rewards, conditions)
-    return standing_reward + overturned_reward
+    return (standing_reward + overturned_reward)[:, None]
 
 def make_mask(detection_ts):
     # if timesteps are the same set mask to 0 else 1
