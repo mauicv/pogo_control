@@ -224,7 +224,7 @@ class DataLoader:
         rollout_rewards = []
         for i in range(self.rollout_ind - num_rollouts, self.rollout_ind):
             rewards = self.reward_buffer[[i % self.num_runs]]
-            rollout_rewards.append(rewards.mean())
+            rollout_rewards.append(rewards.sum())
         return torch.tensor(rollout_rewards).mean()
 
     def sample(

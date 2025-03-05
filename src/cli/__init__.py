@@ -131,46 +131,6 @@ def pogo_sensor_server(port):
 
 
 @cli.command()
-@click.option('--name', type=str, default='pogo_control')
-def create(name):
-    from storage import GCS_Interface
-    from client.model import Actor, EncoderActor, DenseModel
-        
-    gcs = GCS_Interface(
-        experiment_name=name,
-        credentials='world-model-rl-01a513052a8a.json',
-        bucket='pogo_wmrl',
-        model_limits=4
-    )
-
-    # 8 servo, 3 accelerometer, 3 gyro, pitch, roll, aruco d, aruco v
-    state_dim = 8 + 6 + 2 + 1
-    action_dim = 8
-
-    encoder = DenseModel(
-        depth=1,
-        input_dim=state_dim,
-        hidden_dim=256,
-        output_dim=256 * 32,
-    )
-
-    actor = Actor(
-        input_dim=256 * 32,
-        output_dim=action_dim,
-        bound=1,
-    )
-
-    model = EncoderActor(
-        encoder=encoder,
-        actor=actor,
-        num_latent=256,
-        num_cat=32
-    )
-
-    gcs.model.upload_model(model)
-
-
-@cli.command()
 @click.option('--num-steps', type=int, default=250)
 @click.option('--interval', type=float, default=0.1)
 @click.option('--noise', type=float, default=0.3)
@@ -191,6 +151,7 @@ def client(
     ): 
     # from client.multi_client import MultiClientInterface
     from client.client import Client
+    from filters.butterworth import ButterworthFilter
     from filters.identity import IdentityFilter
     from storage import GCS_Interface
     from client.run import run_client
@@ -223,7 +184,13 @@ def client(
     )
     client.connect()
 
-    filter = IdentityFilter()
+    filter = ButterworthFilter(
+        order=5,
+        cutoff=12.0,
+        fs=50.0,
+        num_components=8 # 8 servo motors
+    )
+    # filter = IdentityFilter()
     run_client(
         gcs,
         client,

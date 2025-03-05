@@ -82,7 +82,7 @@ def run_client(
             print('Sampling rollout')
             if random_model:
                 model = create_model(
-                    state_dim=2 * 8 + 2,
+                    state_dim=2 * 8 + 6 + 2,
                     action_dim=8
                 )
 
