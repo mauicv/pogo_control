@@ -72,7 +72,7 @@ def run_client(
         count += 1
         random_weight_perturbation = random.uniform(0.01, 0.03)
         weight_perturbation = random_weight_perturbation
-        # weight_perturbation = 0
+        weight_perturbation = 0
 
         try:
             print('==========================================')
@@ -82,7 +82,7 @@ def run_client(
             print('Sampling rollout')
             if random_model:
                 model = create_model(
-                    state_dim=8 + 6 + 2 + 2 + 2,
+                    state_dim=2 * 8 + 2,
                     action_dim=8
                 )
 

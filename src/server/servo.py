@@ -17,6 +17,7 @@ class Servo:
     ki: float = 0.02
     kd: float = 0.01
     _value: float = 0.0
+    _update_value: float = 0.0
     pid_controller: PID = None
     offset: float = 0.0
 
@@ -46,5 +47,6 @@ class Servo:
         return pwm_val
 
     def get_pwm(self):
-        self._value += self.pid_controller(self._value)
+        self._update_value = self.pid_controller(self._update_value)
+        self._value += self._update_value
         return self._value_to_pwm()

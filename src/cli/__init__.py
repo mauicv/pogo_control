@@ -102,7 +102,7 @@ def pogo_server(port):
 
     def _handle_message(message):
         pogo.update_angle(message)
-        time.sleep(0.23)
+        time.sleep(0.08)
         return pogo.get_data()
 
     channel = Channel(host=HOST, port=POST)
@@ -172,7 +172,7 @@ def create(name):
 
 @cli.command()
 @click.option('--num-steps', type=int, default=250)
-@click.option('--interval', type=float, default=0.25)
+@click.option('--interval', type=float, default=0.1)
 @click.option('--noise', type=float, default=0.3)
 @click.option('--weight-perturbation', type=float, default=0.0)
 @click.option('--consecutive-error-limit', type=int, default=10)
@@ -189,7 +189,8 @@ def client(
         random_model,
         test
     ): 
-    from client.multi_client import MultiClientInterface
+    # from client.multi_client import MultiClientInterface
+    from client.client import Client
     from filters.identity import IdentityFilter
     from storage import GCS_Interface
     from client.run import run_client
@@ -206,17 +207,22 @@ def client(
         bucket='pogo_wmrl',
         model_limits=4
     )
+    # camera_host = os.getenv("CAMERA_HOST")
+    # camera_port = int(os.getenv("CAMERA_POST"))
+    # client = MultiClientInterface(
+    #     pogo_host=pogo_host,
+    #     pogo_port=pogo_port,
+    #     camera_host=camera_host,
+    #     camera_port=camera_port
+    # )
     pogo_host = os.getenv("POGO_HOST")
     pogo_port = int(os.getenv("POGO_POST"))
-    camera_host = os.getenv("CAMERA_HOST")
-    camera_port = int(os.getenv("CAMERA_POST"))
-    client = MultiClientInterface(
-        pogo_host=pogo_host,
-        pogo_port=pogo_port,
-        camera_host=camera_host,
-        camera_port=camera_port
+    client = Client(
+        host=pogo_host,
+        port=pogo_port
     )
     client.connect()
+
     filter = IdentityFilter()
     run_client(
         gcs,
@@ -230,23 +236,6 @@ def client(
         test=test,
         weight_perturbation=weight_perturbation
     )
-
-
-@cli.command()
-def reset():
-    from client.client import Client
-    from client.run import set_init_state
-
-    host = os.getenv("HOST")
-    port = int(os.getenv("POST"))
-
-    client = Client(
-        host=host,
-        port=port
-    )
-    client.connect()
-    INITIAL_POSITION = (-0.4, -0.4, 0.4, 0.4, -0.4, -0.4, 0.4, 0.4)
-    set_init_state(client, INITIAL_POSITION)
 
 
 @cli.command()

@@ -35,10 +35,23 @@ def default_standing_reward(states, conditions):
             back_right_top,
             back_right_bottom,
             back_left_top,
-            back_left_bottom, 
+            back_left_bottom,
+            front_right_top_vel,
+            front_right_bottom_vel,
+            front_left_top_vel,
+            front_left_bottom_vel,
+            back_right_top_vel,
+            back_right_bottom_vel,
+            back_left_top_vel,
+            back_left_bottom_vel,
+            ax,
+            ay,
+            az,
+            gx,
+            gy,
+            gz,
             roll,
-            pitch,
-            *_,
+            pitch
         ] = state
         standing_reward = - (
             min((front_left_bottom - 0.4)**2, 2) +
@@ -56,6 +69,34 @@ def default_standing_reward(states, conditions):
     standing_reward = torch.tensor(rewards)
     overturned_reward = overturned_penalty(rewards, conditions)
     return (standing_reward + overturned_reward)[:, None]
+
+
+def sanity_check_reward_function(states, conditions):
+    rewards = []
+    for state in states:
+        [
+            front_right_top,
+            front_right_bottom,
+            front_left_top,
+            front_left_bottom,
+            back_right_top,
+            back_right_bottom,
+            back_left_top,
+            back_left_bottom,
+            *_
+        ] = state
+        reward = - (
+            (front_left_bottom - 0.4)**2 +
+            (front_right_bottom - 0.4)**2 +
+            (back_right_bottom - 0.4)**2 +
+            (back_left_bottom - 0.4)**2 +
+            (front_left_top - -0.3)**2 +
+            (front_right_top - -0.3)**2 +
+            (back_right_top - -0.3)**2 +
+            (back_left_top - -0.3)**2
+        ) / 8
+        rewards.append(reward)
+    return torch.tensor(rewards)[:, None]
 
 
 def default_velocity_reward_function(states, conditions):
@@ -93,7 +134,7 @@ class DataLoader:
             state_dim=14,
             action_dim=8,
             num_time_steps=25,
-            reward_function=default_standing_reward
+            reward_function=sanity_check_reward_function
         ) -> None:
         self.num_time_steps = num_time_steps
         self.reward_function = reward_function
@@ -120,7 +161,7 @@ class DataLoader:
             dtype=torch.float32
         )
 
-        self.dropout_mask = torch.zeros(
+        self.dropout_mask = torch.ones(
             (self.num_runs, self.rollout_length, 1),
             dtype=torch.float32
         )
@@ -165,8 +206,8 @@ class DataLoader:
             rewards = self.reward_function(rollout_data['states'], conditions)
             self.reward_buffer[run_index][:end_index+1] = rewards
             self.dropout_mask[run_index][:end_index+1] = 1
-            detection_ts = [condition[-1] for condition in conditions]
-            self.dropout_mask[run_index][:end_index+1] = make_mask(detection_ts)
+            # detection_ts = [condition[-1] for condition in conditions]
+            # self.dropout_mask[run_index][:end_index+1] = make_mask(detection_ts)
             if end_index < self.num_time_steps:
                 for i in range(end_index+1, self.num_time_steps):
                     # pad the rollout with the last state

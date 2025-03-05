@@ -26,7 +26,9 @@ class ServoController:
         self.last_servo_set_ts = time.time()
 
     def get_servo_data(self):
-        return [servo._value for servo in self.servos]
+        servo_values = [servo._value for servo in self.servos]
+        servo_updates = [servo._update_value for servo in self.servos]
+        return servo_values + servo_updates
 
     def update_angle(self, values: list[float]):
         for servo, value in zip(self.servos, values):

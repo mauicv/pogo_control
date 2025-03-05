@@ -51,10 +51,6 @@ class ConditionCounter:
             overturned,
             last_mpus6050_sample_ts,
             last_servo_set_ts,
-            last_detection_ts,
-            x_position,
-            y_position,
-            distance
         ) = conditions
 
         if overturned:
@@ -63,12 +59,6 @@ class ConditionCounter:
             self.overturned_iteration_count = 0
         if self.overturned_iteration_count > self.overturned_iteration_count_limit:
             return True
-
-        # print('------------------------------------------------------')
-        # print(f"last_mpus6050_sample_ts: {last_mpus6050_sample_ts}")
-        # print(f"last_servo_set_ts: {last_servo_set_ts}")
-        # print(f"last_detection_ts: {last_detection_ts}")
-        # print('------------------------------------------------------')
         return False
 
 
