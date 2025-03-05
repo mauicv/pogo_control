@@ -47,6 +47,6 @@ class Servo:
         return pwm_val
 
     def get_pwm(self):
-        self._update_value = self.pid_controller(self._update_value)
+        self._update_value = self.pid_controller(self._value)
         self._value += self._update_value
         return self._value_to_pwm()

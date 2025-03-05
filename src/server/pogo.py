@@ -2,17 +2,17 @@ from server.mpu6050Mixin import MPU6050Mixin
 from server.servo_controller import ServoController
 from server.servo import Servo
 
-# generic_values = {
-#     "kp": 0.1,
-#     "ki": 0.01,
-#     "kd": 0.001,
-# }
-
 generic_values = {
-    "kp": 0.02,
-    "ki": 0.02,
-    "kd": 0.01,
+    "kp": 0.1,
+    "ki": 0.01,
+    "kd": 0.001,
 }
+
+# generic_values = {
+#     "kp": 0.02,
+#     "ki": 0.02,
+#     "kd": 0.01,
+# }
 
 
 class Pogo(ServoController, MPU6050Mixin):
