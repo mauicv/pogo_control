@@ -96,6 +96,7 @@ def sample(
         current_time = time.time()
         if i % 2 == 0:
             true_action = model(state).numpy()[0, 0]
+            # true_action = np.array([-0.3, 0.4, -0.3, 0.4, -0.3, 0.4, -0.3, 0.4])
             action_noise = np.random.normal(0, noise, size=true_action.shape)
             true_action = true_action + action_noise
             true_action = np.clip(true_action, -1, 1)
