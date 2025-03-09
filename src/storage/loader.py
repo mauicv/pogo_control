@@ -54,16 +54,16 @@ def default_standing_reward(states, conditions):
             pitch
         ] = state
         standing_reward = - 100 * (
-            min((front_left_bottom - 0.4)**2, 2) +
-            min((front_right_bottom - 0.4)**2, 2) +
-            min((back_right_bottom - 0.4)**2, 2) +
-            min((back_left_bottom - 0.4)**2, 2) +
-            min((front_left_top - -0.3)**2, 2) +
-            min((front_right_top - -0.3)**2, 2) +
-            min((back_right_top - -0.3)**2, 2) +
-            min((back_left_top - -0.3)**2, 2) +
-            min(roll**2, 2) +
-            min(pitch**2, 2)
+            (front_left_bottom - 0.4)**2 +
+            (front_right_bottom - 0.4)**2 +
+            (back_right_bottom - 0.4)**2 +
+            (back_left_bottom - 0.4)**2 +
+            (front_left_top - -0.3)**2 +
+            (front_right_top - -0.3)**2 +
+            (back_right_top - -0.3)**2 +
+            (back_left_top - -0.3)**2 +
+            5 * roll**2 +
+            5 * pitch**2
         )
         rewards.append(standing_reward)
     standing_reward = torch.tensor(rewards)
@@ -85,7 +85,7 @@ def sanity_check_reward_function(states, conditions):
             back_left_bottom,
             *_
         ] = state
-        reward = - (
+        reward = - 100 * (
             (front_left_bottom - 0.4)**2 +
             (front_right_bottom - 0.4)**2 +
             (back_right_bottom - 0.4)**2 +
@@ -94,7 +94,7 @@ def sanity_check_reward_function(states, conditions):
             (front_right_top - -0.3)**2 +
             (back_right_top - -0.3)**2 +
             (back_left_top - -0.3)**2
-        ) / 8
+        )
         rewards.append(reward)
     return torch.tensor(rewards)[:, None]
 
