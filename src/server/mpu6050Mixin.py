@@ -83,9 +83,16 @@ class MPU6050Mixin:
             *self.latest_filtered_data,
             self.c_filter.roll,
             self.c_filter.pitch,
-            self.c_filter.overturned,
+            self.overturned,
             self.last_mpus6050_sample_ts
         ]
+
+    @property
+    def overturned(self):
+        _, _, az = self.latest_filtered_data[:3]
+        overturned = az * 10 < 1
+        print(f"Overturned: {overturned}, az * 10: {az * 10}")
+        return int(overturned)
 
     def deinit_mpu(self):
         """Clean up resources"""

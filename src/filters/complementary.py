@@ -42,10 +42,6 @@ class ComplementaryFilter:
     @property
     def pitch(self):
         return self.pitchComp / 180
-    
-    @property
-    def overturned(self):
-        return self.roll > 0.4 or self.roll < -0.4
         
     @property
     def g_x(self):

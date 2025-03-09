@@ -3,7 +3,7 @@ from server.servo_controller import ServoController
 from server.servo import Servo
 
 generic_values = {
-    "kp": 0.1,
+    "kp": 0.05,
     "ki": 0.01,
     "kd": 0.001,
 }
@@ -55,7 +55,7 @@ class Pogo(ServoController, MPU6050Mixin):
             self.c_filter.pitch,
         ]
         conditions_data = [
-            self.c_filter.overturned,
+            self.overturned,
             self.last_mpus6050_sample_ts,
             self.last_servo_set_ts
         ]
@@ -93,7 +93,7 @@ class SensorPogo(MPU6050Mixin):
             self.c_filter.pitch,
         ]
         conditions_data = [
-            self.c_filter.overturned,
+            self.overturned,
             self.last_mpus6050_sample_ts,
         ]
         return [

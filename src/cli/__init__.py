@@ -197,8 +197,8 @@ def client(
         filter,
         num_steps=num_steps,
         interval=interval,
-        noise_range=noise_range,
-        weight_range=weight_range,
+        noise_perturbation_range=noise_range,
+        weight_perturbation_range=weight_range,
         consecutive_error_limit=consecutive_error_limit,
         random_model=random_model,
         test=test
