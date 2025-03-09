@@ -133,8 +133,8 @@ def pogo_sensor_server(port):
 @cli.command()
 @click.option('--num-steps', type=int, default=250)
 @click.option('--interval', type=float, default=0.1)
-@click.option('--noise', type=float, default=0.3)
-@click.option('--weight-perturbation', type=float, default=0.0)
+@click.option('--noise-range', nargs=2, type=float, default=(0.01, 0.5))
+@click.option('--weight-range', nargs=2, type=float, default=(0.01, 0.02))
 @click.option('--consecutive-error-limit', type=int, default=10)
 @click.option('--name', type=str, default='pogo_control')
 @click.option('--random-model', is_flag=True)
@@ -142,8 +142,8 @@ def pogo_sensor_server(port):
 def client(
         num_steps,
         interval,
-        noise,
-        weight_perturbation,
+        noise_range,
+        weight_range,
         consecutive_error_limit,
         name,
         random_model,
@@ -197,11 +197,11 @@ def client(
         filter,
         num_steps=num_steps,
         interval=interval,
-        noise=noise,
+        noise_range=noise_range,
+        weight_range=weight_range,
         consecutive_error_limit=consecutive_error_limit,
         random_model=random_model,
-        test=test,
-        weight_perturbation=weight_perturbation
+        test=test
     )
 
 

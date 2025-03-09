@@ -49,6 +49,12 @@ def create_model(
         actor=actor
     )
 
+def get_random_perturbation(perturbation_range: tuple[float, float]):
+    assert perturbation_range[0] <= perturbation_range[1]
+    if perturbation_range[0] == perturbation_range[1]:
+        return perturbation_range[0]
+    else:
+        return random.uniform(perturbation_range[0], perturbation_range[1])
 
 def run_client(
         gcs: GCS_Interface,
@@ -57,11 +63,12 @@ def run_client(
         num_steps: int = 100,
         interval: float = 0.1,
         consecutive_error_limit: int = 3,
-        noise: float = 0.3,
-        weight_perturbation: float = 0.00,
+        noise_perturbation_range: tuple[float, float] = (0.00, 0.00),
+        weight_perturbation_range: tuple[float, float] = (0.00, 0.00),
         random_model: bool = False,
         test: bool = False
     ):
+
     if not random_model:
         model = wait_for_model(gcs)
         print(model)
@@ -70,9 +77,8 @@ def run_client(
     time_start = time()
     while True:
         count += 1
-        random_weight_perturbation = random.uniform(0.01, 0.03)
-        weight_perturbation = random_weight_perturbation
-        weight_perturbation = 0
+        weight_perturbation = get_random_perturbation(weight_perturbation_range)
+        noise = get_random_perturbation(noise_perturbation_range)
 
         try:
             print('==========================================')

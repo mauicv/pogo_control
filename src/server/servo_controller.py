@@ -27,7 +27,7 @@ class ServoController:
 
     def get_servo_data(self):
         servo_values = [servo._value for servo in self.servos]
-        servo_updates = [10 * servo._update_value for servo in self.servos]
+        servo_updates = [100 * servo._update_value for servo in self.servos]
         return servo_values + servo_updates
 
     def update_angle(self, values: list[float]):

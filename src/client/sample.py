@@ -89,14 +89,11 @@ def sample(
         times=[],
         conditions=[]
     )
-    # states = []
-    # world_states = []
     current_time = time.time()
     for i in tqdm(range(num_steps)):
         current_time = time.time()
         if i % 2 == 0:
             true_action = model(state).numpy()[0, 0]
-            # true_action = np.array([-0.3, 0.4, -0.3, 0.4, -0.3, 0.4, -0.3, 0.4])
             action_noise = np.random.normal(0, noise, size=true_action.shape)
             true_action = true_action + action_noise
             true_action = np.clip(true_action, -1, 1)
@@ -106,14 +103,10 @@ def sample(
             state = state.numpy()
             filtered_action = filter(true_action)
             rollout.append(state, true_action, current_time, conditions)
-            # states = []
-            # world_states = []
         if counter.update_check(conditions):
             break
         servo_state, world_state, conditions = client.send_data(filtered_action)
         state = torch.tensor(servo_state + world_state)
-        # states.append(state)
-        # world_states.append(world_state)
 
         elapsed_time = time.time() - current_time
         if elapsed_time < interval:

@@ -134,7 +134,7 @@ class DataLoader:
             state_dim=14,
             action_dim=8,
             num_time_steps=25,
-            reward_function=sanity_check_reward_function
+            reward_function=default_standing_reward
         ) -> None:
         self.num_time_steps = num_time_steps
         self.reward_function = reward_function
