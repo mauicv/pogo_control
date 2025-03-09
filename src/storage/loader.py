@@ -4,7 +4,7 @@ import json
 from tqdm import tqdm
 
 def overturned_penalty(rewards, conditions):
-    MAX_OVERTURNED_PENALTY = 10
+    MAX_OVERTURNED_PENALTY = 100
     overturn_index = None
     for i, condition in enumerate(conditions):
         [overturned, *_] = condition
@@ -53,7 +53,7 @@ def default_standing_reward(states, conditions):
             roll,
             pitch
         ] = state
-        standing_reward = - (
+        standing_reward = - 100 * (
             min((front_left_bottom - 0.4)**2, 2) +
             min((front_right_bottom - 0.4)**2, 2) +
             min((back_right_bottom - 0.4)**2, 2) +
@@ -64,7 +64,7 @@ def default_standing_reward(states, conditions):
             min((back_left_top - -0.3)**2, 2) +
             min(roll**2, 2) +
             min(pitch**2, 2)
-        ) / 10
+        )
         rewards.append(standing_reward)
     standing_reward = torch.tensor(rewards)
     overturned_reward = overturned_penalty(rewards, conditions)
