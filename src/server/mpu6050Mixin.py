@@ -91,7 +91,6 @@ class MPU6050Mixin:
     def overturned(self):
         _, _, az = self.latest_filtered_data[:3]
         overturned = az * 10 < 1
-        print(f"Overturned: {overturned}, az * 10: {az * 10}")
         return int(overturned)
 
     def deinit_mpu(self):
