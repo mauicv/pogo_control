@@ -54,14 +54,14 @@ def default_standing_reward(states, conditions):
             pitch
         ] = state
         standing_reward = - 100 * (
-            max((front_left_bottom - 0.4)**2, 2) +
-            max((front_right_bottom - 0.4)**2, 2) +
-            max((back_right_bottom - 0.4)**2, 2) +
-            max((back_left_bottom - 0.4)**2, 2) +
-            max((front_left_top - -0.3)**2, 2) +
-            max((front_right_top - -0.3)**2, 2) +
-            max((back_right_top - -0.3)**2, 2) +
-            max((back_left_top - -0.3)**2, 2) +
+            min((front_left_bottom - 0.4)**2, 2) +
+            min((front_right_bottom - 0.4)**2, 2) +
+            min((back_right_bottom - 0.4)**2, 2) +
+            min((back_left_bottom - 0.4)**2, 2) +
+            min((front_left_top - -0.3)**2, 2) +
+            min((front_right_top - -0.3)**2, 2) +
+            min((back_right_top - -0.3)**2, 2) +
+            min((back_left_top - -0.3)**2, 2) +
             10 * roll**2 +
             10 * pitch**2
         )
