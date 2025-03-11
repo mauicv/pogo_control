@@ -2,6 +2,7 @@ from google.cloud import storage
 import torch
 import json
 from tqdm import tqdm
+from config import PRECOMPUTED_MEANS, PRECOMPUTED_STDS
 
 def overturned_penalty(rewards, conditions):
     MAX_OVERTURNED_PENALTY = 1000
@@ -124,6 +125,7 @@ def make_mask(detection_ts):
     return mask
 
 
+
 class DataLoader:
     def __init__(
             self,
@@ -134,7 +136,9 @@ class DataLoader:
             state_dim=14,
             action_dim=8,
             num_time_steps=25,
-            reward_function=default_standing_reward
+            reward_function=default_standing_reward,
+            means=PRECOMPUTED_MEANS,
+            stds=PRECOMPUTED_STDS
         ) -> None:
         self.num_time_steps = num_time_steps
         self.reward_function = reward_function
@@ -145,6 +149,8 @@ class DataLoader:
         self.num_runs = num_runs
         self.state_dim = state_dim
         self.action_dim = action_dim
+        self.means = means
+        self.stds = stds
 
         self.state_buffer = torch.zeros(
             (self.num_runs, self.rollout_length, self.state_dim),
@@ -200,6 +206,8 @@ class DataLoader:
             end_index = rollout_data['end_index']
             conditions = rollout_data['conditions']
             states = torch.tensor(rollout_data['states'])
+            if self.means is not None and self.stds is not None:
+                states = (states - self.means) / self.stds
             self.state_buffer[run_index][:end_index+1] = states
             actions = torch.tensor(rollout_data['actions'])
             self.action_buffer[run_index][:end_index+1] = actions

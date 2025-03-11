@@ -5,6 +5,8 @@ from dataclasses import dataclass
 from client.multi_client import MultiClientInterface
 from filters.butterworth import ButterworthFilter
 import numpy as np
+from config import PRECOMPUTED_MEANS, PRECOMPUTED_STDS
+
 
 INITIAL_POSITION = (-0.4, -0.4, 0.4, 0.4, -0.4, -0.4, 0.4, 0.4)
 
@@ -60,6 +62,23 @@ class ConditionCounter:
         if self.overturned_iteration_count > self.overturned_iteration_count_limit:
             return True
         return False
+    
+
+def compute_actions(
+        model: torch.nn.Module,
+        state: torch.Tensor,
+        filter: ButterworthFilter,
+        noise: float = 0.3,
+        mean: torch.Tensor = PRECOMPUTED_MEANS,
+        std: torch.Tensor = PRECOMPUTED_STDS
+) -> list[float]:
+    state = (state - mean) / std
+    true_action = model(state).numpy()[0, 0]
+    action_noise = np.random.normal(0, noise, size=true_action.shape)
+    true_action = true_action + action_noise
+    true_action = np.clip(true_action, -1, 1)
+    filtered_action = filter(true_action)
+    return true_action, filtered_action
 
 
 def sample(
@@ -93,15 +112,16 @@ def sample(
     for i in tqdm(range(num_steps)):
         current_time = time.time()
         if i % 2 == 0:
-            true_action = model(state).numpy()[0, 0]
-            action_noise = np.random.normal(0, noise, size=true_action.shape)
-            true_action = true_action + action_noise
-            true_action = np.clip(true_action, -1, 1)
+            true_action, filtered_action = compute_actions(
+                model,
+                state,
+                filter,
+                noise=noise,
+            )
             # NOTE: the state, actions stored here are related as the
             # action resulting from the state (not the state resulting
             # from the action)
             state = state.numpy()
-            filtered_action = filter(true_action)
             rollout.append(state, true_action, current_time, conditions)
         if counter.update_check(conditions):
             break

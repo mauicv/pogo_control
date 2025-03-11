@@ -95,4 +95,5 @@ class GCSModel:
             logger.info(f'loaded model version {self.version}')
         else:
             logger.info(f'model version {self.version} already loaded')
+
         return self.model
