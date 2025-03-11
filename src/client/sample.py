@@ -72,8 +72,8 @@ def compute_actions(
         mean: torch.Tensor = PRECOMPUTED_MEANS,
         std: torch.Tensor = PRECOMPUTED_STDS
 ) -> list[float]:
-    state = (state - mean) / std
-    true_action = model(state).numpy()[0, 0]
+    norm_state = (state - mean) / std
+    true_action = model(norm_state).numpy()[0, 0]
     action_noise = np.random.normal(0, noise, size=true_action.shape)
     true_action = true_action + action_noise
     true_action = np.clip(true_action, -1, 1)
