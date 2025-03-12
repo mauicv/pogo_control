@@ -10,18 +10,7 @@ def overturned_penalty(rewards, conditions):
     for i, condition in enumerate(conditions):
         [overturned, *_] = condition
         if overturned:
-            overturn_index = i
-            break
-    
-    if overturn_index is None:
-        return torch.zeros(len(rewards))
-
-    overturned_reward = -MAX_OVERTURNED_PENALTY
-    for i in range(overturn_index, 0, -1):
-        rewards[i] += overturned_reward
-        overturned_reward = overturned_reward * 0.75
-    for i in range(overturn_index + 1, len(rewards)):
-        rewards[i] = -MAX_OVERTURNED_PENALTY
+            rewards[i] = -MAX_OVERTURNED_PENALTY
     return torch.tensor(rewards)
 
 

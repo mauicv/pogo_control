@@ -84,6 +84,8 @@ def run_client(
             print('==========================================')
             print(f'Count: {count}')
             print(f'Time: {(time() - time_start)/60:.2f} minutes')
+            print(f'Weight perturbation: {weight_perturbation}')
+            print(f'Noise: {noise}')
 
             print('Sampling rollout')
             if random_model:
