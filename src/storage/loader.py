@@ -207,7 +207,7 @@ class DataLoader:
             # detection_ts = [condition[-1] for condition in conditions]
             # self.dropout_mask[run_index][:end_index+1] = make_mask(detection_ts)
             if end_index < self.num_time_steps:
-                for i in range(end_index+1, self.num_time_steps):
+                for i in range(end_index + 1, self.num_time_steps + 1):
                     # pad the rollout with the last state
                     self.state_buffer[run_index][i] = self.state_buffer[run_index][end_index]
                     self.action_buffer[run_index][i] = self.action_buffer[run_index][end_index]
