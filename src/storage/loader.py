@@ -6,10 +6,11 @@ from config import PRECOMPUTED_MEANS, PRECOMPUTED_STDS
 
 def overturned_penalty(rewards, conditions):
     MAX_OVERTURNED_PENALTY = 1000
-    overturn_index = None
+    end_condition = False
     for i, condition in enumerate(conditions):
         [overturned, *_] = condition
-        if overturned:
+        if overturned or end_condition:
+            end_condition = True
             rewards[i] = -MAX_OVERTURNED_PENALTY
     return torch.tensor(rewards)
 
