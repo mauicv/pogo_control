@@ -5,7 +5,7 @@ from tqdm import tqdm
 from config import PRECOMPUTED_MEANS, PRECOMPUTED_STDS
 
 def overturned_penalty(rewards, conditions):
-    MAX_OVERTURNED_PENALTY = 1000
+    MAX_OVERTURNED_PENALTY = 10
     end_condition = False
     for i, condition in enumerate(conditions):
         [overturned, *_] = condition
@@ -17,7 +17,7 @@ def overturned_penalty(rewards, conditions):
 
 def default_standing_reward(states, conditions):
     rewards = []
-    for state in states:
+    for state, condition in zip(states, conditions):
         [
             front_right_top,
             front_right_bottom,
@@ -44,22 +44,56 @@ def default_standing_reward(states, conditions):
             roll,
             pitch
         ] = state
-        standing_reward = - 100 * (
-            min((front_left_bottom - 0.4)**2, 2) +
-            min((front_right_bottom - 0.4)**2, 2) +
-            min((back_right_bottom - 0.4)**2, 2) +
-            min((back_left_bottom - 0.4)**2, 2) +
-            min((front_left_top - -0.3)**2, 2) +
-            min((front_right_top - -0.3)**2, 2) +
-            min((back_right_top - -0.3)**2, 2) +
-            min((back_left_top - -0.3)**2, 2) +
-            10 * roll**2 +
-            10 * pitch**2
+
+        [overturned, *_] = condition
+        
+        position_reward = (
+            1 - abs(front_left_bottom - 0.4) +
+            1 - abs(front_right_bottom - 0.4) +
+            1 - abs(back_right_bottom - 0.4) +
+            1 - abs(back_left_bottom - 0.4) +
+            1 - abs(front_left_top - -0.3) +
+            1 - abs(front_right_top - -0.3) +
+            1 - abs(back_right_top - -0.3) +
+            1 - abs(back_left_top - -0.3)
+        ) / 8
+
+        symmetry_penalty = - (
+            abs(front_left_bottom - front_right_bottom) +
+            abs(front_left_top - front_right_top) +
+            abs(back_left_bottom - back_right_bottom) +
+            abs(back_left_top - back_right_top)
+        ) / 4
+
+
+        posture_reward = torch.exp(-(roll**2 + pitch**2)/2)
+        stability_reward = torch.exp(-(ax**2 + ay**2 + az**2)/3)
+
+        smoothness_penalty = - (
+            front_right_top_vel**2 +
+            front_right_bottom_vel**2 +
+            front_left_top_vel**2 +
+            front_left_bottom_vel**2 +
+            back_right_top_vel**2 +
+            back_right_bottom_vel**2 +
+            back_left_top_vel**2 +
+            back_left_bottom_vel**2
+        ) / 8
+
+        overturn_penalty = 0
+        if overturned:
+            overturn_penalty = -10
+
+        rewards.append(
+            position_reward +
+            posture_reward +
+            stability_reward +
+            symmetry_penalty +
+            smoothness_penalty +
+            overturn_penalty
         )
-        rewards.append(standing_reward)
-    standing_reward = torch.tensor(rewards)
-    overturned_reward = overturned_penalty(rewards, conditions)
-    return (standing_reward + overturned_reward)[:, None]
+    rewards = torch.tensor(rewards)
+    return (rewards)[:, None]
 
 
 def sanity_check_reward_function(states, conditions):
