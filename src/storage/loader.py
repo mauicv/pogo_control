@@ -85,12 +85,12 @@ def default_standing_reward(states, conditions):
             overturn_penalty = -10
 
         rewards.append(
-            position_reward +
+            10 * position_reward +
             posture_reward +
-            stability_reward +
-            symmetry_penalty +
-            smoothness_penalty +
-            overturn_penalty
+            # 0.01 * stability_reward +
+            # 0.1 * symmetry_penalty +
+            0.1 * smoothness_penalty +
+            10 * overturn_penalty
         )
     rewards = torch.tensor(rewards)
     return (rewards)[:, None]
@@ -235,7 +235,7 @@ class DataLoader:
             self.state_buffer[run_index][:end_index+1] = states
             actions = torch.tensor(rollout_data['actions'])
             self.action_buffer[run_index][:end_index+1] = actions
-            rewards = self.reward_function(rollout_data['states'], conditions)
+            rewards = self.reward_function(states, conditions)
             self.reward_buffer[run_index][:end_index+1] = rewards
             self.dropout_mask[run_index][:end_index+1] = 1
             # detection_ts = [condition[-1] for condition in conditions]
