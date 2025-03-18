@@ -230,12 +230,13 @@ class DataLoader:
             end_index = rollout_data['end_index']
             conditions = rollout_data['conditions']
             states = torch.tensor(rollout_data['states'])
+            # Note that the reward funciton is applied to the unnormalized states!
+            rewards = self.reward_function(states, conditions)
             if self.means is not None and self.stds is not None:
                 states = (states - self.means) / self.stds
             self.state_buffer[run_index][:end_index+1] = states
             actions = torch.tensor(rollout_data['actions'])
             self.action_buffer[run_index][:end_index+1] = actions
-            rewards = self.reward_function(states, conditions)
             self.reward_buffer[run_index][:end_index+1] = rewards
             self.dropout_mask[run_index][:end_index+1] = 1
             # detection_ts = [condition[-1] for condition in conditions]
