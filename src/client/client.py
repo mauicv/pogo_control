@@ -1,8 +1,6 @@
 import socket
 import json
 
-# AC:BC:32:D1:8F:C0
-
     
 class Client:
     def __init__(self, host, port):
@@ -28,4 +26,3 @@ class Client:
 
     def close(self):
         self.s.close()
-

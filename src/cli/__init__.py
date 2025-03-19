@@ -3,10 +3,28 @@ import logging
 import dotenv
 import os
 import time
+import numpy as np
+import json
+import pprint
 
 dotenv.load_dotenv()
 
 logger = logging.getLogger(__name__)
+
+c_params = {
+    "camera_matrix": np.array([
+        [2085.4159146805323, 0.0, 1148.4264238731403],
+        [0.0, 2081.546003047629, 790.0377744644074],
+        [0.0, 0.0, 1.0]
+    ]),
+    "dist_coeff": np.array([[
+        0.020513211878008017,
+        -0.38588468516917407,
+        0.005600115703970824,
+        0.012111562135710205,
+        2.66038039807393
+    ]])
+}
 
 
 @click.group()
@@ -18,7 +36,7 @@ def cli(debug):
 @cli.command()
 @click.option('--name', type=str, default='pogo_control')
 def clean(name):
-    from client.gcs_interface import GCS_Interface
+    from storage import GCS_Interface
     gcs = GCS_Interface(
         experiment_name=name,
         credentials='world-model-rl-01a513052a8a.json',
@@ -31,20 +49,52 @@ def clean(name):
 
 @cli.command()
 @click.option('--port', type=int, default=8000)
-def server(port):
+@click.option('--camera-matrix-file', type=str, default='camera_calibration_files/picamera-module-3.json')
+def camera_sensor_server(port, camera_matrix_file):
+    from server.channel import Channel
+    from server.pose_sensor import PoseSensor
+    from server.camera import Picamera2Camera as Camera
+
+    with open(camera_matrix_file, 'r') as f:
+        c_params = json.load(f)
+        pprint.pprint(c_params)
+
+    camera_matrix = np.array(c_params['camera_matrix'])
+    dist_coeff = np.array(c_params['dist_coeff'])
+
+    camera = Camera(
+        input_source="main",
+        height=1536,
+        width=2048,
+        camera_matrix=camera_matrix,
+        dist_coeff=dist_coeff,
+    )
+    pose_sensor = PoseSensor(camera=camera, update_interval=0.01)
+    HOST = os.getenv("HOST")
+    POST = port if port else int(os.getenv("POST"))
+
+    def _handle_message(message):
+        # time.sleep(0.08)
+        data = pose_sensor.get_data()
+        return data
+
+    channel = Channel(host=HOST, port=POST)
+    channel.serve(_handle_message)
+
+
+@cli.command()
+@click.option('--port', type=int, default=8000)
+def pogo_server(port):
     from server.channel import Channel
     from server.pogo import Pogo
-    from server.camera import Camera
     import pigpio
     from server.mpu6050 import mpu6050
 
     gpio = pigpio.pi()
     mpu = mpu6050(0x68)
-    camera = Camera()
     pogo = Pogo(
         gpio=gpio,
         mpu=mpu,
-        camera=camera,
         update_interval=0.01,
     )
     HOST = os.getenv("HOST")
@@ -61,15 +111,13 @@ def server(port):
 
 @cli.command()
 @click.option('--port', type=int, default=8000)
-def sensor_server(port):
+def pogo_sensor_server(port):
     from server.channel import Channel
     from server.mpu6050 import mpu6050
     from server.pogo import SensorPogo
-    from server.camera import Camera
 
     mpu = mpu6050(0x68)
-    camera = Camera()
-    sensor_pogo = SensorPogo(mpu=mpu, camera=camera, update_interval=0.01)
+    sensor_pogo = SensorPogo(mpu=mpu, update_interval=0.01)
     HOST = os.getenv("HOST")
     POST = port if port else int(os.getenv("POST"))
 
@@ -83,50 +131,10 @@ def sensor_server(port):
 
 
 @cli.command()
-@click.option('--name', type=str, default='pogo_control')
-def create(name):
-    from client.gcs_interface import GCS_Interface
-    from client.model import Actor, EncoderActor, DenseModel
-        
-    gcs = GCS_Interface(
-        experiment_name=name,
-        credentials='world-model-rl-01a513052a8a.json',
-        bucket='pogo_wmrl',
-        model_limits=4
-    )
-
-    # 8 servo, 3 accelerometer, 3 gyro, pitch, roll, aruco d, aruco v
-    state_dim = 8 + 6 + 2 + 1
-    action_dim = 8
-
-    encoder = DenseModel(
-        depth=1,
-        input_dim=state_dim,
-        hidden_dim=256,
-        output_dim=256 * 32,
-    )
-
-    actor = Actor(
-        input_dim=256 * 32,
-        output_dim=action_dim,
-        bound=1,
-    )
-
-    model = EncoderActor(
-        encoder=encoder,
-        actor=actor,
-        num_latent=256,
-        num_cat=32
-    )
-
-    gcs.model.upload_model(model)
-
-
-@cli.command()
 @click.option('--num-steps', type=int, default=250)
 @click.option('--interval', type=float, default=0.1)
-@click.option('--noise', type=float, default=0.0)
-@click.option('--weight-perturbation', type=float, default=0.06)
+@click.option('--noise-range', nargs=2, type=float, default=(0.01, 0.5))
+@click.option('--weight-range', nargs=2, type=float, default=(0.01, 0.02))
 @click.option('--consecutive-error-limit', type=int, default=10)
 @click.option('--name', type=str, default='pogo_control')
 @click.option('--random-model', is_flag=True)
@@ -134,16 +142,18 @@ def create(name):
 def client(
         num_steps,
         interval,
-        noise,
-        weight_perturbation,
+        noise_range,
+        weight_range,
         consecutive_error_limit,
         name,
         random_model,
         test
     ): 
+    # from client.multi_client import MultiClientInterface
     from client.client import Client
     from filters.butterworth import ButterworthFilter
-    from client.gcs_interface import GCS_Interface
+    from filters.identity import IdentityFilter
+    from storage import GCS_Interface
     from client.run import run_client
     import torch
     torch.set_grad_enabled(False)
@@ -158,49 +168,41 @@ def client(
         bucket='pogo_wmrl',
         model_limits=4
     )
-    host = os.getenv("HOST")
-    port = int(os.getenv("POST"))
-
+    # camera_host = os.getenv("CAMERA_HOST")
+    # camera_port = int(os.getenv("CAMERA_POST"))
+    # client = MultiClientInterface(
+    #     pogo_host=pogo_host,
+    #     pogo_port=pogo_port,
+    #     camera_host=camera_host,
+    #     camera_port=camera_port
+    # )
+    pogo_host = os.getenv("POGO_HOST")
+    pogo_port = int(os.getenv("POGO_POST"))
     client = Client(
-        host=host,
-        port=port
+        host=pogo_host,
+        port=pogo_port
     )
     client.connect()
-    butterworth_filter = ButterworthFilter(
+
+    filter = ButterworthFilter(
         order=5,
-        cutoff=5.0,
+        cutoff=12.0,
         fs=50.0,
         num_components=8 # 8 servo motors
     )
+    # filter = IdentityFilter()
     run_client(
         gcs,
         client,
-        butterworth_filter,
+        filter,
         num_steps=num_steps,
         interval=interval,
-        noise=noise,
+        noise_perturbation_range=noise_range,
+        weight_perturbation_range=weight_range,
         consecutive_error_limit=consecutive_error_limit,
         random_model=random_model,
-        test=test,
-        weight_perturbation=weight_perturbation
+        test=test
     )
-
-
-@cli.command()
-def reset():
-    from client.client import Client
-    from client.run import set_init_state
-
-    host = os.getenv("HOST")
-    port = int(os.getenv("POST"))
-
-    client = Client(
-        host=host,
-        port=port
-    )
-    client.connect()
-    INITIAL_POSITION = (-0.4, -0.4, 0.4, 0.4, -0.4, -0.4, 0.4, 0.4)
-    set_init_state(client, INITIAL_POSITION)
 
 
 @cli.command()
@@ -213,18 +215,21 @@ def reset():
 @click.option('--back-right-bottom', type=float, default=0.0)
 @click.option('--back-right-top', type=float, default=0.0)
 def move_robot(front_left_bottom, front_left_top, front_right_bottom, front_right_top, back_left_bottom, back_left_top, back_right_bottom, back_right_top):
+    """
+    Move the robot to the given angles.
+
+    example:
+        pogo move-robot --front-left-bottom=0.4 --front-right-bottom=0.4 --back-right-bottom=0.4 --back-left-bottom=0.4 --front-left-top=-0.3 --front-right-top=-0.3 --back-right-top=-0.3 --back-left-top=-0.3
+    """
     from server.pogo import Pogo
     import pigpio
     from server.mpu6050 import mpu6050
-    from server.camera import Camera
 
-    camera = Camera(input_source=-1)
     gpio = pigpio.pi()
     mpu = mpu6050(0x68)
     pogo = Pogo(
         gpio=gpio,
         mpu=mpu,
-        camera=camera,
         update_interval=0.01,
     )
 

@@ -2,9 +2,11 @@ import torch
 import time
 from tqdm import tqdm
 from dataclasses import dataclass
-from client.client import Client
+from client.multi_client import MultiClientInterface
 from filters.butterworth import ButterworthFilter
 import numpy as np
+from config import PRECOMPUTED_MEANS, PRECOMPUTED_STDS
+
 
 INITIAL_POSITION = (-0.4, -0.4, 0.4, 0.4, -0.4, -0.4, 0.4, 0.4)
 
@@ -42,20 +44,16 @@ class Rollout:
 
 
 class ConditionCounter:
-    def __init__(self, overturned_iteration_count_limit: int, no_marker_count_limit: int):
+    def __init__(self, overturned_iteration_count_limit: int):
         self.overturned_iteration_count_limit = overturned_iteration_count_limit
-        self.no_marker_count_limit = no_marker_count_limit
         self.overturned_iteration_count = 0
-        self.no_marker_count = 0
 
     def update_check(self, conditions: list[float]) -> bool:
-        [_, _, height_marker_detected, _, overturned] = conditions
-        if not height_marker_detected:
-            self.no_marker_count += 1
-        else:
-            self.no_marker_count = 0
-        if self.no_marker_count > self.no_marker_count_limit:
-            return True
+        (
+            overturned,
+            last_mpus6050_sample_ts,
+            last_servo_set_ts,
+        ) = conditions
 
         if overturned:
             self.overturned_iteration_count += 1
@@ -64,16 +62,33 @@ class ConditionCounter:
         if self.overturned_iteration_count > self.overturned_iteration_count_limit:
             return True
         return False
+    
+
+def compute_actions(
+        model: torch.nn.Module,
+        state: torch.Tensor,
+        filter: ButterworthFilter,
+        noise: float = 0.3,
+        mean: torch.Tensor = PRECOMPUTED_MEANS,
+        std: torch.Tensor = PRECOMPUTED_STDS
+) -> list[float]:
+    norm_state = (state - mean) / std
+    true_action = model(norm_state).numpy()[0, 0]
+    action_noise = np.random.normal(0, noise, size=true_action.shape)
+    true_action = true_action + action_noise
+    true_action = np.clip(true_action, -1, 1)
+    filtered_action = filter(true_action)
+    return true_action, filtered_action
 
 
 def sample(
         model: torch.nn.Module,
         filter: ButterworthFilter,
-        client: Client,
+        client: MultiClientInterface,
         num_steps: int = 100,
         interval: float = 0.1,
         noise: float = 0.3,
-        weight_perturbation: float = 0.01,
+        weight_perturbation: float = 0.0,
     ) -> Rollout:
     filter.reset()
     torch.set_grad_enabled(False)
@@ -81,28 +96,35 @@ def sample(
         weight_perturbation_size=weight_perturbation
     )
     counter = ConditionCounter(
-        overturned_iteration_count_limit=3,
-        no_marker_count_limit=20
+        overturned_iteration_count_limit=1,
     )
-    action = torch.tensor(INITIAL_POSITION)
-    action = filter(action)
-    servo_state, world_state, conditions = client.send_data(action)
+    true_action = torch.tensor(INITIAL_POSITION)
+    filtered_action = filter(true_action)
+    servo_state, world_state, conditions = client.send_data(filtered_action)
     state = torch.tensor(servo_state + world_state)
-    rollout = Rollout(states=[], actions=[], times=[], conditions=[])
+    rollout = Rollout(
+        states=[],
+        actions=[],
+        times=[],
+        conditions=[]
+    )
     current_time = time.time()
     for i in tqdm(range(num_steps)):
         current_time = time.time()
-        true_action = model(state).numpy()[0, 0]
-        true_action = true_action + np.random.normal(0, noise, size=true_action.shape)
-        true_action = np.clip(true_action, -1, 1)
-        # NOTE: the state, actions stored here are related as the
-        # action resulting from the state (not the state resulting
-        # from the action)
-        state = state.numpy()
-        rollout.append(state, true_action, current_time, conditions)
+        if i % 2 == 0:
+            true_action, filtered_action = compute_actions(
+                model,
+                state,
+                filter,
+                noise=noise,
+            )
+            # NOTE: the state, actions stored here are related as the
+            # action resulting from the state (not the state resulting
+            # from the action)
+            state = state.numpy()
+            rollout.append(state, true_action, current_time, conditions)
         if counter.update_check(conditions):
             break
-        filtered_action = filter(true_action)
         servo_state, world_state, conditions = client.send_data(filtered_action)
         state = torch.tensor(servo_state + world_state)
 

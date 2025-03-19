@@ -1,10 +1,11 @@
 from client.client import Client
 from filters.butterworth import ButterworthFilter
-from client.gcs_interface import GCS_Interface
+from storage import GCS_Interface
 from client.sample import sample
 from client.model import Actor, EncoderActor, DenseModel
 import torch
 from time import sleep, time
+import random
 torch.set_grad_enabled(False)
 
 
@@ -26,7 +27,7 @@ def set_init_state(
 
 
 def create_model(
-        state_dim: int = 8 + 6 + 2 + 1,
+        state_dim: int = 8 + 6 + 2 + 2 + 2,
         action_dim: int = 8
     ):
     print('Randomizing model')
@@ -48,6 +49,12 @@ def create_model(
         actor=actor
     )
 
+def get_random_perturbation(perturbation_range: tuple[float, float]):
+    assert perturbation_range[0] <= perturbation_range[1]
+    if perturbation_range[0] == perturbation_range[1]:
+        return perturbation_range[0]
+    else:
+        return random.uniform(perturbation_range[0], perturbation_range[1])
 
 def run_client(
         gcs: GCS_Interface,
@@ -56,11 +63,12 @@ def run_client(
         num_steps: int = 100,
         interval: float = 0.1,
         consecutive_error_limit: int = 3,
-        noise: float = 0.3,
-        weight_perturbation: float = 0.01,
+        noise_perturbation_range: tuple[float, float] = (0.00, 0.00),
+        weight_perturbation_range: tuple[float, float] = (0.00, 0.00),
         random_model: bool = False,
         test: bool = False
     ):
+
     if not random_model:
         model = wait_for_model(gcs)
         print(model)
@@ -69,15 +77,20 @@ def run_client(
     time_start = time()
     while True:
         count += 1
+        weight_perturbation = get_random_perturbation(weight_perturbation_range)
+        noise = get_random_perturbation(noise_perturbation_range)
+
         try:
             print('==========================================')
             print(f'Count: {count}')
             print(f'Time: {(time() - time_start)/60:.2f} minutes')
+            print(f'Weight perturbation: {weight_perturbation}')
+            print(f'Noise: {noise}')
 
             print('Sampling rollout')
             if random_model:
                 model = create_model(
-                    state_dim=8 + 6 + 2 + 1,
+                    state_dim=2 * 8 + 6 + 2,
                     action_dim=8
                 )
 
