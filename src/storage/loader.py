@@ -2,6 +2,8 @@ from google.cloud import storage
 import torch
 import json
 from tqdm import tqdm
+from concurrent.futures import ThreadPoolExecutor
+from functools import partial
 from config import PRECOMPUTED_MEANS, PRECOMPUTED_STDS
 
 def overturned_penalty(rewards, conditions):
@@ -215,7 +217,54 @@ class DataLoader:
             if blob.name.endswith('.json'):
                 self.indexed_rollouts.add(blob.name)
 
-    def fetch_rollouts(self):
+    def _download_rollout(self, rollout_name):
+        with self.bucket.blob(rollout_name).open('r') as f:
+            rollout_data = json.load(f)
+        return rollout_name, rollout_data
+    
+    def _download_rollouts(self, rollout_names):
+        with ThreadPoolExecutor(max_workers=8) as executor:
+            rollout_data_list = list(tqdm(
+                executor.map(self._download_rollout, rollout_names),
+                total=len(rollout_names),
+                desc="Downloading rollouts"
+            ))
+        return rollout_data_list
+    
+    def _process_rollout(self, rollout_data, rollout_name):
+        run_index = self.rollout_ind % self.num_runs
+        end_index = rollout_data['end_index']
+        conditions = rollout_data['conditions']
+        states = torch.tensor(rollout_data['states'])
+        # Note that the reward funciton is applied to the unnormalized states!
+        rewards = self.reward_function(states, conditions)
+        if self.means is not None and self.stds is not None:
+            states = (states - self.means) / self.stds
+        self.state_buffer[run_index][:end_index+1] = states
+        actions = torch.tensor(rollout_data['actions'])
+        self.action_buffer[run_index][:end_index+1] = actions
+        self.reward_buffer[run_index][:end_index+1] = rewards
+        self.dropout_mask[run_index][:end_index+1] = 1
+        # detection_ts = [condition[-1] for condition in conditions]
+        # self.dropout_mask[run_index][:end_index+1] = make_mask(detection_ts)
+        if end_index < self.num_time_steps:
+            for i in range(end_index + 1, self.num_time_steps + 1):
+                # pad the rollout with the last state
+                self.state_buffer[run_index][i] = self.state_buffer[run_index][end_index]
+                self.action_buffer[run_index][i] = self.action_buffer[run_index][end_index]
+                self.reward_buffer[run_index][i] = self.reward_buffer[run_index][end_index]
+                self.dropout_mask[run_index][i] = self.dropout_mask[run_index][end_index]
+            end_index = self.num_time_steps
+        self.end_index[run_index] = end_index + 1
+        self.fetched_rollouts.add(rollout_name)
+        self.rollout_ind += 1
+
+    def fetch_all_rollouts(self):
+        rollout_data_list = self._download_rollouts(self.indexed_rollouts)
+        for rollout_name, rollout_data in tqdm(rollout_data_list):
+            self._process_rollout(rollout_data, rollout_name)
+
+    def fetch_new_rollouts(self):
         missing_rollouts = self.indexed_rollouts - self.fetched_rollouts
 
         if len(missing_rollouts) > self.num_runs:
@@ -224,34 +273,8 @@ class DataLoader:
             missing_rollouts = missing_rollouts[-self.num_runs:]
 
         for rollout in tqdm(missing_rollouts):
-            run_index = self.rollout_ind % self.num_runs
-            with self.bucket.blob(rollout).open('r') as f:
-                rollout_data = json.load(f)
-            end_index = rollout_data['end_index']
-            conditions = rollout_data['conditions']
-            states = torch.tensor(rollout_data['states'])
-            # Note that the reward funciton is applied to the unnormalized states!
-            rewards = self.reward_function(states, conditions)
-            if self.means is not None and self.stds is not None:
-                states = (states - self.means) / self.stds
-            self.state_buffer[run_index][:end_index+1] = states
-            actions = torch.tensor(rollout_data['actions'])
-            self.action_buffer[run_index][:end_index+1] = actions
-            self.reward_buffer[run_index][:end_index+1] = rewards
-            self.dropout_mask[run_index][:end_index+1] = 1
-            # detection_ts = [condition[-1] for condition in conditions]
-            # self.dropout_mask[run_index][:end_index+1] = make_mask(detection_ts)
-            if end_index < self.num_time_steps:
-                for i in range(end_index + 1, self.num_time_steps + 1):
-                    # pad the rollout with the last state
-                    self.state_buffer[run_index][i] = self.state_buffer[run_index][end_index]
-                    self.action_buffer[run_index][i] = self.action_buffer[run_index][end_index]
-                    self.reward_buffer[run_index][i] = self.reward_buffer[run_index][end_index]
-                    self.dropout_mask[run_index][i] = self.dropout_mask[run_index][end_index]
-                end_index = self.num_time_steps
-            self.end_index[run_index] = end_index + 1
-            self.fetched_rollouts.add(rollout)
-            self.rollout_ind += 1
+            rollout_name, rollout_data = self._download_rollout(rollout)
+            self._process_rollout(rollout_data, rollout_name)
 
     def compute_rollout_rewards(self, num_rollouts=10):
         rollout_rewards = []
