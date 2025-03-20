@@ -225,7 +225,7 @@ class DataLoader:
     def _download_rollouts(self, rollout_names):
         with ThreadPoolExecutor(max_workers=8) as executor:
             rollout_data_list = list(tqdm(
-                executor.map(self._load_rollout, rollout_names),
+                executor.map(self._download_rollout, rollout_names),
                 total=len(rollout_names),
                 desc="Downloading rollouts"
             ))
