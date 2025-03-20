@@ -273,8 +273,8 @@ class DataLoader:
             missing_rollouts = missing_rollouts[-self.num_runs:]
 
         for rollout in tqdm(missing_rollouts):
-            rollout_data = self.download_rollout(rollout)
-            self._process_rollout(rollout_data, rollout)
+            rollout_name, rollout_data = self._download_rollout(rollout)
+            self._process_rollout(rollout_data, rollout_name)
 
     def compute_rollout_rewards(self, num_rollouts=10):
         rollout_rewards = []
