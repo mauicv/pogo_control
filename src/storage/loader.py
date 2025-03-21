@@ -6,6 +6,7 @@ from concurrent.futures import ThreadPoolExecutor
 from functools import partial
 from config import PRECOMPUTED_MEANS, PRECOMPUTED_STDS
 
+
 def overturned_penalty(rewards, conditions):
     MAX_OVERTURNED_PENALTY = 10
     end_condition = False
@@ -48,51 +49,30 @@ def default_standing_reward(states, conditions):
         ] = state
 
         [overturned, *_] = condition
-        
-        position_reward = (
-            1 - abs(front_left_bottom - 0.4) +
-            1 - abs(front_right_bottom - 0.4) +
-            1 - abs(back_right_bottom - 0.4) +
-            1 - abs(back_left_bottom - 0.4) +
-            1 - abs(front_left_top - -0.3) +
-            1 - abs(front_right_top - -0.3) +
-            1 - abs(back_right_top - -0.3) +
-            1 - abs(back_left_top - -0.3)
-        ) / 8
-
-        symmetry_penalty = - (
-            abs(front_left_bottom - front_right_bottom) +
-            abs(front_left_top - front_right_top) +
-            abs(back_left_bottom - back_right_bottom) +
-            abs(back_left_top - back_right_top)
-        ) / 4
 
 
-        posture_reward = torch.exp(-(roll**2 + pitch**2)/2)
-        stability_reward = torch.exp(-(ax**2 + ay**2 + az**2)/3)
+        flbe = 1 - abs(front_left_bottom - 0.4)
+        frbe = 1 - abs(front_right_bottom - 0.4)
+        brbe = 1 - abs(back_right_bottom - 0.4)
+        blbe = 1 - abs(back_left_bottom - 0.4)
+        flte = 1 - abs(front_left_top - -0.3)
+        frte = 1 - abs(front_right_top - -0.3)
+        brte = 1 - abs(back_right_top - -0.3)
+        blte = 1 - abs(back_left_top - -0.3)
+        pe = 1 - abs(pitch)
+        re = 1 - abs(roll)
 
-        smoothness_penalty = - (
-            front_right_top_vel**2 +
-            front_right_bottom_vel**2 +
-            front_left_top_vel**2 +
-            front_left_bottom_vel**2 +
-            back_right_top_vel**2 +
-            back_right_bottom_vel**2 +
-            back_left_top_vel**2 +
-            back_left_bottom_vel**2
-        ) / 8
+        posture_reward = 0
+        for item in [flbe, frbe, brbe, blbe, flte, frte, brte, blte, pe, re]:
+            posture_reward += item
 
         overturn_penalty = 0
         if overturned:
             overturn_penalty = -10
 
         rewards.append(
-            10 * position_reward +
-            posture_reward +
-            # 0.01 * stability_reward +
-            # 0.1 * symmetry_penalty +
-            0.1 * smoothness_penalty +
-            10 * overturn_penalty
+            10 * posture_reward +
+            overturn_penalty
         )
     rewards = torch.tensor(rewards)
     return (rewards)[:, None]
