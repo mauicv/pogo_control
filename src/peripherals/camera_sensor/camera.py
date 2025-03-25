@@ -3,7 +3,6 @@ import time
 import numpy as np
 from dataclasses import dataclass
 from picamera2 import Picamera2
-from libcamera import controls
 import numpy as np
 import pprint
 import time

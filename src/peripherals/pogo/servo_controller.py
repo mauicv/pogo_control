@@ -1,5 +1,5 @@
-from server.servo import Servo
-from server.loop import Loop
+from peripherals.pogo.servo import Servo
+from networking_utils.loop import Loop
 import time
 
 

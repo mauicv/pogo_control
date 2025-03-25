@@ -51,9 +51,9 @@ def clean(name):
 @click.option('--port', type=int, default=8000)
 @click.option('--camera-matrix-file', type=str, default='camera_calibration_files/picamera-module-3.json')
 def camera_sensor_server(port, camera_matrix_file):
-    from server.channel import Channel
-    from server.pose_sensor import PoseSensor
-    from server.camera import Picamera2Camera as Camera
+    from networking_utils.channel import Channel
+    from peripherals.camera_sensor.pose_sensor import PoseSensor
+    from peripherals.camera_sensor.camera import Picamera2Camera as Camera
 
     with open(camera_matrix_file, 'r') as f:
         c_params = json.load(f)
@@ -85,10 +85,10 @@ def camera_sensor_server(port, camera_matrix_file):
 @cli.command()
 @click.option('--port', type=int, default=8000)
 def pogo_server(port):
-    from server.channel import Channel
-    from server.pogo import Pogo
+    from networking_utils.channel import Channel
+    from peripherals.pogo import Pogo
     import pigpio
-    from server.mpu6050 import mpu6050
+    from peripherals.pogo.mpu6050 import mpu6050
 
     gpio = pigpio.pi()
     mpu = mpu6050(0x68)
@@ -112,9 +112,9 @@ def pogo_server(port):
 @cli.command()
 @click.option('--port', type=int, default=8000)
 def pogo_sensor_server(port):
-    from server.channel import Channel
-    from server.mpu6050 import mpu6050
-    from server.pogo import SensorPogo
+    from networking_utils.channel import Channel
+    from peripherals.pogo.mpu6050 import mpu6050
+    from peripherals.pogo import SensorPogo
 
     mpu = mpu6050(0x68)
     sensor_pogo = SensorPogo(mpu=mpu, update_interval=0.01)
@@ -150,7 +150,7 @@ def client(
         test
     ): 
     # from client.multi_client import MultiClientInterface
-    from client.client import Client
+    from networking_utils.client import Client
     from filters.butterworth import ButterworthFilter
     from filters.identity import IdentityFilter
     from storage import GCS_Interface
@@ -221,9 +221,9 @@ def move_robot(front_left_bottom, front_left_top, front_right_bottom, front_righ
     example:
         pogo move-robot --front-left-bottom=0.4 --front-right-bottom=0.4 --back-right-bottom=0.4 --back-left-bottom=0.4 --front-left-top=-0.3 --front-right-top=-0.3 --back-right-top=-0.3 --back-left-top=-0.3
     """
-    from server.pogo import Pogo
+    from peripherals.pogo import Pogo
     import pigpio
-    from server.mpu6050 import mpu6050
+    from peripherals.pogo.mpu6050 import mpu6050
 
     gpio = pigpio.pi()
     mpu = mpu6050(0x68)
@@ -251,9 +251,9 @@ def move_robot(front_left_bottom, front_left_top, front_right_bottom, front_righ
 
 @cli.command()
 def sense():
-    from server.pogo import Pogo
+    from peripherals.pogo import Pogo
     import pigpio
-    from server.mpu6050 import mpu6050
+    from peripherals.pogo.mpu6050 import mpu6050
 
     gpio = pigpio.pi()
     mpu = mpu6050(0x68)

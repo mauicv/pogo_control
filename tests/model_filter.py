@@ -1,6 +1,5 @@
 import os
 import sys
-import torch
 import logging
 
 logger = logging.getLogger(__name__)

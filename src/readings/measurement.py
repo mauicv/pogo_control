@@ -2,7 +2,7 @@ import dotenv
 dotenv.load_dotenv()
 
 import numpy as np
-from client.client import Client
+from networking_utils.client import Client
 from tqdm import tqdm
 from readings.data import SensorDataArray
 

@@ -1,4 +1,3 @@
-from google.cloud import storage
 import torch
 import logging
 logger = logging.getLogger(__name__)

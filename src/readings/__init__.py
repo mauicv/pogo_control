@@ -20,7 +20,7 @@ def cli(ctx, debug, host, port):
     if debug:
         from readings.mock_client import MockClient as Client
     else:
-        from client.client import Client
+        from networking_utils.client import Client
 
     client = Client(
         host=host,

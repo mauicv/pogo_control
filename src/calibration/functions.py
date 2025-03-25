@@ -1,5 +1,5 @@
 from picamera2 import Picamera2
-from server.camera import Picamera2Camera
+from peripherals.camera_sensor.camera import Picamera2Camera
 import cv2
 import time
 from tqdm import tqdm

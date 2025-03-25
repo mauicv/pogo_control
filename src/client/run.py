@@ -1,4 +1,4 @@
-from client.client import Client
+from networking_utils.client import Client
 from filters.butterworth import ButterworthFilter
 from storage import GCS_Interface
 from client.sample import sample

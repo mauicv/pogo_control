@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import random
 from tqdm import tqdm
-from server.pogo import Pogo
+from peripherals.pogo import Pogo
 from rollout import rollout
 
 
