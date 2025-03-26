@@ -1,7 +1,6 @@
 import dotenv
 dotenv.load_dotenv()
 
-import os
 import click
 import logging
 
@@ -13,7 +12,7 @@ logger = logging.getLogger(__name__)
 @click.option('--host', type=str, default='192.168.0.20')
 @click.option('--port', type=int, default=8000)
 @click.pass_context
-def cli(ctx, debug, host, port):
+def readings(ctx, debug, host, port):
     ctx.ensure_object(dict)
     ctx.obj['DEBUG'] = debug
 
@@ -29,9 +28,9 @@ def cli(ctx, debug, host, port):
     ctx.obj['client'] = client
 
 
-@cli.command()
+@readings.command()
 @click.pass_context
-def plot_pose_readings(ctx):
+def position(ctx):
     from readings.plot_pose_readings import plot_pose_readings as plot_pose_readings_func
     client = ctx.obj['client']
     client.connect()
@@ -41,10 +40,9 @@ def plot_pose_readings(ctx):
     client.close()
 
 
-
-@cli.command()
+@readings.command()
 @click.pass_context
-def plot_base_readings(ctx):
+def raw(ctx):
     from readings.plot_sense_readings import plot_base_sense_readings as plot_base_sense_readings_func
     client = ctx.obj['client']
     client.connect()
@@ -52,19 +50,9 @@ def plot_base_readings(ctx):
     client.close()
 
 
-@cli.command()
+@readings.command()
 @click.pass_context
-def measure_mpu_offsets(ctx):
-    from readings.measurement import measure_mpu_offsets as measure_mpu_offsets_func
-    client = ctx.obj['client']
-    client.connect()
-    measure_mpu_offsets_func(client)
-    client.close()
-
-
-@cli.command()
-@click.pass_context
-def plot_readings(ctx):
+def pose(ctx):
     from readings.plot_sense_readings import plot_readings as plot_readings_func
     client = ctx.obj['client']
     client.connect()
@@ -72,5 +60,11 @@ def plot_readings(ctx):
     client.close()
 
 
-if __name__ == "__main__":
-    cli()
+@readings.command()
+@click.pass_context
+def mpu_offsets(ctx):
+    from readings.measurement import measure_mpu_offsets as measure_mpu_offsets_func
+    client = ctx.obj['client']
+    client.connect()
+    measure_mpu_offsets_func(client)
+    client.close()
