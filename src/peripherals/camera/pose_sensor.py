@@ -1,4 +1,4 @@
-from peripherals.camera_sensor.aruco_sensor import ArucoSensorMixin
+from peripherals.camera.aruco_sensor import ArucoSensorMixin
 
 
 class PoseSensor(ArucoSensorMixin):
@@ -9,7 +9,7 @@ class PoseSensor(ArucoSensorMixin):
         ):
 
         if not camera:
-            from camera_sensor.camera import Picamera2Camera as Camera
+            from camera.camera import Picamera2Camera as Camera
             camera = Camera(input_source="main")
 
         super().__init__(

@@ -10,8 +10,8 @@ def setup_camera_sensor(
     update_interval: float = 0.01,
 ):
     from networking_utils.channel import Channel
-    from peripherals.camera_sensor.pose_sensor import PoseSensor
-    from peripherals.camera_sensor.camera import Picamera2Camera as Camera
+    from peripherals.camera.pose_sensor import PoseSensor
+    from peripherals.camera.camera import Picamera2Camera as Camera
 
     with open(camera_matrix_file, 'r') as f:
         c_params = json.load(f)

@@ -1,6 +1,6 @@
 from filters.kalman import KalmanDSFilter, KalmanXVFilter, KalmanYawFilter
 from networking_utils.loop import Loop
-from peripherals.camera_sensor.camera import Camera
+from peripherals.camera.camera import Camera
 import cv2
 import numpy as np
 

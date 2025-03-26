@@ -2,7 +2,7 @@ import logging
 import dotenv
 import click
 from peripherals.pogo import pogo
-from peripherals.camera_sensor import camera
+from peripherals.camera import camera
 from client import client
 from readings import readings
 
