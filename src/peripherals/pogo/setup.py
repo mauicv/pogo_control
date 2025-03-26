@@ -1,5 +1,4 @@
 from networking_utils.channel import Channel
-from peripherals.pogo.pogo import Pogo
 import time
 
 
@@ -9,6 +8,7 @@ def setup_pogo_control(
     update_interval: float = 0.01,
 ):
     import pigpio
+    from peripherals.pogo.pogo import Pogo
     from peripherals.pogo.mpu6050 import mpu6050
 
     gpio = pigpio.pi()
@@ -33,9 +33,8 @@ def setup_pogo_sensor(
     port: int,
     update_interval: float = 0.01,
 ):
-    from networking_utils.channel import Channel
     from peripherals.pogo.mpu6050 import mpu6050
-    from peripherals.pogo import SensorPogo
+    from peripherals.pogo.pogo import SensorPogo
 
     mpu = mpu6050(0x68)
     sensor_pogo = SensorPogo(mpu=mpu, update_interval=update_interval)
