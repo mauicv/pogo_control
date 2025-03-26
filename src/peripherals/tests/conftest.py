@@ -1,10 +1,9 @@
-# conftest.py
 import pytest
 import random
 import time
-from server.servo_controller import ServoController
-from server.mpu6050Mixin import MPU6050Mixin
-from server.servo import Servo
+from peripherals.pogo.servo_controller import ServoController
+from peripherals.pogo.mpu6050Mixin import MPU6050Mixin
+from peripherals.pogo.servo import Servo
 
 
 class MockValues:

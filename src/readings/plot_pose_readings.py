@@ -1,11 +1,10 @@
 import dotenv
 dotenv.load_dotenv()
 import numpy as np
-from client.client import Client
+from networking_utils.client import Client
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from readings.data import PoseDataArray
-from filters.kalman import make_ds_filter, make_xv_kalman_filter
 
 
 def extract_dv(data):

@@ -1,9 +1,7 @@
-from google.cloud import storage
 import torch
 import json
 from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor
-from functools import partial
 from config import PRECOMPUTED_MEANS, PRECOMPUTED_STDS
 
 

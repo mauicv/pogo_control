@@ -1,5 +1,5 @@
-from server.aruco_sensor import ArucoSensorMixin
-import numpy as np
+from peripherals.camera_sensor.aruco_sensor import ArucoSensorMixin
+
 
 class PoseSensor(ArucoSensorMixin):
     def __init__(
@@ -9,7 +9,7 @@ class PoseSensor(ArucoSensorMixin):
         ):
 
         if not camera:
-            from server.camera import Picamera2Camera as Camera
+            from camera_sensor.camera import Picamera2Camera as Camera
             camera = Camera(input_source="main")
 
         super().__init__(

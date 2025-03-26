@@ -1,4 +1,4 @@
-from client.client import Client
+from networking_utils.client import Client
 import random
 
 class MockClient(Client):

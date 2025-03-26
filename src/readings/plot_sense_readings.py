@@ -1,10 +1,9 @@
 import dotenv
 dotenv.load_dotenv()
 import numpy as np
-from client.client import Client
+from networking_utils.client import Client
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-from filters.kalman import KalmanMPU6050Filter
 from readings.data import SensorDataArray, StateDataArray
 
 

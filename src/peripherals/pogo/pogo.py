@@ -1,19 +1,13 @@
-from server.mpu6050Mixin import MPU6050Mixin
-from server.servo_controller import ServoController
-from server.servo import Servo
+from peripherals.pogo.mpu6050Mixin import MPU6050Mixin
+from peripherals.pogo.servo_controller import ServoController
+from peripherals.pogo.servo import Servo
+
 
 generic_values = {
     "kp": 0.05,
     "ki": 0.01,
     "kd": 0.001,
 }
-
-# generic_values = {
-#     "kp": 0.02,
-#     "ki": 0.02,
-#     "kd": 0.01,
-# }
-
 
 class Pogo(ServoController, MPU6050Mixin):
     servos: list[Servo] = [
@@ -38,7 +32,7 @@ class Pogo(ServoController, MPU6050Mixin):
             import pigpio
             gpio = pigpio.pi()
         if not mpu:
-            from server.mpu6050 import mpu6050
+            from peripherals.pogo.mpu6050 import mpu6050
             mpu = mpu6050(0x68)
 
         super().__init__(
@@ -78,7 +72,7 @@ class SensorPogo(MPU6050Mixin):
             mpu=None,
         ):
         if not mpu:
-            from server.mpu6050 import mpu6050
+            from peripherals.pogo.mpu6050 import mpu6050
             mpu = mpu6050(0x68)
 
         super().__init__(
