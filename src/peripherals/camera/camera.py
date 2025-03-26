@@ -6,11 +6,14 @@ from picamera2 import Picamera2
 import numpy as np
 import pprint
 import time
+import uuid
+
 
 @dataclass
 class Frame:
     data: np.ndarray
     timestamp: float
+    uuid: str
 
 
 class Camera:
@@ -67,7 +70,8 @@ class Camera:
         )
         return Frame(
             data=frame,
-            timestamp=time.time()
+            timestamp=time.time(),
+            uuid=str(uuid.uuid4())
         )
 
     def capture(self):
