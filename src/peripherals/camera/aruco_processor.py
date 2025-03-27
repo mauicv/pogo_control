@@ -62,7 +62,7 @@ class ArucoSensorProcessor:
         self._distance = a
 
     def process(self, frame: Frame):
-        corners, ids, rejected = self.detector.detectMarkers(
+        corners, ids, _ = self.detector.detectMarkers(
             frame.data
         )
         

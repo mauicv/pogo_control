@@ -2,6 +2,7 @@ from peripherals.camera.camera import Camera
 import os
 from PIL import Image
 from peripherals.camera.aruco_processor import ArucoSensorProcessor
+from tqdm import tqdm
 
 class CameraSensor:
     def __init__(
@@ -49,7 +50,7 @@ class CameraSensor:
     
     def _process(self):
         data = []
-        for frame in self.buffer:
+        for frame in tqdm(self.buffer):
             data.append(self.aruco_processor.process(frame))
         return data
 
