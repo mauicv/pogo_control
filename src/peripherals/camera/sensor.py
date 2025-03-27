@@ -55,6 +55,7 @@ class CameraSensor:
 
     def _reset(self):
         self.buffer = []
+        self.aruco_processor.init_variables()
         return True
 
     def deinit_camera_sensor(self):

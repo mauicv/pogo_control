@@ -16,28 +16,30 @@ class ArucoSensorProcessor:
         self.camera = camera
         self.aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_6X6_250)
         self.parameters = cv2.aruco.DetectorParameters()
+        self.source_marker_id = source_marker_id
+        self.target_marker_id = target_marker_id
         self.detector = cv2.aruco.ArucoDetector(
             self.aruco_dict,
             self.parameters
         )
         self.use_kalman_filter = use_kalman_filter
+        self.init_variables()
+
+    def init_variables(self):
         if self.use_kalman_filter:
             self.ds_filter = KalmanDSFilter(0)
             self.xv_filter = KalmanXVFilter(0, 0)
             self.yaw_filter = KalmanYawFilter(0)
-        else:
-            self._delta_tvec = np.array([0, 0, 0])
-            self._delta_rvec = np.array([0, 0, 0])
-            self._last_delta_tvec = np.array([0, 0, 0])
-            self._last_delta_rvec = np.array([0, 0, 0])
-            self._t_delta = 0
-            self._velocity = np.array([0, 0, 0])
-            self._speed = 0
-            self._distance = 0
+        self._delta_tvec = np.array([0, 0, 0])
+        self._delta_rvec = np.array([0, 0, 0])
+        self._last_delta_tvec = np.array([0, 0, 0])
+        self._last_delta_rvec = np.array([0, 0, 0])
+        self._t_delta = 0
+        self._velocity = np.array([0, 0, 0])
+        self._speed = 0
+        self._distance = 0
         self._yaw = 0
         self._last_detection_ts = 0
-        self.source_marker_id = source_marker_id
-        self.target_marker_id = target_marker_id
 
     def _update_kalman_filter(self, frame, delta_tvec):
         x, y, _ = delta_tvec[0]
