@@ -1,6 +1,7 @@
 import dotenv
 dotenv.load_dotenv()
 
+import uuid
 import click
 import logging
 
@@ -34,9 +35,51 @@ def position(ctx):
     from readings.plot_pose_readings import plot_pose_readings as plot_pose_readings_func
     client = ctx.obj['client']
     client.connect()
-    data = client.send_data({})
-    print(data)
     plot_pose_readings_func(client)
+    client.close()
+
+
+@readings.command()
+@click.pass_context
+def capture(ctx):
+    client = ctx.obj['client']
+    client.connect()
+    data = client.send_data({'command': 'capture'})
+    client.close()
+    print(data)
+
+
+@readings.command()
+@click.pass_context
+def store(ctx):
+    client = ctx.obj['client']
+    client.connect()
+    data = client.send_data({
+        'command': 'store',
+        'args': {
+            'name': str(uuid.uuid4())
+        }
+    })
+    client.close()
+
+
+@readings.command()
+@click.pass_context
+def process(ctx):
+    client = ctx.obj['client']
+    client.connect()
+    data = client.send_data({'command': 'process'})
+    print(data)
+    client.close()
+
+
+@readings.command()
+@click.pass_context
+def reset(ctx):
+    client = ctx.obj['client']
+    client.connect()
+    data = client.send_data({'command': 'reset'})
+    print(data)
     client.close()
 
 
