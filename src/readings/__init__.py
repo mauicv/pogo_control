@@ -4,6 +4,8 @@ dotenv.load_dotenv()
 import uuid
 import click
 import logging
+import time
+from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
 
@@ -41,12 +43,20 @@ def position(ctx):
 
 @readings.command()
 @click.pass_context
-def capture(ctx):
+@click.option('--num', type=int, default=5)
+@click.option('--interval', type=float, default=0.2)
+def capture(ctx, num, interval):
     client = ctx.obj['client']
     client.connect()
-    data = client.send_data({'command': 'capture'})
+    start_time = time.time()
+    for _ in tqdm(range(num)):
+        last_time = time.time()
+        data = client.send_data({'command': 'capture'})
+        if time.time() - last_time < interval:
+            time.sleep(interval - (time.time() - last_time))
+    print(f'Time taken: {time.time() - start_time:.2f} seconds')
+    print(f'Average time per capture: {(time.time() - start_time) / num:.2f} seconds')
     client.close()
-    print(data)
 
 
 @readings.command()

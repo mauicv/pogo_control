@@ -26,7 +26,7 @@ def set_init_state(
     client.send_data(target_position)
 
 
-def create_model(
+def create_random_model(
         state_dim: int = 8 + 6 + 2 + 2 + 2,
         action_dim: int = 8
     ):
@@ -62,7 +62,6 @@ def run_client(
         butterworth_filter: ButterworthFilter,
         num_steps: int = 100,
         interval: float = 0.1,
-        consecutive_error_limit: int = 3,
         noise_perturbation_range: tuple[float, float] = (0.00, 0.00),
         weight_perturbation_range: tuple[float, float] = (0.00, 0.00),
         random_model: bool = False,
@@ -72,7 +71,6 @@ def run_client(
     if not random_model:
         model = wait_for_model(gcs)
         print(model)
-    consecutive_errors = 0
     count = 0
     time_start = time()
     while True:
@@ -80,49 +78,38 @@ def run_client(
         weight_perturbation = get_random_perturbation(weight_perturbation_range)
         noise = get_random_perturbation(noise_perturbation_range)
 
-        try:
-            print('==========================================')
-            print(f'Count: {count}')
-            print(f'Time: {(time() - time_start)/60:.2f} minutes')
-            print(f'Weight perturbation: {weight_perturbation}')
-            print(f'Noise: {noise}')
+        print('==========================================')
+        print(f'Count: {count}')
+        print(f'Time: {(time() - time_start)/60:.2f} minutes')
+        print(f'Weight perturbation: {weight_perturbation}')
+        print(f'Noise: {noise}')
 
-            print('Sampling rollout')
-            if random_model:
-                model = create_model(
-                    state_dim=2 * 8 + 6 + 2,
-                    action_dim=8
-                )
-
-            sample_start = time()
-            rollout = sample(
-                model,
-                butterworth_filter,
-                client,
-                num_steps,
-                interval,
-                noise,
-                weight_perturbation
+        print('Sampling rollout')
+        if random_model:
+            model = create_random_model(
+                state_dim=2 * 8 + 6 + 2,
+                action_dim=8
             )
-            print(f'Sampling time: {time() - sample_start:.2f} seconds')
-            print('Re-initalizing')
-            set_init_state(client)
-            print('Uploading rollout')
-            if not test:
-                gcs.rollout.upload_rollout(
-                    rollout.to_dict(),
-                    gcs.model.version
-                )
-            if not random_model:
-                model = gcs.model.load_model()
-            consecutive_errors = 0
-            sleep(10)
-        except Exception as e:
-            # print(e)
-            raise e
-            consecutive_errors += 1
-            if consecutive_errors > consecutive_error_limit:
-                print("Too many consecutive errors, exiting")
-                raise e
-            sleep(1)
-            continue
+
+        sample_start = time()
+        rollout = sample(
+            model,
+            butterworth_filter,
+            client,
+            num_steps,
+            interval,
+            noise,
+            weight_perturbation
+        )
+        print(f'Sampling time: {time() - sample_start:.2f} seconds')
+        print('Re-initalizing')
+        set_init_state(client)
+        print('Uploading rollout')
+        if not test:
+            gcs.rollout.upload_rollout(
+                rollout.to_dict(),
+                gcs.model.version
+            )
+        if not random_model:
+            model = gcs.model.load_model()
+        sleep(10)
