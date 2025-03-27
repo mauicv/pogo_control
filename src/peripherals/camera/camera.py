@@ -15,6 +15,13 @@ class Frame:
     timestamp: float
     uuid: str
 
+    def to_dict(self):
+        return {
+            'data': self.data.tolist(),
+            'timestamp': self.timestamp,
+            'uuid': self.uuid,
+        }
+
 
 class Camera:
     def __init__(

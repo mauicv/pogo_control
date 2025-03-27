@@ -1,19 +1,16 @@
 from filters.kalman import KalmanDSFilter, KalmanXVFilter, KalmanYawFilter
-from networking_utils.loop import Loop
-from peripherals.camera.camera import Camera
+from peripherals.camera.camera import Frame, Camera
 import cv2
 import numpy as np
 
 
-class ArucoSensorMixin:
+class ArucoSensorProcessor:
     def __init__(
             self,
-            camera: Camera,
             source_marker_id: int = 1,
             target_marker_id: int = 2,
-            aruco_sensor_update_interval: float = 0.05,
             use_kalman_filter: bool = True,
-            **kwargs
+            camera: Camera = None,
         ):
         self.markerSizeInCM = 4.5
         self.camera = camera
@@ -41,12 +38,6 @@ class ArucoSensorMixin:
         self._last_detection_ts = 0
         self.source_marker_id = source_marker_id
         self.target_marker_id = target_marker_id
-        self.aruco_sensor_update_interval = max(0.01, aruco_sensor_update_interval)
-        self.aruco_sensor_update_loop = Loop(
-            interval=self.aruco_sensor_update_interval,
-            func=self._read
-        )
-        self.aruco_sensor_update_loop.start()
 
     def _update_kalman_filter(self, frame, delta_tvec):
         x, y, _ = delta_tvec[0]
@@ -68,11 +59,7 @@ class ArucoSensorMixin:
         self._last_delta_tvec = self._delta_tvec
         self._distance = a
 
-    def _read(self):
-        # start = time.time()
-        frame = self.camera.get_frame()
-        if frame is None: return
-
+    def process(self, frame: Frame):
         corners, ids, rejected = self.detector.detectMarkers(
             frame.data
         )
@@ -100,13 +87,17 @@ class ArucoSensorMixin:
             self._update_raw(frame, self._delta_tvec)
 
         self._yaw = np.abs(rvec[target_index][0, 1])
-        # end = time.time()
-        # print(f"Time taken: {end - start}")
 
-    def deinit_aruco_sensor(self):
-        """Clean up resources"""
-        self.aruco_sensor_update_loop.stop()
-        self.camera.close()
+        return [
+            self.position[0],
+            self.position[1],
+            self.distance,
+            self.velocity[0],
+            self.velocity[1],
+            self.speed,
+            self.yaw,
+            self.last_detection_ts,
+        ]
 
     @property
     def position(self):

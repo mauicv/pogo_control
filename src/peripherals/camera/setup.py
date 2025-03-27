@@ -30,9 +30,5 @@ def setup_camera_sensor(
         camera=camera,
     )
 
-    def _handle_message(message):
-        data = camera_sensor.capture()
-        return data
-
     channel = Channel(host=host, port=port)
-    channel.serve(_handle_message)
+    channel.serve(camera_sensor.handle_message)
