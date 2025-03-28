@@ -27,18 +27,18 @@ class ArucoSensorProcessor:
 
     def init_variables(self):
         if self.use_kalman_filter:
-            self.ds_filter = KalmanDSFilter(0)
-            self.xv_filter = KalmanXVFilter(0, 0)
-            self.yaw_filter = KalmanYawFilter(0)
-        self._delta_tvec = np.array([0, 0, 0])
-        self._delta_rvec = np.array([0, 0, 0])
-        self._last_delta_tvec = np.array([0, 0, 0])
-        self._last_delta_rvec = np.array([0, 0, 0])
-        self._t_delta = 0
-        self._velocity = np.array([0, 0, 0])
-        self._speed = 0
-        self._distance = 0
-        self._yaw = 0
+            self.ds_filter = KalmanDSFilter(0.0)
+            self.xv_filter = KalmanXVFilter(0.0, 0.0)
+            self.yaw_filter = KalmanYawFilter(0.0)
+        self._delta_tvec = np.array([0.0, 0.0, 0.0])
+        self._delta_rvec = np.array([0.0, 0.0, 0.0])
+        self._last_delta_tvec = np.array([0.0, 0.0, 0.0])
+        self._last_delta_rvec = np.array([0.0, 0.0, 0.0])
+        self._t_delta = 0.0
+        self._velocity = np.array([0.0, 0.0, 0.0])
+        self._speed = 0.0
+        self._distance = 0.0
+        self._yaw = 0.0
         self._last_detection_ts = 0
 
     def _update_kalman_filter(self, frame, delta_tvec):
@@ -90,6 +90,7 @@ class ArucoSensorProcessor:
 
         self._yaw = np.abs(rvec[target_index][0, 1])
 
+    def get_data(self):
         return [
             self.position[0],
             self.position[1],

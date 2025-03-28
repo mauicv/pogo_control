@@ -49,10 +49,12 @@ class CameraSensor:
         return name
     
     def _process(self):
-        data = []
+        pose_data = []
         for frame in tqdm(self.buffer):
-            data.append(self.aruco_processor.process(frame))
-        return data
+            self.aruco_processor.process(frame)
+            data = self.aruco_processor.get_data()
+            pose_data.append(data)
+        return pose_data
 
     def _reset(self):
         self.buffer = []
