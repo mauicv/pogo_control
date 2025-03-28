@@ -36,7 +36,6 @@ class Channel:
                         conn.sendall(message_length)
                         conn.sendall(outputs)
 
-
     def _handle_request(self, data, function):
         try:
             data = json.loads(data.decode())

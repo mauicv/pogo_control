@@ -23,7 +23,7 @@ logging.basicConfig(
 @click.option('--name', type=str, default='test')
 @click.option('--test', is_flag=True)
 @click.option('--num-steps', type=int, default=250)
-@click.option('--interval', type=float, default=0.1)
+@click.option('--interval', type=float, default=0.2)
 @click.option('--noise-range', nargs=2, type=float, default=(0.01, 0.5))
 @click.option('--weight-range', nargs=2, type=float, default=(0.01, 0.02))
 @click.option('--random-model', is_flag=True)
@@ -103,7 +103,7 @@ def standing(
 @click.option('--camera-port', type=int, default=None)
 @click.option('--pogo-host', type=str, default=None)
 @click.option('--pogo-port', type=int, default=None)
-def walking_client(
+def walking(
         ctx,
         camera_host,
         camera_port,

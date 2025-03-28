@@ -55,20 +55,20 @@ def sample(
         conditions=[]
     )
     current_time = time.time()
+    rollout.append(state, true_action, current_time, conditions)
     for i in tqdm(range(num_steps)):
         current_time = time.time()
-        if i % 2 == 0:
-            true_action, filtered_action = compute_actions(
-                model=model,
-                state=state,
-                filter=filter,
-                noise=noise,
-            )
-            # NOTE: the state, actions stored here are related as the
-            # action resulting from the state (not the state resulting
-            # from the action)
-            state = state.numpy()
-            rollout.append(state, true_action, current_time, conditions)
+        true_action, filtered_action = compute_actions(
+            model=model,
+            state=state,
+            filter=filter,
+            noise=noise,
+        )
+        # NOTE: the state, actions stored here are related as the
+        # action resulting from the state (not the state resulting
+        # from the action)
+        state = state.numpy()
+        rollout.append(state, true_action, current_time, conditions)
         if check_overturned(conditions):
             break
         state, conditions = client.send_data(filtered_action)

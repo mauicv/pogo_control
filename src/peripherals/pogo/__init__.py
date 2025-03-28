@@ -1,5 +1,6 @@
 import click
 import os
+from peripherals.pogo.functions import move_robot
 
 
 @click.group()
@@ -62,7 +63,6 @@ def move(
         pogo move-robot --front-left-bottom=0.4 --front-right-bottom=0.4 --back-right-bottom=0.4 --back-left-bottom=0.4 --front-left-top=-0.3 --front-right-top=-0.3 --back-right-top=-0.3 --back-left-top=-0.3
     """
 
-    from peripherals.pogo.functions import move_robot
     move_robot(
         front_left_bottom,
         front_left_top,
