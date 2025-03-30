@@ -28,7 +28,8 @@ except ImportError:
 try:
     from client import client
     cli.add_command(client)
-except ImportError:
+except ImportError as error:
+    logger.error(error)
     pass
 
 try:

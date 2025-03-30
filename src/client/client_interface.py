@@ -53,7 +53,7 @@ class WalkingClientInterface:
     def post_process(self, rollout: Rollout):
         data = self.camera_client.send_data({'command': 'process'})
         for ind, pose_data in enumerate(data):
-            rollout.conditions[ind].extend(pose_data)
+            rollout.conditions[ind] = rollout.conditions[ind] + pose_data
         return rollout
 
     def reset(self):

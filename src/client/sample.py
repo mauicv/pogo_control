@@ -56,7 +56,8 @@ def sample(
     )
     current_time = time.time()
     rollout.append(state, true_action, current_time, conditions)
-    for i in tqdm(range(num_steps)):
+    last_conditions = conditions
+    for i in tqdm(range(num_steps - 1)):
         current_time = time.time()
         true_action, filtered_action = compute_actions(
             model=model,
@@ -68,11 +69,13 @@ def sample(
         # action resulting from the state (not the state resulting
         # from the action)
         state = state.numpy()
-        rollout.append(state, true_action, current_time, conditions)
-        if check_overturned(conditions):
-            break
+        rollout.append(state, true_action, current_time, last_conditions)
         state, conditions = client.send_data(filtered_action)
+        if check_overturned(last_conditions):
+            break
 
+        last_conditions = conditions
+        
         elapsed_time = time.time() - current_time
         if elapsed_time < interval:
             time.sleep(interval - elapsed_time)
