@@ -59,7 +59,7 @@ def overturn_penalty(state, condition):
     return 0
 
 
-def velocity_reward(state, condition):
+def velocity_reward(state, condition, last_distance=None):
     [
         overturned,
         last_mpus6050_sample_ts,
@@ -71,13 +71,13 @@ def velocity_reward(state, condition):
         vy,
         speed,
         yaw,
-        last_detection_ts
+        last_detection_ts   
     ] = condition
     if last_distance is None:
         last_distance = distance
     distance_delta_reward = distance - last_distance
     last_distance = distance
-    return -distance_delta_reward
+    return -distance_delta_reward, last_distance
 
 
 def default_standing_reward(states, conditions):
@@ -97,13 +97,11 @@ def default_standing_reward(states, conditions):
 def default_velocity_reward(states, conditions):
     rewards = []
     last_distance = None
-
     for state, condition in zip(states, conditions):
         posture_reward, posture_close = posture_reward(state, condition)
         overturn_penalty = overturn_penalty(state, condition)
-        if posture_close:
-            velocity_reward = velocity_reward(state, condition)
-        else:
+        velocity_reward, last_distance = velocity_reward(state, condition, last_distance)
+        if not posture_close:
             velocity_reward = 0
 
 
