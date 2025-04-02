@@ -1,7 +1,7 @@
 import torch
 
 
-def posture_reward(state, condition):
+def compute_posture_reward(state, condition):
     [
         front_right_top,
         front_right_bottom,
@@ -52,14 +52,14 @@ def posture_reward(state, condition):
     return posture_reward, posture_close
 
 
-def overturn_penalty(state, condition):
+def compute_overturn_penalty(state, condition):
     [overturned, *_] = condition
     if overturned:
         return -10
     return 0
 
 
-def velocity_reward(state, condition, last_distance=None):
+def compute_velocity_reward(state, condition, last_distance=None):
     [
         overturned,
         last_mpus6050_sample_ts,
@@ -83,8 +83,8 @@ def velocity_reward(state, condition, last_distance=None):
 def default_standing_reward(states, conditions):
     rewards = []
     for state, condition in zip(states, conditions):
-        posture_reward, _ = posture_reward(state, condition)
-        overturn_penalty = overturn_penalty(state, condition)
+        posture_reward, _ = compute_posture_reward(state, condition)
+        overturn_penalty = compute_overturn_penalty(state, condition)
 
         rewards.append(
             10 * posture_reward +
@@ -98,7 +98,7 @@ def default_velocity_reward(states, conditions):
     rewards = []
     last_distance = None
     for state, condition in zip(states, conditions):
-        posture_reward, posture_close = posture_reward(state, condition)
+        posture_reward, posture_close = compute_posture_reward(state, condition)
         overturn_penalty = overturn_penalty(state, condition)
         velocity_reward, last_distance = velocity_reward(state, condition, last_distance)
         if not posture_close:
