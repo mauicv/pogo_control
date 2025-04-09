@@ -5,7 +5,7 @@ import os
 from storage import GCS_Interface
 from filters.butterworth import ButterworthFilter
 from networking_utils.client import Client
-from client.functions import run_client
+from client.functions import run_training
 from client.client_interface import StandingClientInterface, WalkingClientInterface
 
 dotenv.load_dotenv()
@@ -84,7 +84,7 @@ def standing(
         pogo_client=client
     )
 
-    run_client(
+    run_training(
         ctx.obj['GCS'],
         standing_client,
         ctx.obj['FILTER'],
@@ -134,7 +134,7 @@ def walking(
         camera_client=camera_client
     )
 
-    run_client(
+    run_training(
         ctx.obj['GCS'],
         multi_client,
         ctx.obj['FILTER'],

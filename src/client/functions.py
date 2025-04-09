@@ -6,6 +6,10 @@ from client.model import Actor, EncoderActor, DenseModel
 import torch
 from time import sleep, time
 import random
+import numpy as np
+import sys
+import os
+from client.sample import Rollout
 torch.set_grad_enabled(False)
 
 
@@ -55,8 +59,28 @@ def get_random_perturbation(perturbation_range: tuple[float, float]):
         return perturbation_range[0]
     else:
         return random.uniform(perturbation_range[0], perturbation_range[1])
+    
 
-def run_client(
+def show_rollout_stats(rollout: Rollout):
+    actions = np.array(rollout.actions)
+    print(f'Rollout actions shape: {actions.shape}')
+    print(f'Rollout actions mean: {actions.mean(axis=0)}')
+    print(f'Rollout actions std: {actions.std(axis=0)}')
+    print(f'Rollout actions min: {actions.min(axis=0)}')
+    print(f'Rollout actions max: {actions.max(axis=0)}')
+
+    conditions = np.array(rollout.conditions)
+    rolled = conditions[:, 0]
+    last_detection_ts = conditions[:, -1]
+    print(f'Rollout rolled: {"True" if rolled.any() else "False"}')
+    num_failed_detections = 0
+    for i in range(1, len(last_detection_ts)):
+        if last_detection_ts[i] == last_detection_ts[i-1]:
+            num_failed_detections += 1
+    print(f'Rollout num failed detections: {num_failed_detections}/{len(last_detection_ts)}')
+
+
+def run_training(
         gcs: GCS_Interface,
         client: Client,
         butterworth_filter: ButterworthFilter,
@@ -80,7 +104,7 @@ def run_client(
 
         print('==========================================')
         print(f'Count: {count}')
-        print(f'Time: {(time() - time_start)/60:.2f} minutes')
+        print(f'Training Running Time: {(time() - time_start)/60:.2f} minutes')
         print(f'Weight perturbation: {weight_perturbation}')
         print(f'Noise: {noise}')
 
@@ -92,24 +116,46 @@ def run_client(
             )
 
         sample_start = time()
-        rollout = sample(
-            model,
-            butterworth_filter,
-            client,
-            num_steps,
-            interval,
-            noise,
-            weight_perturbation
-        )
-        print(f'Sampling time: {time() - sample_start:.2f} seconds')
-        print('Re-initalizing')
-        set_init_state(client)
-        print('Uploading rollout')
-        if not test:
-            gcs.rollout.upload_rollout(
-                rollout.to_dict(),
-                gcs.model.version
+        try:
+            rollout = sample(
+                model,
+                butterworth_filter,
+                client,
+                num_steps,
+                interval,
+                noise,
+                weight_perturbation
             )
+        except KeyboardInterrupt as e:
+            print(f'Interrupted sampling rollout: {e}')
+            set_init_state(client)
+            raise e
+
+        print(f'Rollout Sampling time: {time() - sample_start:.2f} seconds')
+        show_rollout_stats(rollout)
+        set_init_state(client)
+        accept = input('Accept rollout? (Y/N), (Q)uit')
+        if not test:
+            for opt in ['Y', 'y', 'Yes', 'yes']:
+                if opt in accept:
+                    print('Uploading rollout')
+                    gcs.rollout.upload_rollout(
+                        rollout.to_dict(),
+                        gcs.model.version
+                    )
+                    break
+        else:
+            print('Skipping upload')
+            
+        quit_training = False
+        for opt in ['Q', 'q', 'Quit', 'quit']:
+            if opt in accept:
+                quit_training = True
+                break
+
+        if quit_training:
+            break
+
         if not random_model:
             model = gcs.model.load_model()
-        sleep(10)
+        
