@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 @click.group()
 @click.option('--debug/--no-debug', default=False)
-@click.option('--host', type=str, default='192.168.0.20')
+@click.option('--host', type=str, default='192.168.0.27')
 @click.option('--port', type=int, default=8000)
 @click.pass_context
 def readings(ctx, debug, host, port):

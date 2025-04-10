@@ -3,6 +3,7 @@ import os
 from PIL import Image
 from peripherals.camera.aruco_processor import ArucoSensorProcessor
 from tqdm import tqdm
+import cv2
 
 class CameraSensor:
     def __init__(
@@ -41,11 +42,16 @@ class CameraSensor:
         return frame.uuid
 
     def _store(self, name='collection'):
+        height=1536
+        width=2048
         data = self.buffer
         os.makedirs('images', exist_ok=True)
-        os.makedirs(f'images/{name}', exist_ok=True)
-        for ind, frame in enumerate(data):
-            Image.fromarray(frame.data).save(f'images/{name}/{ind:04d}_{frame.uuid}.png')
+        fourcc = cv2.VideoWriter_fourcc(*'MJPG')
+        out = cv2.VideoWriter(f'images/{name}.avi', fourcc, 5.0, (width, height), isColor=True)
+        for frame in tqdm(data):
+            colored_frame = cv2.cvtColor(frame.data, cv2.COLOR_GRAY2BGR)
+            out.write(colored_frame)
+        out.release()
         return name
     
     def _process(self):
