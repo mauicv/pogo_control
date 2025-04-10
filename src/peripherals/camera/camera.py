@@ -3,6 +3,7 @@ import time
 import numpy as np
 from dataclasses import dataclass
 from picamera2 import Picamera2
+from libcamera import controls
 import numpy as np
 import pprint
 import time
@@ -174,7 +175,7 @@ class Picamera2Camera(Camera):
         self.vc = Picamera2()
         config = self.vc.create_video_configuration(
             main={"size": (width, height)},
-            # controls={"AfMode": controls.AfModeEnum.Continuous}
+            controls={"AfMode": controls.AfModeEnum.Continuous}
         )
         self.vc.configure(config)
         self.vc.set_controls({
