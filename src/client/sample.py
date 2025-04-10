@@ -81,6 +81,4 @@ def sample(
             time.sleep(interval - elapsed_time)
     
     rollout = client.post_process(rollout)
-    client.reset()
-
     return rollout

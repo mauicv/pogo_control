@@ -1,8 +1,8 @@
-from networking_utils.client import Client
 from filters.butterworth import ButterworthFilter
 from storage import GCS_Interface
 from client.sample import sample
 from client.model import Actor, EncoderActor, DenseModel
+from client.client_interface import StandingClientInterface, WalkingClientInterface
 import torch
 from time import sleep, time
 import random
@@ -24,7 +24,7 @@ def wait_for_model(gcs: GCS_Interface):
 
 
 def set_init_state(
-        client: Client,
+        client: StandingClientInterface | WalkingClientInterface,
         target_position: list[float]=(-0.4, -0.4, -0.4, -0.4, -0.4, -0.4, -0.4, -0.4)
     ):
     client.send_data(target_position)
@@ -82,7 +82,7 @@ def show_rollout_stats(rollout: Rollout):
 
 def run_training(
         gcs: GCS_Interface,
-        client: Client,
+        client: StandingClientInterface | WalkingClientInterface,
         butterworth_filter: ButterworthFilter,
         num_steps: int = 100,
         interval: float = 0.1,
@@ -134,9 +134,16 @@ def run_training(
         print(f'Rollout Sampling time: {time() - sample_start:.2f} seconds')
         show_rollout_stats(rollout)
         set_init_state(client)
-        accept = input('Accept rollout? (Y/N), (Q)uit')
+        accept = input('(A)ccept, (Q)uit, (S)ave-images')
+
+        for opt in ['S', 's']:
+            if opt in accept:
+                name = client.save_images()
+                print(f'Saved images to {name}')
+                break
+
         if not test:
-            for opt in ['Y', 'y', 'Yes', 'yes']:
+            for opt in ['A', 'a']:
                 if opt in accept:
                     print('Uploading rollout')
                     gcs.rollout.upload_rollout(
@@ -148,7 +155,7 @@ def run_training(
             print('Skipping upload')
             
         quit_training = False
-        for opt in ['Q', 'q', 'Quit', 'quit']:
+        for opt in ['Q', 'q']:
             if opt in accept:
                 quit_training = True
                 break

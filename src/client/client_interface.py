@@ -1,6 +1,7 @@
 from networking_utils.client import Client
 from client.sample import Rollout
 import torch
+import uuid
 
 
 class StandingClientInterface:
@@ -23,6 +24,9 @@ class StandingClientInterface:
     
     def reset(self):
         pass
+
+    def save_images(self):
+        print('Not implemented for standing client')
 
     def close(self):
         self.pogo_client.close()
@@ -55,6 +59,16 @@ class WalkingClientInterface:
         for ind, pose_data in enumerate(data):
             rollout.conditions[ind] = rollout.conditions[ind] + pose_data
         return rollout
+    
+    def save_images(self):
+        name = str(uuid.uuid4())
+        data = self.camera_client.send_data({
+            'command': 'store',
+            'args': {
+                'name': name
+            }
+        })
+        return name
 
     def reset(self):
         self.camera_client.send_data({'command': 'reset'})
