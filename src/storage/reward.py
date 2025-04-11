@@ -46,7 +46,7 @@ def compute_posture_reward(state, condition):
 
     posture_close = True
     for item in [flbe, frbe, brbe, blbe, flte, frte, brte, blte]:
-        if item < 0.75:
+        if item < 0.7:
             posture_close = False
 
     return posture_reward, posture_close
@@ -104,5 +104,5 @@ def default_velocity_reward(states, conditions):
         if not posture_close:
             velocity_reward = 0
 
-        rewards.append(posture_reward + velocity_reward + overturn_penalty)
+        rewards.append(0.1 * posture_reward + 10 * velocity_reward + overturn_penalty)
     return torch.tensor(rewards)[:, None]
