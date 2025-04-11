@@ -43,6 +43,8 @@ class DataLoader:
         self.means = means
         self.stds = stds
 
+        self.reward_type = reward_type
+
         self.state_buffer = torch.zeros(
             (self.num_runs, self.rollout_length, self.state_dim),
             dtype=torch.float32
