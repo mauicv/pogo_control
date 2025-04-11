@@ -26,9 +26,10 @@ class DataLoader:
             state_dim=14,
             action_dim=8,
             num_time_steps=25,
-            reward_function=default_standing_reward,
+            reward_type='walking',
+            reward_function=default_velocity_reward,
             means=PRECOMPUTED_MEANS,
-            stds=PRECOMPUTED_STDS
+            stds=PRECOMPUTED_STDS,
         ) -> None:
         self.num_time_steps = num_time_steps
         self.reward_function = reward_function
@@ -109,8 +110,9 @@ class DataLoader:
         self.action_buffer[run_index][:end_index+1] = actions
         self.reward_buffer[run_index][:end_index+1] = rewards
         self.dropout_mask[run_index][:end_index+1] = 1
-        # detection_ts = [condition[-1] for condition in conditions]
-        # self.dropout_mask[run_index][:end_index+1] = make_mask(detection_ts)
+        if self.reward_type == 'walking':
+            detection_ts = [condition[-1] for condition in conditions]
+            self.dropout_mask[run_index][:end_index+1] = make_mask(detection_ts)
         if end_index < self.num_time_steps:
             for i in range(end_index + 1, self.num_time_steps + 1):
                 # pad the rollout with the last state
