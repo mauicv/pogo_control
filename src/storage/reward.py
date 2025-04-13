@@ -55,7 +55,7 @@ def compute_posture_reward(state, condition):
 def compute_overturn_penalty(state, condition):
     [overturned, *_] = condition
     if overturned:
-        return -10
+        return -25
     return 0
 
 
@@ -98,11 +98,14 @@ def default_velocity_reward(states, conditions):
     rewards = []
     last_distance = None
     for state, condition in zip(states, conditions):
+        overturned = condition[0]
         posture_reward, posture_close = compute_posture_reward(state, condition)
         overturn_penalty = compute_overturn_penalty(state, condition)
         velocity_reward, last_distance = compute_velocity_reward(state, condition, last_distance)
         if not posture_close:
             velocity_reward = 0
-
+        if overturned:
+            velocity_reward = 0
+            posture_reward = 0
         rewards.append(0.1 * posture_reward + 10 * velocity_reward + overturn_penalty)
     return torch.tensor(rewards)[:, None]

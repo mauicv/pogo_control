@@ -6,11 +6,13 @@ from config import PRECOMPUTED_MEANS, PRECOMPUTED_STDS
 from storage.reward import default_standing_reward, default_velocity_reward
 
 
-def make_mask(detection_ts):
-    # if timesteps are the same set mask to 0 else 1
+def make_mask(conditions):
+    # if timesteps are the same and not overturned set mask to 0 else 1
+    detection_ts = [condition[-1] for condition in conditions]
+    overturned = [condition[0] for condition in conditions]
     mask = torch.ones(len(detection_ts), 1)
     for i in range(1, len(detection_ts)):
-        if detection_ts[i] == detection_ts[i-1]:
+        if detection_ts[i] == detection_ts[i-1] and not overturned[i]:
             mask[i, 0] = 0
     return mask
 
@@ -113,8 +115,7 @@ class DataLoader:
         self.reward_buffer[run_index][:end_index+1] = rewards
         self.dropout_mask[run_index][:end_index+1] = 1
         if self.reward_type == 'walking':
-            detection_ts = [condition[-1] for condition in conditions]
-            self.dropout_mask[run_index][:end_index+1] = make_mask(detection_ts)
+            self.dropout_mask[run_index][:end_index+1] = make_mask(conditions)
         if end_index < self.num_time_steps:
             for i in range(end_index + 1, self.num_time_steps + 1):
                 # pad the rollout with the last state
