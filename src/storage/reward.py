@@ -80,14 +80,14 @@ def compute_stability_reward(state, condition):
         pitch
     ] = state
 
-    flbe = abs(front_right_top_vel)
-    frbe = abs(front_right_bottom_vel)
-    brbe = abs(back_right_bottom_vel)
-    blbe = abs(back_left_bottom_vel)
-    flte = abs(front_left_top_vel)
-    frte = abs(front_right_top_vel)
-    brte = abs(back_right_top_vel)
-    blte = abs(back_left_top_vel)
+    flbe = - abs(front_left_bottom_vel)
+    frbe = - abs(front_right_bottom_vel)
+    brbe = - abs(back_right_bottom_vel)
+    blbe = - abs(back_left_bottom_vel)
+    flte = - abs(front_left_top_vel)
+    frte = - abs(front_right_top_vel)
+    brte = - abs(back_right_top_vel)
+    blte = - abs(back_left_top_vel)
 
     stability_reward = 0
     for item in [flbe, frbe, brbe, blbe, flte, frte, brte, blte]:
