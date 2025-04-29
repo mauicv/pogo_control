@@ -6,6 +6,7 @@ from client.client_interface import StandingClientInterface, WalkingClientInterf
 from filters.butterworth import ButterworthFilter
 import numpy as np
 from config import PRECOMPUTED_MEANS, PRECOMPUTED_STDS, INITIAL_POSITION
+from typing import Optional
 
     
 def check_overturned(conditions: list[float]) -> bool:
@@ -38,16 +39,21 @@ def sample(
         interval: float = 0.1,
         noise: float = 0.3,
         weight_perturbation: float = 0.0,
+        initial_state: Optional[torch.Tensor] = None,
+        initial_action: Optional[torch.Tensor] = INITIAL_POSITION
     ) -> Rollout:
-    filter.reset()
     client.reset()
     torch.set_grad_enabled(False)
     model.perturb_actor(
         weight_perturbation_size=weight_perturbation
     )
-    true_action = torch.tensor(INITIAL_POSITION)
+    if initial_action is None:
+        initial_action = torch.tensor(INITIAL_POSITION)
+    true_action = torch.tensor(initial_action)
     filtered_action = filter(true_action)
     state, conditions = client.send_data(filtered_action)
+    if initial_state is not None:
+        state = initial_state
     rollout = Rollout(
         states=[],
         actions=[],
@@ -82,3 +88,44 @@ def sample(
     
     rollout = client.post_process(rollout)
     return rollout
+
+
+def deploy_model(
+        model: torch.nn.Module,
+        filter: ButterworthFilter,
+        client: StandingClientInterface | WalkingClientInterface,
+        num_steps: int = 15,
+        interval: float = 0.2,
+    ) -> Rollout:
+    filter.reset()
+    client.reset()
+    torch.set_grad_enabled(False)
+    model.perturb_actor(
+        weight_perturbation_size=0.0
+    )
+    true_action = torch.tensor(INITIAL_POSITION)
+    filtered_action = filter(true_action)
+    state, conditions = client.send_data(filtered_action)
+    current_time = time.time()
+    last_conditions = conditions
+    for i in tqdm(range(num_steps - 1)):
+        current_time = time.time()
+        true_action, filtered_action = compute_actions(
+            model=model,
+            state=state,
+            filter=filter,
+            noise=0.0,
+        )
+        state, conditions = client.send_data(filtered_action)
+        if check_overturned(last_conditions):
+            break
+
+        last_conditions = conditions
+        
+        elapsed_time = time.time() - current_time
+        if elapsed_time < interval:
+            time.sleep(interval - elapsed_time)
+    
+    print(f'Final state: {state}')
+    print(f'Final action: {true_action}')
+    return state, true_action

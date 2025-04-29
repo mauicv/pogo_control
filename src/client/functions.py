@@ -1,3 +1,4 @@
+from typing import Optional
 from filters.butterworth import ButterworthFilter
 from storage import GCS_Interface
 from client.sample import sample
@@ -10,6 +11,7 @@ import numpy as np
 import sys
 import os
 from client.sample import Rollout
+from client.sample import deploy_model
 torch.set_grad_enabled(False)
 
 
@@ -22,13 +24,27 @@ def wait_for_model(gcs: GCS_Interface):
             sleep(1)
             continue
 
+def load_local_model(solution: str):
+    local_path = f"solutions/{solution}.pt"
+    model = torch.load(
+        local_path,
+        map_location=torch.device('cpu')
+    )
+    return model
+
 
 def set_init_state(
         client: StandingClientInterface | WalkingClientInterface,
-        target_position: list[float]=(-0.4, -0.4, -0.4, -0.4, -0.4, -0.4, -0.4, -0.4)
+        filter: Optional[ButterworthFilter]=None,
+        soln_model: Optional[torch.nn.Module]=None,
+        target_position: Optional[list[float]]=(-0.4, -0.4, -0.4, -0.4, -0.4, -0.4, -0.4, -0.4),
     ):
-    client.send_data(target_position)
-
+    if soln_model is not None:
+        state, action = deploy_model(soln_model, filter, client)
+        return state, action
+    else:
+        client.send_data(target_position)
+        return None, None
 
 def create_random_model(
         state_dim: int = 8 + 6 + 2 + 2 + 2,
@@ -80,6 +96,20 @@ def show_rollout_stats(rollout: Rollout):
     print(f'Rollout num failed detections: {num_failed_detections}/{len(last_detection_ts)}')
 
 
+def deploy_solution(
+        gcs: GCS_Interface,
+        client: StandingClientInterface | WalkingClientInterface,
+        butterworth_filter: ButterworthFilter,
+        solution: str
+    ):
+    set_init_state(client)
+    soln_model = None
+    if solution is not None:
+        soln_model = load_local_model(solution)
+    set_init_state(client=client, filter=butterworth_filter, soln_model=soln_model)
+    set_init_state(client)
+
+
 def run_training(
         gcs: GCS_Interface,
         client: StandingClientInterface | WalkingClientInterface,
@@ -89,12 +119,20 @@ def run_training(
         noise_perturbation_range: tuple[float, float] = (0.00, 0.00),
         weight_perturbation_range: tuple[float, float] = (0.00, 0.00),
         random_model: bool = False,
-        test: bool = False
+        test: bool = False,
+        pre_solution: Optional[str] = 'sonic-open-yellow'
     ):
-
+    set_init_state(client)
+    soln_model = None
+    if pre_solution is not None:
+        soln_model = load_local_model(pre_solution)
+    
     if not random_model:
         model = wait_for_model(gcs)
         print(model)
+
+    initial_state, initial_action = set_init_state(client=client, filter=butterworth_filter, soln_model=soln_model)
+    
     count = 0
     time_start = time()
     while True:
@@ -124,17 +162,22 @@ def run_training(
                 num_steps,
                 interval,
                 noise,
-                weight_perturbation
+                weight_perturbation,
+                initial_state,
+                initial_action,
             )
         except KeyboardInterrupt as e:
             print(f'Interrupted sampling rollout: {e}')
             set_init_state(client)
+            butterworth_filter.reset()
             raise e
 
         print(f'Rollout Sampling time: {time() - sample_start:.2f} seconds')
         show_rollout_stats(rollout)
-        set_init_state(client)
+        set_init_state(client, filter=butterworth_filter)
+
         accept = input('(A)ccept, (Q)uit, (S)ave-images')
+
 
         for opt in ['S', 's']:
             if opt in accept:
@@ -165,4 +208,13 @@ def run_training(
 
         if not random_model:
             model = gcs.model.load_model()
+
+        butterworth_filter.reset()
+
+        initial_state, initial_action = set_init_state(
+            client,
+            filter=butterworth_filter,
+            soln_model=soln_model
+        )
+
         

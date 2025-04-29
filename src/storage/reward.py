@@ -52,6 +52,50 @@ def compute_posture_reward(state, condition):
     return posture_reward, posture_close
 
 
+def compute_stability_reward(state, condition):
+    [
+        front_right_top,
+        front_right_bottom,
+        front_left_top,
+        front_left_bottom,
+        back_right_top,
+        back_right_bottom,
+        back_left_top,
+        back_left_bottom,
+        front_right_top_vel,
+        front_right_bottom_vel,
+        front_left_top_vel,
+        front_left_bottom_vel,
+        back_right_top_vel,
+        back_right_bottom_vel,
+        back_left_top_vel,
+        back_left_bottom_vel,
+        ax,
+        ay,
+        az,
+        gx,
+        gy,
+        gz,
+        roll,
+        pitch
+    ] = state
+
+    flbe = abs(front_right_top_vel)
+    frbe = abs(front_right_bottom_vel)
+    brbe = abs(back_right_bottom_vel)
+    blbe = abs(back_left_bottom_vel)
+    flte = abs(front_left_top_vel)
+    frte = abs(front_right_top_vel)
+    brte = abs(back_right_top_vel)
+    blte = abs(back_left_top_vel)
+
+    stability_reward = 0
+    for item in [flbe, frbe, brbe, blbe, flte, frte, brte, blte]:
+        stability_reward += item
+
+    return stability_reward
+
+
 def compute_overturn_penalty(state, condition):
     [overturned, *_] = condition
     if overturned:
@@ -102,10 +146,11 @@ def default_velocity_reward(states, conditions):
         posture_reward, posture_close = compute_posture_reward(state, condition)
         overturn_penalty = compute_overturn_penalty(state, condition)
         velocity_reward, last_distance = compute_velocity_reward(state, condition, last_distance)
+        stability_reward = compute_stability_reward(state, condition)
         if not posture_close:
             velocity_reward = 0
         if overturned:
             velocity_reward = 0
             posture_reward = 0
-        rewards.append(0.1 * posture_reward + 10 * velocity_reward + overturn_penalty)
+        rewards.append(0.1 * posture_reward + 10 * velocity_reward + overturn_penalty + stability_reward)
     return torch.tensor(rewards)[:, None]
