@@ -1,10 +1,7 @@
 import logging
 import dotenv
 import click
-from peripherals.pogo import pogo
-from peripherals.camera import camera
-from client import client
-from readings import readings
+
 
 dotenv.load_dotenv()
 
@@ -15,10 +12,31 @@ logger = logging.getLogger(__name__)
 def cli():
     pass
 
-cli.add_command(pogo)
-cli.add_command(camera)
-cli.add_command(client)
-cli.add_command(readings)
+
+try:
+    from peripherals.pogo import pogo
+    cli.add_command(pogo)
+except ImportError:
+    pass
+
+try:
+    from peripherals.camera import camera
+    cli.add_command(camera)
+except ImportError:
+    pass
+
+try:
+    from client import client
+    cli.add_command(client)
+except ImportError as error:
+    logger.error(error)
+    pass
+
+try:
+    from readings import readings
+    cli.add_command(readings)
+except ImportError:
+    pass
 
 if __name__ == "__main__":
     cli()

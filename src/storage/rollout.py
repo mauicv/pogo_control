@@ -13,7 +13,7 @@ class GCSRollout:
 
     def upload_rollout(self, rollout, model_version):
         rollout_index = str(uuid.uuid4())
-        blob_name = f"{self.experiment_name}/rollouts/{model_version}-{rollout_index}.json"
+        blob_name = f"{self.experiment_name}/rollouts/{model_version}-n-{rollout_index}.json"
         blob = self.bucket.blob(blob_name)
         blob.upload_from_string(json.dumps(rollout))
 

@@ -1,5 +1,6 @@
 import click
 import os
+from peripherals.pogo.functions import move_robot
 
 
 @click.group()
@@ -17,7 +18,7 @@ def pogo(ctx, debug, host, port):
 @pogo.command()
 @click.pass_context
 @click.option('--update-interval', type=float, default=0.01)
-@click.option('--sensor-only', type=bool, default=False)
+@click.option('--sensor-only', is_flag=True)
 def start(ctx, update_interval, sensor_only):
     from peripherals.pogo.setup import setup_pogo_control
     from peripherals.pogo.setup import setup_pogo_sensor
@@ -62,7 +63,6 @@ def move(
         pogo move-robot --front-left-bottom=0.4 --front-right-bottom=0.4 --back-right-bottom=0.4 --back-left-bottom=0.4 --front-left-top=-0.3 --front-right-top=-0.3 --back-right-top=-0.3 --back-left-top=-0.3
     """
 
-    from peripherals.pogo.functions import move_robot
     move_robot(
         front_left_bottom,
         front_left_top,

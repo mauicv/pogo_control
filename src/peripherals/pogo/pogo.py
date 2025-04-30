@@ -17,7 +17,7 @@ class Pogo(ServoController, MPU6050Mixin):
         Servo(name="front_left_bottom", pin_id=3, pin=10, pin_limits=(-0.9, 0.9), init_value=-0.4, offset=0.0, reverse=True, **generic_values),
         Servo(name="back_right_top", pin_id=4, pin=20, pin_limits=(-0.9, 0.2), init_value=-0.4, offset=0.0, **generic_values),
         Servo(name="back_right_bottom", pin_id=5, pin=19, pin_limits=(-0.9, 0.9), init_value=-0.4, offset=0.0, **generic_values),
-        Servo(name="back_left_top", pin_id=6, pin=13, pin_limits=(-0.9, 0.2), init_value=-0.4, offset=0.2, reverse=True, **generic_values),
+        Servo(name="back_left_top", pin_id=6, pin=13, pin_limits=(-0.9, 0.2), init_value=-0.4, offset=-0.6, reverse=True, **generic_values),
         Servo(name="back_left_bottom", pin_id=7, pin=6, pin_limits=(-0.9, 0.9), init_value=-0.4, offset=0.0, reverse=True, **generic_values),
     ]
 

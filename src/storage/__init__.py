@@ -2,6 +2,7 @@ from google.cloud import storage
 from storage.model import GCSModel
 from storage.rollout import GCSRollout
 from storage.loader import DataLoader
+from storage.reward import default_velocity_reward
 
 
 class GCS_Interface:
@@ -17,6 +18,7 @@ class GCS_Interface:
             state_dim=14,
             action_dim=8,
             num_time_steps=25,
+            reward_function=default_velocity_reward
         ) -> None:
         if credentials:
             client = storage.Client.from_service_account_json(credentials)
@@ -40,5 +42,6 @@ class GCS_Interface:
             rollout_length=rollout_length,
             state_dim=state_dim,
             action_dim=action_dim,
-            num_time_steps=num_time_steps
+            num_time_steps=num_time_steps,
+            reward_function=reward_function
         )

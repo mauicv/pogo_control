@@ -1,15 +1,18 @@
 import dotenv
 dotenv.load_dotenv()
 
+import uuid
 import click
 import logging
+import time
+from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
 
 
 @click.group()
 @click.option('--debug/--no-debug', default=False)
-@click.option('--host', type=str, default='192.168.0.20')
+@click.option('--host', type=str, default='192.168.0.27')
 @click.option('--port', type=int, default=8000)
 @click.pass_context
 def readings(ctx, debug, host, port):
@@ -34,9 +37,59 @@ def position(ctx):
     from readings.plot_pose_readings import plot_pose_readings as plot_pose_readings_func
     client = ctx.obj['client']
     client.connect()
-    data = client.send_data({})
-    print(data)
     plot_pose_readings_func(client)
+    client.close()
+
+
+@readings.command()
+@click.pass_context
+@click.option('--num', type=int, default=5)
+@click.option('--interval', type=float, default=0.2)
+def capture(ctx, num, interval):
+    client = ctx.obj['client']
+    client.connect()
+    start_time = time.time()
+    for _ in tqdm(range(num)):
+        last_time = time.time()
+        data = client.send_data({'command': 'capture'})
+        if time.time() - last_time < interval:
+            time.sleep(interval - (time.time() - last_time))
+    print(f'Time taken: {time.time() - start_time:.2f} seconds')
+    print(f'Average time per capture: {(time.time() - start_time) / num:.2f} seconds')
+    client.close()
+
+
+@readings.command()
+@click.pass_context
+def store(ctx):
+    client = ctx.obj['client']
+    client.connect()
+    data = client.send_data({
+        'command': 'store',
+        'args': {
+            'name': str(uuid.uuid4())
+        }
+    })
+    client.close()
+
+
+@readings.command()
+@click.pass_context
+def process(ctx):
+    client = ctx.obj['client']
+    client.connect()
+    data = client.send_data({'command': 'process'})
+    print(data)
+    client.close()
+
+
+@readings.command()
+@click.pass_context
+def reset(ctx):
+    client = ctx.obj['client']
+    client.connect()
+    data = client.send_data({'command': 'reset'})
+    print(data)
     client.close()
 
 

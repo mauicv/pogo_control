@@ -3,14 +3,25 @@ import time
 import numpy as np
 from dataclasses import dataclass
 from picamera2 import Picamera2
+from libcamera import controls
 import numpy as np
 import pprint
 import time
+import uuid
+
 
 @dataclass
 class Frame:
     data: np.ndarray
     timestamp: float
+    uuid: str
+
+    def to_dict(self):
+        return {
+            'data': self.data.tolist(),
+            'timestamp': self.timestamp,
+            'uuid': self.uuid,
+        }
 
 
 class Camera:
@@ -67,7 +78,8 @@ class Camera:
         )
         return Frame(
             data=frame,
-            timestamp=time.time()
+            timestamp=time.time(),
+            uuid=str(uuid.uuid4())
         )
 
     def capture(self):
@@ -163,7 +175,7 @@ class Picamera2Camera(Camera):
         self.vc = Picamera2()
         config = self.vc.create_video_configuration(
             main={"size": (width, height)},
-            # controls={"AfMode": controls.AfModeEnum.Continuous}
+            controls={"AfMode": controls.AfModeEnum.Continuous}
         )
         self.vc.configure(config)
         self.vc.set_controls({

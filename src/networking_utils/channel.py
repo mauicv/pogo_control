@@ -32,8 +32,9 @@ class Channel:
                             conn.sendall(b"ACK_MSG")
                             continue
 
+                        message_length = len(outputs).to_bytes(4, byteorder='big')
+                        conn.sendall(message_length)
                         conn.sendall(outputs)
-
 
     def _handle_request(self, data, function):
         try:

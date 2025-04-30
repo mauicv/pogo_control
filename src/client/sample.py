@@ -1,67 +1,17 @@
 import torch
 import time
 from tqdm import tqdm
-from dataclasses import dataclass
-from client.multi_client import MultiClientInterface
+from client.rollout import Rollout
+from client.client_interface import StandingClientInterface, WalkingClientInterface
 from filters.butterworth import ButterworthFilter
 import numpy as np
-from config import PRECOMPUTED_MEANS, PRECOMPUTED_STDS
+from config import PRECOMPUTED_MEANS, PRECOMPUTED_STDS, INITIAL_POSITION
+from typing import Optional
 
-
-INITIAL_POSITION = (-0.4, -0.4, 0.4, 0.4, -0.4, -0.4, 0.4, 0.4)
-
-@dataclass
-class Rollout:
-    states: list[list[float]]
-    actions: list[list[float]]
-    times: list[float]
-    conditions: list[list[float]]
-    end_index: int = None
-
-    def to_dict(self):
-        return {
-            "states": self.states,
-            "actions": self.actions,
-            "times": self.times,
-            "conditions": self.conditions,
-            "end_index": self.end_index
-        }
-
-    def append(self, state, action, time, conditions):
-        if isinstance(state, torch.Tensor):
-            state = state.numpy().tolist()
-        if isinstance(action, torch.Tensor):
-            action = action.numpy().tolist()
-        if isinstance(state, np.ndarray):
-            state = state.tolist()
-        if isinstance(action, np.ndarray):
-            action = action.tolist()
-        self.states.append(state)
-        self.actions.append(action)
-        self.times.append(time)
-        self.conditions.append(conditions)
-        self.end_index = len(self.states) - 1
-
-
-class ConditionCounter:
-    def __init__(self, overturned_iteration_count_limit: int):
-        self.overturned_iteration_count_limit = overturned_iteration_count_limit
-        self.overturned_iteration_count = 0
-
-    def update_check(self, conditions: list[float]) -> bool:
-        (
-            overturned,
-            last_mpus6050_sample_ts,
-            last_servo_set_ts,
-        ) = conditions
-
-        if overturned:
-            self.overturned_iteration_count += 1
-        else:
-            self.overturned_iteration_count = 0
-        if self.overturned_iteration_count > self.overturned_iteration_count_limit:
-            return True
-        return False
+    
+def check_overturned(conditions: list[float]) -> bool:
+    overturned, *_ = conditions
+    return overturned
     
 
 def compute_actions(
@@ -84,24 +34,26 @@ def compute_actions(
 def sample(
         model: torch.nn.Module,
         filter: ButterworthFilter,
-        client: MultiClientInterface,
+        client: StandingClientInterface | WalkingClientInterface,
         num_steps: int = 100,
         interval: float = 0.1,
         noise: float = 0.3,
         weight_perturbation: float = 0.0,
+        initial_state: Optional[torch.Tensor] = None,
+        initial_action: Optional[torch.Tensor] = INITIAL_POSITION
     ) -> Rollout:
-    filter.reset()
+    client.reset()
     torch.set_grad_enabled(False)
     model.perturb_actor(
         weight_perturbation_size=weight_perturbation
     )
-    counter = ConditionCounter(
-        overturned_iteration_count_limit=1,
-    )
-    true_action = torch.tensor(INITIAL_POSITION)
+    if initial_action is None:
+        initial_action = torch.tensor(INITIAL_POSITION)
+    true_action = torch.tensor(initial_action)
     filtered_action = filter(true_action)
-    servo_state, world_state, conditions = client.send_data(filtered_action)
-    state = torch.tensor(servo_state + world_state)
+    state, conditions = client.send_data(filtered_action)
+    if initial_state is not None:
+        state = initial_state
     rollout = Rollout(
         states=[],
         actions=[],
@@ -109,27 +61,71 @@ def sample(
         conditions=[]
     )
     current_time = time.time()
-    for i in tqdm(range(num_steps)):
+    rollout.append(state, true_action, current_time, conditions)
+    last_conditions = conditions
+    for i in tqdm(range(num_steps - 1)):
         current_time = time.time()
-        if i % 2 == 0:
-            true_action, filtered_action = compute_actions(
-                model,
-                state,
-                filter,
-                noise=noise,
-            )
-            # NOTE: the state, actions stored here are related as the
-            # action resulting from the state (not the state resulting
-            # from the action)
-            state = state.numpy()
-            rollout.append(state, true_action, current_time, conditions)
-        if counter.update_check(conditions):
+        true_action, filtered_action = compute_actions(
+            model=model,
+            state=state,
+            filter=filter,
+            noise=noise,
+        )
+        # NOTE: the state, actions stored here are related as the
+        # action resulting from the state (not the state resulting
+        # from the action)
+        state = state.numpy()
+        rollout.append(state, true_action, current_time, last_conditions)
+        state, conditions = client.send_data(filtered_action)
+        if check_overturned(last_conditions):
             break
-        servo_state, world_state, conditions = client.send_data(filtered_action)
-        state = torch.tensor(servo_state + world_state)
 
+        last_conditions = conditions
+        
         elapsed_time = time.time() - current_time
         if elapsed_time < interval:
             time.sleep(interval - elapsed_time)
-
+    
+    rollout = client.post_process(rollout)
     return rollout
+
+
+def deploy_model(
+        model: torch.nn.Module,
+        filter: ButterworthFilter,
+        client: StandingClientInterface | WalkingClientInterface,
+        num_steps: int = 15,
+        interval: float = 0.2,
+    ) -> Rollout:
+    filter.reset()
+    client.reset()
+    torch.set_grad_enabled(False)
+    model.perturb_actor(
+        weight_perturbation_size=0.0
+    )
+    true_action = torch.tensor(INITIAL_POSITION)
+    filtered_action = filter(true_action)
+    state, conditions = client.send_data(filtered_action)
+    current_time = time.time()
+    last_conditions = conditions
+    for i in tqdm(range(num_steps - 1)):
+        current_time = time.time()
+        true_action, filtered_action = compute_actions(
+            model=model,
+            state=state,
+            filter=filter,
+            noise=0.0,
+        )
+        state, conditions = client.send_data(filtered_action)
+        if check_overturned(last_conditions):
+            break
+
+        last_conditions = conditions
+        
+        elapsed_time = time.time() - current_time
+        if elapsed_time < interval:
+            time.sleep(interval - elapsed_time)
+    
+    print(f'Final state: {state}')
+    print(f'Final action: {true_action}')
+    return state, true_action

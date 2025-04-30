@@ -3,128 +3,16 @@ import json
 from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor
 from config import PRECOMPUTED_MEANS, PRECOMPUTED_STDS
+from storage.reward import default_standing_reward, default_velocity_reward
 
 
-def overturned_penalty(rewards, conditions):
-    MAX_OVERTURNED_PENALTY = 10
-    end_condition = False
-    for i, condition in enumerate(conditions):
-        [overturned, *_] = condition
-        if overturned or end_condition:
-            end_condition = True
-            rewards[i] = -MAX_OVERTURNED_PENALTY
-    return torch.tensor(rewards)
-
-
-def default_standing_reward(states, conditions):
-    rewards = []
-    for state, condition in zip(states, conditions):
-        [
-            front_right_top,
-            front_right_bottom,
-            front_left_top,
-            front_left_bottom,
-            back_right_top,
-            back_right_bottom,
-            back_left_top,
-            back_left_bottom,
-            front_right_top_vel,
-            front_right_bottom_vel,
-            front_left_top_vel,
-            front_left_bottom_vel,
-            back_right_top_vel,
-            back_right_bottom_vel,
-            back_left_top_vel,
-            back_left_bottom_vel,
-            ax,
-            ay,
-            az,
-            gx,
-            gy,
-            gz,
-            roll,
-            pitch
-        ] = state
-
-        [overturned, *_] = condition
-
-
-        flbe = 1 - abs(front_left_bottom - 0.4)
-        frbe = 1 - abs(front_right_bottom - 0.4)
-        brbe = 1 - abs(back_right_bottom - 0.4)
-        blbe = 1 - abs(back_left_bottom - 0.4)
-        flte = 1 - abs(front_left_top - -0.3)
-        frte = 1 - abs(front_right_top - -0.3)
-        brte = 1 - abs(back_right_top - -0.3)
-        blte = 1 - abs(back_left_top - -0.3)
-        pe = 1 - abs(pitch)
-        re = 1 - abs(roll)
-
-        posture_reward = 0
-        for item in [flbe, frbe, brbe, blbe, flte, frte, brte, blte, pe, re]:
-            posture_reward += item
-
-        overturn_penalty = 0
-        if overturned:
-            overturn_penalty = -10
-
-        rewards.append(
-            10 * posture_reward +
-            overturn_penalty
-        )
-    rewards = torch.tensor(rewards)
-    return (rewards)[:, None]
-
-
-def sanity_check_reward_function(states, conditions):
-    rewards = []
-    for state in states:
-        [
-            front_right_top,
-            front_right_bottom,
-            front_left_top,
-            front_left_bottom,
-            back_right_top,
-            back_right_bottom,
-            back_left_top,
-            back_left_bottom,
-            *_
-        ] = state
-        reward = - 100 * (
-            (front_left_bottom - 0.4)**2 +
-            (front_right_bottom - 0.4)**2 +
-            (back_right_bottom - 0.4)**2 +
-            (back_left_bottom - 0.4)**2 +
-            (front_left_top - -0.3)**2 +
-            (front_right_top - -0.3)**2 +
-            (back_right_top - -0.3)**2 +
-            (back_left_top - -0.3)**2
-        )
-        rewards.append(reward)
-    return torch.tensor(rewards)[:, None]
-
-
-def default_velocity_reward_function(states, conditions):
-    rewards = []
-    last_distance = None
-
-    for condition in conditions:
-        [*_, distance] = condition
-        if last_distance is None:
-            last_distance = distance
-        distance_delta = distance - last_distance
-        last_distance = distance
-    rewards.append(-distance_delta)
-    velocity_reward = torch.tanh(0.25 * torch.tensor(rewards))
-    overturned_reward = overturned_penalty(rewards, conditions)
-    return (velocity_reward + overturned_reward)[:, None]
-
-
-def make_mask(detection_ts):
-    # if timesteps are the same set mask to 0 else 1
+def make_mask(conditions):
+    # if timesteps are the same and not overturned set mask to 0 else 1
+    detection_ts = [condition[-1] for condition in conditions]
+    overturned = [condition[0] for condition in conditions]
     mask = torch.ones(len(detection_ts), 1)
     for i in range(1, len(detection_ts)):
-        if detection_ts[i] == detection_ts[i-1]:
+        if detection_ts[i] == detection_ts[i-1] and not overturned[i]:
             mask[i, 0] = 0
     return mask
 
@@ -140,9 +28,10 @@ class DataLoader:
             state_dim=14,
             action_dim=8,
             num_time_steps=25,
-            reward_function=default_standing_reward,
+            reward_type='walking',
+            reward_function=default_velocity_reward,
             means=PRECOMPUTED_MEANS,
-            stds=PRECOMPUTED_STDS
+            stds=PRECOMPUTED_STDS,
         ) -> None:
         self.num_time_steps = num_time_steps
         self.reward_function = reward_function
@@ -155,6 +44,8 @@ class DataLoader:
         self.action_dim = action_dim
         self.means = means
         self.stds = stds
+
+        self.reward_type = reward_type
 
         self.state_buffer = torch.zeros(
             (self.num_runs, self.rollout_length, self.state_dim),
@@ -223,8 +114,8 @@ class DataLoader:
         self.action_buffer[run_index][:end_index+1] = actions
         self.reward_buffer[run_index][:end_index+1] = rewards
         self.dropout_mask[run_index][:end_index+1] = 1
-        # detection_ts = [condition[-1] for condition in conditions]
-        # self.dropout_mask[run_index][:end_index+1] = make_mask(detection_ts)
+        if self.reward_type == 'walking':
+            self.dropout_mask[run_index][:end_index+1] = make_mask(conditions)
         if end_index < self.num_time_steps:
             for i in range(end_index + 1, self.num_time_steps + 1):
                 # pad the rollout with the last state

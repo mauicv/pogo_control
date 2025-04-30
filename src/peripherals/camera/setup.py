@@ -7,11 +7,10 @@ def setup_camera_sensor(
     host: str,
     port: int,
     camera_matrix_file: str,
-    update_interval: float = 0.01,
 ):
     from networking_utils.channel import Channel
-    from peripherals.camera.pose_sensor import PoseSensor
     from peripherals.camera.camera import Picamera2Camera as Camera
+    from peripherals.camera.sensor import CameraSensor
 
     with open(camera_matrix_file, 'r') as f:
         c_params = json.load(f)
@@ -27,15 +26,9 @@ def setup_camera_sensor(
         camera_matrix=camera_matrix,
         dist_coeff=dist_coeff,
     )
-    pose_sensor = PoseSensor(
+    camera_sensor = CameraSensor(
         camera=camera,
-        update_interval=update_interval
     )
 
-    def _handle_message(message):
-        # time.sleep(0.08)
-        data = pose_sensor.get_data()
-        return data
-
     channel = Channel(host=host, port=port)
-    channel.serve(_handle_message)
+    channel.serve(camera_sensor.handle_message)
