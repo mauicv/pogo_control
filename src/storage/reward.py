@@ -152,5 +152,5 @@ def default_velocity_reward(states, conditions):
         if overturned:
             velocity_reward = 0
             posture_reward = 0
-        rewards.append(0.1 * posture_reward + 10 * velocity_reward + overturn_penalty + stability_reward)
+        rewards.append(posture_reward + 10 * velocity_reward + overturn_penalty + stability_reward)
     return torch.tensor(rewards)[:, None]
