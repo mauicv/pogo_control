@@ -79,7 +79,6 @@ def process(ctx):
     client = ctx.obj['client']
     client.connect()
     data = client.send_data({'command': 'process'})
-    print(data)
     client.close()
 
 
@@ -100,16 +99,6 @@ def raw(ctx):
     client = ctx.obj['client']
     client.connect()
     plot_base_sense_readings_func(client)
-    client.close()
-
-
-@readings.command()
-@click.pass_context
-def pose(ctx):
-    from readings.plot_sense_readings import plot_readings as plot_readings_func
-    client = ctx.obj['client']
-    client.connect()
-    plot_readings_func(client)
     client.close()
 
 

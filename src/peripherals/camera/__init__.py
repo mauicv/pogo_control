@@ -20,12 +20,16 @@ def camera(ctx, debug, host, port):
 @camera.command()
 @click.pass_context
 @click.option('--camera-matrix-file', type=str, default='camera_calibration_files/picamera-module-3.json')
-def start(ctx, camera_matrix_file):
+@click.option('--live', is_flag=True, default=False)
+@click.option('--use-kalman-filter', is_flag=True, default=False)
+def start(ctx, camera_matrix_file, live, use_kalman_filter):
     from peripherals.camera.setup import setup_camera_sensor
     setup_camera_sensor(
         host=ctx.obj['HOST'],
         port=ctx.obj['POST'],
         camera_matrix_file=camera_matrix_file,
+        live=live,
+        use_kalman_filter=use_kalman_filter,
     )
 
 

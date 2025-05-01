@@ -7,10 +7,12 @@ def setup_camera_sensor(
     host: str,
     port: int,
     camera_matrix_file: str,
+    live: bool = False,
+    use_kalman_filter: bool = False,
 ):
     from networking_utils.channel import Channel
     from peripherals.camera.camera import Picamera2Camera as Camera
-    from peripherals.camera.sensor import CameraSensor
+    from peripherals.camera.sensor import CameraSensor, LiveCameraSensor
 
     with open(camera_matrix_file, 'r') as f:
         c_params = json.load(f)
@@ -26,9 +28,17 @@ def setup_camera_sensor(
         camera_matrix=camera_matrix,
         dist_coeff=dist_coeff,
     )
-    camera_sensor = CameraSensor(
-        camera=camera,
-    )
+
+    if live:
+        camera_sensor = LiveCameraSensor(
+            camera=camera,
+            use_kalman_filter=use_kalman_filter,
+        )
+    else:
+        camera_sensor = CameraSensor(
+            camera=camera,
+            use_kalman_filter=use_kalman_filter,
+        )
 
     channel = Channel(host=host, port=port)
     channel.serve(camera_sensor.handle_message)

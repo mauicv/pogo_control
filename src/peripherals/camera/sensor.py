@@ -70,3 +70,47 @@ class CameraSensor:
     def deinit_camera_sensor(self):
         self.camera.close()
         self.reset()
+
+
+class LiveCameraSensor:
+    def __init__(
+            self,
+            camera: Camera,
+            source_marker_id: int = 1,
+            target_marker_id: int = 2,
+            use_kalman_filter: bool = False,
+        ):
+        self.camera = camera
+        self.buffer = []
+        self.aruco_processor = ArucoSensorProcessor(
+            source_marker_id=source_marker_id,
+            target_marker_id=target_marker_id,
+            use_kalman_filter=use_kalman_filter,
+            camera=camera,
+        )
+
+    def _parse_command(self, message):
+        command = message['command']
+        args = message['args'] if 'args' in message else {}
+        return command, args
+
+    def handle_message(self, message):
+        command, args = self._parse_command(message)
+        return {
+            'capture': self._capture,
+            'reset': self._reset,
+        }[command](**args)
+
+    def _capture(self):
+        frame = self.camera.get_frame()
+        self.aruco_processor.process(frame)
+        data = self.aruco_processor.get_data()
+        return data
+    
+    def _reset(self):
+        self.aruco_processor.init_variables()
+        return True
+
+    def deinit_camera_sensor(self):
+        self.camera.close()
+        self.reset()

@@ -27,12 +27,13 @@ class ArucoSensorProcessor:
 
     def init_variables(self):
         if self.use_kalman_filter:
-            # self.front_xv_filter = KalmanXYZFilter(0.0, 0.0, 0.0)
-            # self.back_xv_filter = KalmanXYZFilter(0.0, 0.0, 0.0)
-            self.front_xv_filter = None
-            self.back_xv_filter = None
+            # self.front_xyx_filter = KalmanXYZFilter(0.0, 0.0, 0.0)
+            # self.back_xyz_filter = KalmanXYZFilter(0.0, 0.0, 0.0)
+            self.front_xyx_filter = None
+            self.back_xyz_filter = None
 
-        self._last_tvec = None
+        self._last_front_tvec = None
+        self._last_back_tvec = None
         # self._last_tvec = np.array([[0.0, 0.0, 0.0], [0.0, 0.0, 0.0]])
         self._orientation = None
         # self._orientation = np.array([0.0, 0.0, 0.0])
@@ -45,34 +46,45 @@ class ArucoSensorProcessor:
         self._last_detection_ts = frame.timestamp
         self._orientation = tvec[target_index] - tvec[source_index]
 
-        if self.front_xv_filter is None:
+        if self._last_front_tvec is None:
+            self._last_front_tvec = tvec[source_index]
+        if self._last_back_tvec is None:
+            self._last_back_tvec = tvec[target_index]
+        if self.front_xyx_filter is None:
             ((x, y, z), ) = tvec[source_index]
-            self.front_xv_filter = KalmanXYZFilter(x, y, z)
-
-        if self.back_xv_filter is None:
+            self.front_xyx_filter = KalmanXYZFilter(x, y, z)
+        if self.back_xyz_filter is None:
             ((x, y, z), ) = tvec[target_index]
-            self.back_xv_filter = KalmanXYZFilter(x, y, z)
+            self.back_xyz_filter = KalmanXYZFilter(x, y, z)
 
-        ((front_x, front_y, front_z), ) = tvec[source_index]
-        (front_x, front_y, front_z), _ = self.front_xv_filter(front_x, front_y, front_z)
-        ((back_x, back_y, back_z), ) = tvec[target_index]
-        (back_x, back_y, back_z), _ = self.back_xv_filter(back_x, back_y, back_z)
-        self._last_tvec = tvec
+        front_tvec = tvec[source_index][0]
+        front_tvec = np.array(self.front_xyx_filter(*front_tvec))
+        back_tvec = tvec[target_index][0]
+        back_tvec = np.array(self.back_xyz_filter(*back_tvec))
+
+        front_diff = front_tvec - self._last_front_tvec
+        back_diff = back_tvec - self._last_back_tvec
+        
+        self._last_front_tvec = front_tvec
+        self._last_back_tvec = back_tvec
         self._last_detection_ts = frame.timestamp
-        vel_1 = np.dot(np.array([front_x, front_y, front_z]), self._orientation[0])
-        vel_2 = np.dot(np.array([back_x, back_y, back_z]), self._orientation[0])
+        vel_1 = np.dot(np.array(front_diff), self._orientation[0]).item()
+        vel_2 = np.dot(np.array(back_diff), self._orientation[0]).item()
         self._speed = (vel_1 + vel_2) / 2 * self._t_delta
 
     def _update_raw(self, frame, tvec, source_index, target_index):
-        if self._last_tvec is None:
-            self._last_tvec = tvec
+        if self._last_front_tvec is None:
+            self._last_front_tvec = tvec[source_index]
+        if self._last_back_tvec is None:
+            self._last_back_tvec = tvec[target_index]
 
         self._t_delta = frame.timestamp - self._last_detection_ts
         self._last_detection_ts = frame.timestamp
         self._orientation = tvec[target_index] - tvec[source_index]
-        front_diff = tvec[source_index] - self._last_tvec[source_index]
-        back_diff = tvec[target_index] - self._last_tvec[target_index]
-        self._last_tvec = tvec
+        front_diff = tvec[source_index] - self._last_front_tvec
+        back_diff = tvec[target_index] - self._last_back_tvec
+        self._last_front_tvec = tvec[source_index]
+        self._last_back_tvec = tvec[target_index]
         vel_1 = np.dot(front_diff[0], self._orientation[0])
         vel_2 = np.dot(back_diff[0], self._orientation[0])
         self._speed = (vel_1 + vel_2) / 2 * self._t_delta

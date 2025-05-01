@@ -30,44 +30,38 @@ class KalmanDSFilter:
         return self.filter.x
 
 
-def make_xyzv_kalman_filter(init_x, init_y, init_z, init_vx, init_vy, init_vz):
-    filter = KalmanFilter(dim_x=6, dim_z=3)
-    filter.x = np.array([init_x, init_y, init_z, init_vx, init_vy, init_vz])
+def make_xyzv_kalman_filter(init_x, init_y, init_z):
+    filter = KalmanFilter(dim_x=3, dim_z=3)
+    filter.x = np.array([init_x, init_y, init_z])
     filter.F = np.array([
-        [1, 0, 0, 0.1, 0, 0],
-        [0, 1, 0, 0, 0.1, 0],
-        [0, 0, 1, 0, 0, 0.1],
-        [0, 0, 0, 1, 0, 0],
-        [0, 0, 0, 0, 1, 0],
-        [0, 0, 0, 0, 0, 1]
+        [1, 0, 0],
+        [0, 1, 0],
+        [0, 0, 1],
     ])
     filter.H = np.array([
-        [1, 0, 0, 0, 0, 0],
-        [0, 1, 0, 0, 0, 0],
-        [0, 0, 1, 0, 0, 0]
+        [1, 0, 0],
+        [0, 1, 0],
+        [0, 0, 1]
     ])
-    filter.P = np.eye(6) * 1000
+    filter.P = np.eye(3) * 1000
     filter.R = np.eye(3) * 5
     filter.Q = np.array([
-        [1, 0, 0, 0, 0, 0],
-        [0, 1, 0, 0, 0, 0],
-        [0, 0, 1, 0, 0, 0],
-        [0, 0, 0, 25, 0, 0],
-        [0, 0, 0, 0, 25, 0],
-        [0, 0, 0, 0, 0, 25]
+        [1, 0, 0],
+        [0, 1, 0],
+        [0, 0, 1]
     ])
     return filter
 
 
 class KalmanXYZFilter:
     def __init__(self, init_x, init_y, init_z):
-        self.filter = make_xyzv_kalman_filter(init_x, init_y, init_z, 0, 0, 0)
+        self.filter = make_xyzv_kalman_filter(init_x, init_y, init_z)
 
     def __call__(self, x, y, z):
         self.filter.predict()
         self.filter.update(np.array([x, y, z]))
-        x, y, z, vx, vy, vz = self.filter.x
-        return (x, y, z), (vx, vy, vz)
+        x, y, z = self.filter.x
+        return x, y, z
 
     @property
     def x(self):
