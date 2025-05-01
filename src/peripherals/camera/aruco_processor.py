@@ -1,4 +1,4 @@
-from filters.kalman import KalmanDSFilter, KalmanXVFilter, KalmanYawFilter
+from filters.kalman import KalmanDSFilter, KalmanXYZFilter, KalmanYawFilter
 from peripherals.camera.camera import Frame, Camera
 import cv2
 import numpy as np
@@ -27,39 +27,55 @@ class ArucoSensorProcessor:
 
     def init_variables(self):
         if self.use_kalman_filter:
-            self.ds_filter = KalmanDSFilter(0.0)
-            self.xv_filter = KalmanXVFilter(0.0, 0.0)
-            self.yaw_filter = KalmanYawFilter(0.0)
-        self._delta_tvec = np.array([0.0, 0.0, 0.0])
-        self._delta_rvec = np.array([0.0, 0.0, 0.0])
-        self._last_delta_tvec = np.array([0.0, 0.0, 0.0])
-        self._last_delta_rvec = np.array([0.0, 0.0, 0.0])
+            # self.front_xv_filter = KalmanXYZFilter(0.0, 0.0, 0.0)
+            # self.back_xv_filter = KalmanXYZFilter(0.0, 0.0, 0.0)
+            self.front_xv_filter = None
+            self.back_xv_filter = None
+
+        self._last_tvec = None
+        # self._last_tvec = np.array([[0.0, 0.0, 0.0], [0.0, 0.0, 0.0]])
+        self._orientation = None
+        # self._orientation = np.array([0.0, 0.0, 0.0])
+
         self._t_delta = 0.0
-        self._velocity = np.array([0.0, 0.0, 0.0])
-        self._speed = 0.0
-        self._distance = 0.0
-        self._yaw = 0.0
         self._last_detection_ts = 0
 
-    def _update_kalman_filter(self, frame, delta_tvec):
-        x, y, _ = delta_tvec[0]
-        distance = np.linalg.norm(delta_tvec)
-        self._last_detection_ts = frame.timestamp
-        self.ds_filter(distance)
-        self.xv_filter(x, y)
-        self.yaw_filter(self._yaw)
-
-    def _update_raw(self, frame, delta_tvec):
-        self._delta_tvec = delta_tvec
+    def _update_kalman_filter(self, frame, tvec, source_index, target_index):
         self._t_delta = frame.timestamp - self._last_detection_ts
         self._last_detection_ts = frame.timestamp
-        diff = self._delta_tvec - self._last_delta_tvec
-        self._velocity = diff / self._t_delta
-        a = np.linalg.norm(self._delta_tvec)
-        b = np.linalg.norm(self._last_delta_tvec)
-        self._speed = (a - b) / self._t_delta
-        self._last_delta_tvec = self._delta_tvec
-        self._distance = a
+        self._orientation = tvec[target_index] - tvec[source_index]
+
+        if self.front_xv_filter is None:
+            ((x, y, z), ) = tvec[source_index]
+            self.front_xv_filter = KalmanXYZFilter(x, y, z)
+
+        if self.back_xv_filter is None:
+            ((x, y, z), ) = tvec[target_index]
+            self.back_xv_filter = KalmanXYZFilter(x, y, z)
+
+        ((front_x, front_y, front_z), ) = tvec[source_index]
+        (front_x, front_y, front_z), _ = self.front_xv_filter(front_x, front_y, front_z)
+        ((back_x, back_y, back_z), ) = tvec[target_index]
+        (back_x, back_y, back_z), _ = self.back_xv_filter(back_x, back_y, back_z)
+        self._last_tvec = tvec
+        self._last_detection_ts = frame.timestamp
+        vel_1 = np.dot(np.array([front_x, front_y, front_z]), self._orientation[0])
+        vel_2 = np.dot(np.array([back_x, back_y, back_z]), self._orientation[0])
+        self._speed = (vel_1 + vel_2) / 2 * self._t_delta
+
+    def _update_raw(self, frame, tvec, source_index, target_index):
+        if self._last_tvec is None:
+            self._last_tvec = tvec
+
+        self._t_delta = frame.timestamp - self._last_detection_ts
+        self._last_detection_ts = frame.timestamp
+        self._orientation = tvec[target_index] - tvec[source_index]
+        front_diff = tvec[source_index] - self._last_tvec[source_index]
+        back_diff = tvec[target_index] - self._last_tvec[target_index]
+        self._last_tvec = tvec
+        vel_1 = np.dot(front_diff[0], self._orientation[0])
+        vel_2 = np.dot(back_diff[0], self._orientation[0])
+        self._speed = (vel_1 + vel_2) / 2 * self._t_delta
 
     def process(self, frame: Frame):
         corners, ids, _ = self.detector.detectMarkers(
@@ -75,72 +91,21 @@ class ArucoSensorProcessor:
         source_index = ids.index(self.source_marker_id)
         target_index = ids.index(self.target_marker_id)
 
-        rvec , tvec, _ = cv2.aruco.estimatePoseSingleMarkers(
+        _ , tvec, _ = cv2.aruco.estimatePoseSingleMarkers(
             corners,
             self.markerSizeInCM,
             self.camera.camera_matrix,
             self.camera.dist_coeff,
         )
 
-        self._delta_tvec = tvec[target_index] - tvec[source_index]
         if self.use_kalman_filter:
-            self._update_kalman_filter(frame, self._delta_tvec)
+            self._update_kalman_filter(frame, tvec, source_index, target_index)
         else:
-            self._update_raw(frame, self._delta_tvec)
-
-        self._yaw = np.abs(rvec[target_index][0, 1])
+            self._update_raw(frame, tvec, source_index, target_index)
 
     def get_data(self):
         return [
-            self.position[0],
-            self.position[1],
-            self.distance,
-            self.velocity[0],
-            self.velocity[1],
-            self.speed,
-            self.yaw,
-            self.last_detection_ts,
+            self._speed,
+            *self._orientation[0],
+            self._last_detection_ts,
         ]
-
-    @property
-    def position(self):
-        if self.use_kalman_filter:
-            return [self.xv_filter.x[0], self.xv_filter.x[1]]
-        else:
-            return self._delta_tvec.tolist()
-    
-    @property
-    def distance(self):
-        if self.use_kalman_filter:
-            return self.ds_filter.x[0]
-        else:
-            return self._distance
-
-    @property
-    def last_detection_ts(self):
-        return self._last_detection_ts
-
-    @property
-    def t_delta(self):
-        return self._t_delta
-    
-    @property
-    def velocity(self):
-        if self.use_kalman_filter:
-            return self.xv_filter.x[2:].tolist()
-        else:
-            return self._velocity.tolist()
-    
-    @property
-    def speed(self):
-        if self.use_kalman_filter:
-            return self.ds_filter.x[1]
-        else:
-            return self._speed
-        
-    @property
-    def yaw(self):
-        if self.use_kalman_filter:
-            return self.yaw_filter.x[0]/np.pi
-        else:
-            return self._yaw/np.pi
