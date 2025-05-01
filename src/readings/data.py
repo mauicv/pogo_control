@@ -3,28 +3,33 @@ import numpy as np
 
 
 @dataclass
-class PoseDataArray:
-    xs: list[float] = field(default_factory=list)
-    ys: list[float] = field(default_factory=list)
+class SpeedDataArray:
     speeds: list[float] = field(default_factory=list)
-    distances: list[float] = field(default_factory=list)
-    yaws: list[float] = field(default_factory=list)
-
-    def update(self, x: float, y: float, speed: float, d: float, yaw: list[float]):
-        self.xs.append(x)
-        self.ys.append(y)
+    ts: list[float] = field(default_factory=list)
+    detection_flags: list[int] = field(default_factory=list)
+    pogo_a: list[float] = field(default_factory=list)
+    pogo_v: list[float] = field(default_factory=list)
+    alpha: float = field(default=0.8)
+    
+    def update(self, speed: float, ts: float, pogo_a: float):
         self.speeds.append(speed)
-        self.distances.append(d)
-        self.yaws.append(yaw)
+        if len(self.ts) > 1 and self.ts[-1] == ts:
+            self.detection_flags.append(0)
+        else:
+            self.detection_flags.append(1)
+        self.ts.append(ts)
+        self.pogo_a.append(pogo_a)
+        v = (self.pogo_v[-1] + pogo_a) * self.alpha + speed * (1 - self.alpha)
+        self.pogo_v.append(v)
 
     def get_data(self, limit=100):
         return (
-            self.xs[-limit:],
-            self.ys[-limit:],
             self.speeds[-limit:],
-            self.distances[-limit:],
-            self.yaws[-limit:],
+            self.detection_flags[-limit:],
+            self.pogo_a[-limit:],
+            self.pogo_v[-limit:],
         )
+    
 
 @dataclass
 class SensorDataArray:

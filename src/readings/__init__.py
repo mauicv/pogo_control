@@ -12,10 +12,12 @@ logger = logging.getLogger(__name__)
 
 @click.group()
 @click.option('--debug/--no-debug', default=False)
-@click.option('--host', type=str, default='192.168.0.27')
-@click.option('--port', type=int, default=8000)
+@click.option('--camera-host', type=str, default='192.168.0.27')
+@click.option('--camera-port', type=int, default=8000)
+@click.option('--pogo-host', type=str, default='192.168.0.29')
+@click.option('--pogo-port', type=int, default=8000)
 @click.pass_context
-def readings(ctx, debug, host, port):
+def readings(ctx, debug, camera_host, camera_port, pogo_host, pogo_port):
     ctx.ensure_object(dict)
     ctx.obj['DEBUG'] = debug
 
@@ -25,10 +27,17 @@ def readings(ctx, debug, host, port):
         from networking_utils.client import Client
 
     client = Client(
-        host=host,
-        port=port
+        host=camera_host,
+        port=camera_port
     )
+
+    pogo_client = Client(
+        host=pogo_host,
+        port=pogo_port
+    )
+
     ctx.obj['client'] = client
+    ctx.obj['pogo_client'] = pogo_client
 
 
 @readings.command()
@@ -58,6 +67,18 @@ def capture(ctx, num, interval):
     print(f'Average time per capture: {(time.time() - start_time) / num:.2f} seconds')
     client.close()
 
+
+@readings.command()
+@click.pass_context
+def pose(ctx):
+    from readings.plot_pose_readings import plot_pose_readings as plot_readings_func
+    client = ctx.obj['client']
+    client.connect()
+    pogo_client = ctx.obj['pogo_client']
+    pogo_client.connect()
+    plot_readings_func(client, pogo_client)
+    client.close()
+    pogo_client.close()
 
 @readings.command()
 @click.pass_context

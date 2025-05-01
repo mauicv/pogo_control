@@ -55,7 +55,7 @@ class MPU6050Mixin:
             except OSError as e:
                 if e.errno == 121:
                     if attempt == ATTEMPTS - 2:
-                        from networking_utils.mpu6050 import mpu6050
+                        from peripherals.pogo.mpu6050 import mpu6050
                         self.mpu = mpu6050(0x68)
                     if attempt == ATTEMPTS - 1:
                         raise e

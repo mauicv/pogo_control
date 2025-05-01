@@ -4,90 +4,73 @@ import numpy as np
 from networking_utils.client import Client
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-from readings.data import PoseDataArray
+from readings.data import SpeedDataArray
 
 
-def extract_dv(data):
-    [data, _] = data
-    position, distance,  _, speed, yaw = data
-    x, y = position
-    return -x, y, distance, speed, yaw
+def get_speed(client: Client, pogo_client: Client):
+    (vel, *_, ts) = client.send_data({'command': 'capture'})
+    (s, *_) = pogo_client.send_data({})
+    a = s[0]
+    return vel, ts, a
 
 
-def plot_pose_readings(client: Client):
+def plot_pose_readings(client: Client, pogo_client: Client):
     fig, axs = plt.subplot_mosaic(
         [
-            ['location', 'distance'],
-            ['yaw', 'speed']
+            ['speed', 'detection_flags'],
+            ['a', 'v']
         ],
         layout='constrained'
     )
 
-    x, y, d, speed, yaw = extract_dv(client.send_data({}))
+    # fig, axs = plt.subplots(nrows=1, ncols=1)
+
     init_xs = np.arange(100)
-    init_pos_x = np.empty(100)
-    init_pos_x.fill(x)
-    init_pos_y = np.empty(100)
-    init_pos_y.fill(y)
-    init_speeds = np.empty(100)
-    init_speeds.fill(speed)
-    init_distances = np.empty(100)
-    init_distances.fill(d)
+    init_speed = np.empty(100)
+    speed, _, a = get_speed(client, pogo_client)
+    init_speed.fill(speed)
+    init_detection_flags = np.empty(100)
+    init_detection_flags.fill(0)
+    init_pogo_a = np.empty(100)
+    init_pogo_a.fill(a)
+    init_pogo_v = np.empty(100)
+    init_pogo_v.fill(0)
 
-    init_yaw = np.zeros((100))
-    init_yaw.fill(yaw)
-
-    pose_data = PoseDataArray(
-        xs=init_pos_x.tolist(),
-        ys=init_pos_y.tolist(),
-        speeds=init_speeds.tolist(),
-        distances=init_distances.tolist(),
-        yaws=init_yaw.tolist()
+    pose_data = SpeedDataArray(
+        speeds=init_speed.tolist(),
+        detection_flags=init_detection_flags.tolist(),
+        pogo_a=init_pogo_a.tolist(),
+        pogo_v=init_pogo_v.tolist(),
     )
 
-    plot, = axs['location'].plot(init_pos_x, init_pos_y, '-')
-    axs['location'].set_title("Location")
-    axs['location'].set_xlim(-40,40)
-    axs['location'].set_ylim(-80,0)
-
-    speed_plot, = axs['speed'].plot(init_xs, init_speeds, '-')
+    speed_plot, = axs['speed'].plot(init_xs, init_speed, '-')
     axs['speed'].set_title("Speed")
-    axs['speed'].set_ylim(-10, 10)
+    axs['speed'].set_ylim(-100, 100)
 
-    distance_plot, = axs['distance'].plot(init_xs, init_distances, '-')
-    axs['distance'].set_title("Distance")
-    axs['distance'].set_ylim(0,100)
+    detection_flags_plot, = axs['detection_flags'].plot(init_xs, init_detection_flags, '-')
+    axs['detection_flags'].set_title("Detection Flags")
+    axs['detection_flags'].set_ylim(-0.1, 1.1)
 
-    yaw_plot, = axs['yaw'].plot(init_xs, init_yaw, '-')
-    axs['yaw'].set_title("yaw")
-    axs['yaw'].set_ylim(0, 1)
+    pogo_a_plot, = axs['a'].plot(init_xs, init_pogo_a, '-')
+    axs['a'].set_title("Pogo A")
+    axs['a'].set_ylim(-0.1, 0.1)
+
+    pogo_v_plot, = axs['v'].plot(init_xs, init_pogo_v, '-')
+    axs['v'].set_title("Pogo V")
+    axs['v'].set_ylim(-10, 10)
 
     def animate(
             i,
             client,
-            pose_data: PoseDataArray,
+            pose_data: SpeedDataArray,
         ):
-        x, y, d, speed, yaw = extract_dv(client.send_data({}))
-
-        pose_data.update(
-            x,
-            y,
-            speed,
-            d,
-            yaw
-        )
-        (
-            xs,
-            ys,
-            speeds,
-            distances,
-            yaws,
-        ) = pose_data.get_data()
-
-        plot.set_data(xs, ys)
+        speed, ts, a = get_speed(client, pogo_client)
+        pose_data.update(speed, ts, a)
+        speeds, detection_flags, pogo_a, pogo_v = pose_data.get_data()
         speed_plot.set_ydata(speeds)
-        distance_plot.set_ydata(distances)
-        yaw_plot.set_ydata(yaws)
+        detection_flags_plot.set_ydata(detection_flags)
+        pogo_a_plot.set_ydata(pogo_a)
+        pogo_v_plot.set_ydata(pogo_v)
 
     ani = animation.FuncAnimation(
         fig,
@@ -96,7 +79,7 @@ def plot_pose_readings(client: Client):
             client,
             pose_data,
         ),
-        interval=250
+        interval=25
     )
     plt.show()
 
