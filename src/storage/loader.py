@@ -176,7 +176,11 @@ class DataLoader:
 
         max_index = min(self.rollout_ind, self.num_runs)
         valid_lengths = self.end_index[:max_index] - num_time_steps
-        b_inds = torch.multinomial(valid_lengths.float(), batch_size, replacement=True)
+        b_inds = torch.multinomial(
+            valid_lengths.float(),
+            batch_size,
+            replacement=True
+        )[:, None]
         end_inds = self.end_index[b_inds]
         t_inds = []
         for end_ind in end_inds:
