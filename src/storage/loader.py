@@ -174,7 +174,8 @@ class DataLoader:
             print(f'Clamping num_time_steps to {self.num_time_steps}')
             num_time_steps = min(num_time_steps, self.num_time_steps)
 
-        valid_lengths = self.end_index - num_time_steps
+        max_index = min(self.rollout_ind, self.num_runs)
+        valid_lengths = self.end_index[:max_index] - num_time_steps
         b_inds = torch.multinomial(valid_lengths.float(), batch_size, replacement=True)
         end_inds = self.end_index[b_inds]
         t_inds = []
