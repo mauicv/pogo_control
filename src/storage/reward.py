@@ -121,7 +121,9 @@ def compute_velocity_reward(state, condition, last_distance=None):
         last_distance = distance
     distance_delta_reward = distance - last_distance
     last_distance = distance
-    return -distance_delta_reward, last_distance
+    reward = -distance_delta_reward
+    reward = max(reward, 5)
+    return reward, last_distance
 
 
 def default_standing_reward(states, conditions):
@@ -152,5 +154,5 @@ def default_velocity_reward(states, conditions):
         if overturned:
             velocity_reward = 0
             posture_reward = 0
-        rewards.append(posture_reward + 10 * velocity_reward + overturn_penalty + stability_reward)
+        rewards.append(posture_reward + 10 * velocity_reward + overturn_penalty + 0.25 * stability_reward)
     return torch.tensor(rewards)[:, None]
