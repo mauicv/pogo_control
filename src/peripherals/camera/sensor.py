@@ -34,6 +34,7 @@ class CameraSensor:
             'store': self._store,
             'process': self._process,
             'reset': self._reset,
+            'read': self._read,
         }[command](**args)
 
     def _capture(self):
@@ -61,6 +62,12 @@ class CameraSensor:
             data = self.aruco_processor.get_data()
             pose_data.append(data)
         return pose_data
+
+    def _read(self):
+        frame = self.camera.get_frame()
+        self.aruco_processor.process(frame)
+        data = self.aruco_processor.get_data()
+        return data
 
     def _reset(self):
         self.buffer = []

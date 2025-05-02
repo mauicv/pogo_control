@@ -7,10 +7,9 @@ import matplotlib.animation as animation
 from readings.data import PoseDataArray
 
 
-def extract_dv(data):
-    [data, _] = data
-    position, distance,  _, speed, yaw = data
-    x, y = position
+def read_data(client):
+    data = client.send_data({'command': 'read'})
+    (x, y, distance, _, _, speed, yaw, _) = data
     return -x, y, distance, speed, yaw
 
 
@@ -23,7 +22,8 @@ def plot_pose_readings(client: Client):
         layout='constrained'
     )
 
-    x, y, d, speed, yaw = extract_dv(client.send_data({}))
+    x, y, d, speed, yaw = read_data(client)
+
     init_xs = np.arange(100)
     init_pos_x = np.empty(100)
     init_pos_x.fill(x)
@@ -67,7 +67,7 @@ def plot_pose_readings(client: Client):
             client,
             pose_data: PoseDataArray,
         ):
-        x, y, d, speed, yaw = extract_dv(client.send_data({}))
+        x, y, d, speed, yaw = read_data(client)
 
         pose_data.update(
             x,

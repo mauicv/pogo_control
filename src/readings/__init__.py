@@ -33,16 +33,6 @@ def readings(ctx, debug, host, port):
 
 @readings.command()
 @click.pass_context
-def position(ctx):
-    from readings.plot_pose_readings import plot_pose_readings as plot_pose_readings_func
-    client = ctx.obj['client']
-    client.connect()
-    plot_pose_readings_func(client)
-    client.close()
-
-
-@readings.command()
-@click.pass_context
 @click.option('--num', type=int, default=5)
 @click.option('--interval', type=float, default=0.2)
 def capture(ctx, num, interval):
@@ -90,6 +80,16 @@ def reset(ctx):
     client.connect()
     data = client.send_data({'command': 'reset'})
     print(data)
+    client.close()
+
+
+@readings.command()
+@click.pass_context
+def read(ctx):
+    from readings.plot_pose_readings import plot_pose_readings as plot_pose_readings_func
+    client = ctx.obj['client']
+    client.connect()
+    plot_pose_readings_func(client)
     client.close()
 
 
