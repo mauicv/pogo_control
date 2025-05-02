@@ -155,8 +155,7 @@ class DataLoader:
     def sample(
             self,
             batch_size=None,
-            num_time_steps=None,
-            from_start=False
+            num_time_steps=None
         ):
         """Sample a batch of data from the buffer.
 
@@ -165,8 +164,6 @@ class DataLoader:
                 The number of samples to return.
             num_time_steps: int, optional
                 The number of time steps to sample.
-            from_start: bool, optional
-                If True, sample from the start of the rollout.
         """
         if not batch_size:
             batch_size = self.batch_size
@@ -178,16 +175,18 @@ class DataLoader:
             num_time_steps = min(num_time_steps, self.num_time_steps)
 
         max_index = min(self.rollout_ind, self.num_runs)
-        b_inds = torch.randint(0, max_index, (batch_size, 1))
+        valid_lengths = self.end_index[:max_index] - num_time_steps
+        b_inds = torch.multinomial(
+            valid_lengths.float(),
+            batch_size,
+            replacement=True
+        )[:, None]
         end_inds = self.end_index[b_inds]
         t_inds = []
-        if from_start:
-            t_inds = torch.zeros(batch_size, dtype=torch.int)
-        else:
-            for end_ind in end_inds:
-                t_ind = torch.randint(0, (end_ind - num_time_steps), (1, ))
-                t_inds.append(t_ind)
-            t_inds = torch.cat(t_inds, dim=0)
+        for end_ind in end_inds:
+            t_ind = torch.randint(0, int(end_ind - num_time_steps), (1, ))
+            t_inds.append(t_ind)
+        t_inds = torch.cat(t_inds, dim=0)
         t_inds = t_inds[:, None] + torch.arange(0, num_time_steps)
 
         return (
