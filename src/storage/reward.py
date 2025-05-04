@@ -122,7 +122,7 @@ def compute_velocity_reward(state, condition, last_distance=None):
     distance_delta_reward = distance - last_distance
     last_distance = distance
     reward = -distance_delta_reward
-    reward = max(reward, 5)
+    reward = min(reward, 5)
     return reward, last_distance
 
 
