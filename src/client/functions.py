@@ -115,12 +115,12 @@ def run_training(
         client: StandingClientInterface | WalkingClientInterface,
         butterworth_filter: ButterworthFilter,
         num_steps: int = 100,
-        interval: float = 0.1,
+        interval: float = 0.05,
         noise_perturbation_range: tuple[float, float] = (0.00, 0.00),
         weight_perturbation_range: tuple[float, float] = (0.00, 0.00),
         random_model: bool = False,
         test: bool = False,
-        pre_solution: Optional[str] = 'sonic-open-yellow'
+        pre_solution: Optional[str] = None
     ):
     set_init_state(client)
     soln_model = None

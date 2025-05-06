@@ -26,7 +26,7 @@ def compute_actions(
     true_action = model(norm_state).numpy()[0, 0]
     action_noise = np.random.normal(0, noise, size=true_action.shape)
     true_action = true_action + action_noise
-    true_action = np.clip(true_action, -1, 1)
+    true_action = np.clip(true_action, -1, 1) * 0.05
     filtered_action = filter(true_action)
     return true_action, filtered_action
 
@@ -36,7 +36,7 @@ def sample(
         filter: ButterworthFilter,
         client: StandingClientInterface | WalkingClientInterface,
         num_steps: int = 100,
-        interval: float = 0.1,
+        interval: float = 0.05,
         noise: float = 0.3,
         weight_perturbation: float = 0.0,
         initial_state: Optional[torch.Tensor] = None,
@@ -95,7 +95,7 @@ def deploy_model(
         filter: ButterworthFilter,
         client: StandingClientInterface | WalkingClientInterface,
         num_steps: int = 15,
-        interval: float = 0.2,
+        interval: float = 0.05,
     ) -> Rollout:
     filter.reset()
     client.reset()

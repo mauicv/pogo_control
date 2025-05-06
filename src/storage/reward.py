@@ -99,7 +99,7 @@ def compute_stability_reward(state, condition):
 def compute_overturn_penalty(state, condition):
     [overturned, *_] = condition
     if overturned:
-        return -25
+        return -250
     return 0
 
 

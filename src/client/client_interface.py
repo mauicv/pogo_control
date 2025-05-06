@@ -4,34 +4,6 @@ import torch
 import uuid
 
 
-class StandingClientInterface:
-    def __init__(
-            self,
-            pogo_client: Client,
-        ):
-        self.pogo_client = pogo_client
-
-    def connect(self):
-        self.pogo_client.connect()
-
-    def send_data(self, actions):
-        servo_state, world_state, conditions = self.pogo_client.send_data(actions)
-        state = torch.tensor(servo_state + world_state)
-        return state, conditions
-    
-    def post_process(self, rollout: Rollout):
-        return rollout
-    
-    def reset(self):
-        pass
-
-    def save_images(self):
-        print('Not implemented for standing client')
-
-    def close(self):
-        self.pogo_client.close()
-
-
 class WalkingClientInterface:
     def __init__(
             self,

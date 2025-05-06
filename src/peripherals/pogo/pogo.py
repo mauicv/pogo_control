@@ -4,9 +4,9 @@ from peripherals.pogo.servo import Servo
 
 
 generic_values = {
-    "kp": 0.05,
+    "kp": 0.08,
     "ki": 0.01,
-    "kd": 0.001,
+    "kd": 0.005,
 }
 
 class Pogo(ServoController, MPU6050Mixin):
