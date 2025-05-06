@@ -3,7 +3,7 @@ from filters.butterworth import ButterworthFilter
 from storage import GCS_Interface
 from client.sample import sample
 from client.model import Actor, EncoderActor, DenseModel
-from client.client_interface import StandingClientInterface, WalkingClientInterface
+from client.client_interface import ClientInterface
 import torch
 from time import sleep, time
 import random
@@ -13,6 +13,7 @@ import os
 from client.sample import Rollout
 from client.sample import deploy_model
 torch.set_grad_enabled(False)
+from config import INITIAL_POSITION
 
 
 def wait_for_model(gcs: GCS_Interface):
@@ -34,16 +35,16 @@ def load_local_model(solution: str):
 
 
 def set_init_state(
-        client: StandingClientInterface | WalkingClientInterface,
+        client: ClientInterface,
         filter: Optional[ButterworthFilter]=None,
         soln_model: Optional[torch.nn.Module]=None,
-        target_position: Optional[list[float]]=(-0.4, -0.4, -0.4, -0.4, -0.4, -0.4, -0.4, -0.4),
+        target_position: Optional[list[float]]=INITIAL_POSITION,
     ):
     if soln_model is not None:
         state, action = deploy_model(soln_model, filter, client)
         return state, action
     else:
-        client.send_data(target_position)
+        client.set_servo_states(target_position)
         return None, None
 
 def create_random_model(
@@ -98,7 +99,7 @@ def show_rollout_stats(rollout: Rollout):
 
 def deploy_solution(
         gcs: GCS_Interface,
-        client: StandingClientInterface | WalkingClientInterface,
+        client: ClientInterface,
         butterworth_filter: ButterworthFilter,
         solution: str
     ):
@@ -112,7 +113,7 @@ def deploy_solution(
 
 def run_training(
         gcs: GCS_Interface,
-        client: StandingClientInterface | WalkingClientInterface,
+        client: ClientInterface,
         butterworth_filter: ButterworthFilter,
         num_steps: int = 100,
         interval: float = 0.05,

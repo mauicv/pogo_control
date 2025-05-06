@@ -21,20 +21,20 @@ def pogo(ctx, debug, host, port):
 @click.option('--sensor-only', is_flag=True)
 def start(ctx, update_interval, sensor_only):
     from peripherals.pogo.setup import setup_pogo_control
-    from peripherals.pogo.setup import setup_pogo_sensor
+    # from peripherals.pogo.setup import setup_pogo_sensor
 
-    if sensor_only:
-        setup_pogo_sensor(
-            host=ctx.obj['HOST'],
-            port=ctx.obj['POST'],
-            update_interval=update_interval
-        )
-    else:
-        setup_pogo_control(
-            host=ctx.obj['HOST'],
-            port=ctx.obj['POST'],
-            update_interval=update_interval
-        )
+    # if sensor_only:
+    #     setup_pogo_sensor(
+    #         host=ctx.obj['HOST'],
+    #         port=ctx.obj['POST'],
+    #         update_interval=update_interval
+    #     )
+    # else:
+    setup_pogo_control(
+        host=ctx.obj['HOST'],
+        port=ctx.obj['POST'],
+        update_interval=update_interval
+    )
 
 
 @pogo.command()

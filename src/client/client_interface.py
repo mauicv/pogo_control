@@ -4,7 +4,7 @@ import torch
 import uuid
 
 
-class WalkingClientInterface:
+class ClientInterface:
     def __init__(
             self,
             pogo_client: Client,
@@ -18,13 +18,26 @@ class WalkingClientInterface:
         self.camera_client.connect()
 
     def send_data(self, actions):
-        servo_state, world_state, conditions = self.pogo_client.send_data(actions)
+        servo_state, world_state, conditions = self.pogo_client.send_data({
+            'command': 'act',
+            'args': {
+                'values': actions
+            }
+        })
         state = torch.tensor(servo_state + world_state)
         self.camera_client.send_data({'command': 'capture'})
         return (
             state,
             conditions
         )
+    
+    def set_servo_states(self, states: list[float]):
+        self.pogo_client.send_data({
+            'command': 'update_setpoint',
+            'args': {
+                'values': states
+            }
+        })
     
     def post_process(self, rollout: Rollout):
         data = self.camera_client.send_data({'command': 'process'})

@@ -28,8 +28,11 @@ class Servo:
             setpoint=self.init_value,
         )
 
-    def update_setpoint(self, setpoint_delta: float):
+    def update_setpoint_delta(self, setpoint_delta: float):
         self.pid_controller.setpoint = self.pid_controller.setpoint + setpoint_delta
+
+    def update_setpoint(self, setpoint: float):
+        self.pid_controller.setpoint = setpoint
 
     @property
     def value(self):

@@ -6,7 +6,7 @@ from storage import GCS_Interface
 from filters.butterworth import ButterworthFilter
 from networking_utils.client import Client
 from client.functions import run_training, deploy_solution
-from client.client_interface import WalkingClientInterface
+from client.client_interface import ClientInterface
 
 dotenv.load_dotenv()
 
@@ -95,7 +95,7 @@ def sample(
     camera_client.connect()
 
 
-    multi_client = WalkingClientInterface(
+    multi_client = ClientInterface(
         pogo_client=pogo_client,
         camera_client=camera_client
     )
@@ -148,7 +148,7 @@ def deploy(
     camera_client.connect()
 
 
-    multi_client = WalkingClientInterface(
+    multi_client = ClientInterface(
         pogo_client=pogo_client,
         camera_client=camera_client
     )

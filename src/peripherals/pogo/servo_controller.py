@@ -30,7 +30,12 @@ class ServoController:
         servo_updates = [servo._update_value for servo in self.servos]
         return servo_values + servo_updates
 
-    def update_angle(self, values: list[float]):
+    def update_setpoint_delta(self, values: list[float]):
+        for servo, value in zip(self.servos, values):
+            servo.update_setpoint_delta(value)
+        self.last_servo_set_ts = time.time()
+
+    def update_setpoint(self, values: list[float]):
         for servo, value in zip(self.servos, values):
             servo.update_setpoint(value)
         self.last_servo_set_ts = time.time()
