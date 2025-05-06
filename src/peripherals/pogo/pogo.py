@@ -52,12 +52,17 @@ class Pogo(ServoController, MPU6050Mixin):
         command, args = self._parse_command(message)
         return {
             'act': self.act,
-            'update_setpoint': self.update_setpoint,
+            'set_servo_states': self.set_servo_states,
             'read': self.get_data,
         }[command](**args)
     
     def act(self, values: list[float]):
         self.update_setpoint_delta(values)
+        time.sleep(0.04)
+        return self.get_data()
+    
+    def set_servo_states(self, values: list[float]):
+        self.update_setpoint(values)
         time.sleep(0.04)
         return self.get_data()
 

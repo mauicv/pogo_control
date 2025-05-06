@@ -32,8 +32,8 @@ class ClientInterface:
         )
     
     def set_servo_states(self, states: list[float]):
-        self.pogo_client.send_data({
-            'command': 'update_setpoint',
+        return self.pogo_client.send_data({
+            'command': 'set_servo_states',
             'args': {
                 'values': states
             }
