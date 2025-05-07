@@ -62,7 +62,6 @@ def sample(
         noise=[]
     )
     current_time = time.time()
-    last_conditions = conditions
     for i in tqdm(range(num_steps - 1)):
         current_time = time.time()
         state, conditions = client.read_state()
@@ -81,15 +80,13 @@ def sample(
             filtered_action,
             action_noise,
             current_time,
-            last_conditions
+            conditions
         )
         client.take_action(filtered_action)
-        if check_overturned(last_conditions):
+        if check_overturned(conditions):
             break
 
-        last_conditions = conditions
         elapsed_time = time.time() - current_time
-        print(f'Elapsed time: {elapsed_time}')
         if elapsed_time < interval:
             time.sleep(interval - elapsed_time)
     

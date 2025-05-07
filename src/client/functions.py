@@ -181,8 +181,6 @@ def run_training(
                 interval,
                 noise,
                 weight_perturbation,
-                initial_state,
-                initial_action,
             )
         except KeyboardInterrupt as e:
             print(f'Interrupted sampling rollout: {e}')
