@@ -23,7 +23,7 @@ logging.basicConfig(
 @click.option('--name', type=str, default='test')
 @click.option('--test', is_flag=True)
 @click.option('--num-steps', type=int, default=150)
-@click.option('--interval', type=float, default=0.05)
+@click.option('--interval', type=float, default=0.1)
 @click.option('--noise-range', nargs=2, type=float, default=(0.3, 0.3))
 @click.option('--weight-range', nargs=2, type=float, default=(0.0, 0.0))
 @click.option('--random-model', is_flag=True)

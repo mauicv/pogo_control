@@ -41,28 +41,18 @@ def sample(
         interval: float = 0.05,
         noise: float = 0.3,
         weight_perturbation: float = 0.0,
-        initial_state: Optional[torch.Tensor] = None,
-        initial_action: Optional[torch.Tensor] = INITIAL_ACTION
     ) -> Rollout:
     client.reset()
     torch.set_grad_enabled(False)
     model.perturb_actor(
         weight_perturbation_size=weight_perturbation
     )
-    if initial_action is None:
-        initial_action = torch.tensor(INITIAL_ACTION)
-    true_action = torch.tensor(initial_action)
-    filtered_action = filter(true_action)
-    state, conditions = client.send_data(filtered_action)
     noise_generator = LinearSegmentNoiseND(
         dim=8,
         steps=num_steps,
         noise_size=noise,
         num_interp_points=10
     )
-    action_noise = noise_generator()
-    if initial_state is not None:
-        state = initial_state
     rollout = Rollout(
         states=[],
         actions=[],
@@ -72,17 +62,10 @@ def sample(
         noise=[]
     )
     current_time = time.time()
-    rollout.append(
-        state,
-        true_action,
-        filtered_action,
-        action_noise,
-        current_time,
-        conditions
-    )
     last_conditions = conditions
     for i in tqdm(range(num_steps - 1)):
         current_time = time.time()
+        state, conditions = client.read_state()
         true_action, filtered_action, action_noise = compute_actions(
             model=model,
             state=state,
@@ -92,22 +75,21 @@ def sample(
         # NOTE: the state, actions stored here are related as the
         # action resulting from the state (not the state resulting
         # from the action)
-        state = state.numpy()
         rollout.append(
-            state,
+            state.numpy(),
             true_action,
             filtered_action,
             action_noise,
             current_time,
             last_conditions
         )
-        state, conditions = client.send_data(filtered_action)
+        client.take_action(filtered_action)
         if check_overturned(last_conditions):
             break
 
         last_conditions = conditions
-        
         elapsed_time = time.time() - current_time
+        print(f'Elapsed time: {elapsed_time}')
         if elapsed_time < interval:
             time.sleep(interval - elapsed_time)
     
@@ -122,35 +104,36 @@ def deploy_model(
         num_steps: int = 15,
         interval: float = 0.05,
     ) -> Rollout:
-    filter.reset()
-    client.reset()
-    torch.set_grad_enabled(False)
-    model.perturb_actor(
-        weight_perturbation_size=0.0
-    )
-    true_action = torch.tensor(INITIAL_ACTION)
-    filtered_action = filter(true_action)
-    state, conditions = client.send_data(filtered_action)
-    current_time = time.time()
-    last_conditions = conditions
-    for i in tqdm(range(num_steps - 1)):
-        current_time = time.time()
-        true_action, filtered_action = compute_actions(
-            model=model,
-            state=state,
-            filter=filter,
-            noise=0.0,
-        )
-        state, conditions = client.send_data(filtered_action)
-        if check_overturned(last_conditions):
-            break
+    raise NotImplementedError
+    # filter.reset()
+    # client.reset()
+    # torch.set_grad_enabled(False)
+    # model.perturb_actor(
+    #     weight_perturbation_size=0.0
+    # )
+    # true_action = torch.tensor(INITIAL_ACTION)
+    # filtered_action = filter(true_action)
+    # state, conditions = client.send_data(filtered_action)
+    # current_time = time.time()
+    # last_conditions = conditions
+    # for i in tqdm(range(num_steps - 1)):
+    #     current_time = time.time()
+    #     true_action, filtered_action = compute_actions(
+    #         model=model,
+    #         state=state,
+    #         filter=filter,
+    #         noise=0.0,
+    #     )
+    #     state, conditions = client.send_data(filtered_action)
+    #     if check_overturned(last_conditions):
+    #         break
 
-        last_conditions = conditions
+    #     last_conditions = conditions
         
-        elapsed_time = time.time() - current_time
-        if elapsed_time < interval:
-            time.sleep(interval - elapsed_time)
+    #     elapsed_time = time.time() - current_time
+    #     if elapsed_time < interval:
+    #         time.sleep(interval - elapsed_time)
     
-    print(f'Final state: {state}')
-    print(f'Final action: {true_action}')
-    return state, true_action
+    # print(f'Final state: {state}')
+    # print(f'Final action: {true_action}')
+    # return state, true_action

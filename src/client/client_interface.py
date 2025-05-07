@@ -16,16 +16,21 @@ class ClientInterface:
     def connect(self):
         self.pogo_client.connect()
         self.camera_client.connect()
-
-    def send_data(self, actions):
-        servo_state, world_state, conditions = self.pogo_client.send_data({
+    
+    def take_action(self, actions: list[float]):
+        return self.pogo_client.send_data({
             'command': 'act',
             'args': {
                 'values': actions
             }
         })
-        state = torch.tensor(servo_state + world_state)
+    
+    def read_state(self):
         self.camera_client.send_data({'command': 'capture'})
+        servo_state, world_state, conditions =  self.pogo_client.send_data({
+            'command': 'read'
+        })
+        state = torch.tensor(servo_state + world_state)
         return (
             state,
             conditions

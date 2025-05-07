@@ -58,13 +58,11 @@ class Pogo(ServoController, MPU6050Mixin):
     
     def act(self, values: list[float]):
         self.update_setpoint_delta(values)
-        time.sleep(0.04)
-        return self.get_data()
+        return []
     
     def set_servo_states(self, values: list[float]):
         self.update_setpoint(values)
-        time.sleep(0.04)
-        return self.get_data()
+        return []
 
     def get_data(self):
         state_data = [
