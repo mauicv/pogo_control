@@ -23,8 +23,7 @@ def compute_actions(
         mean: torch.Tensor = PRECOMPUTED_MEANS,
         std: torch.Tensor = PRECOMPUTED_STDS
 ) -> list[float]:
-    # norm_state = (state - mean) / std
-    norm_state = state
+    norm_state = (state - mean) / std
     true_action = model(norm_state).numpy()[0, 0]
     action_noise = noise_generator()
     true_action = true_action + action_noise
