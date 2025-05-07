@@ -18,7 +18,7 @@ class ClientInterface:
         self.camera_client.connect()
     
     def take_action(self, actions: list[float]):
-        return self.pogo_client.send_data({
+        self.pogo_client.send_data({
             'command': 'act',
             'args': {
                 'values': actions
