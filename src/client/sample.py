@@ -7,6 +7,7 @@ from filters.butterworth import ButterworthFilter
 import numpy as np
 from config import PRECOMPUTED_MEANS, PRECOMPUTED_STDS, INITIAL_ACTION
 from typing import Optional
+from client.noise import LinearSegmentNoiseND
 
     
 def check_overturned(conditions: list[float]) -> bool:
@@ -18,18 +19,18 @@ def compute_actions(
         model: torch.nn.Module,
         state: torch.Tensor,
         filter: ButterworthFilter,
-        noise: float = 0.3,
+        noise_generator: LinearSegmentNoiseND,
         mean: torch.Tensor = PRECOMPUTED_MEANS,
         std: torch.Tensor = PRECOMPUTED_STDS
 ) -> list[float]:
     # norm_state = (state - mean) / std
     norm_state = state
     true_action = model(norm_state).numpy()[0, 0]
-    action_noise = np.random.normal(0, noise, size=true_action.shape)
+    action_noise = noise_generator()
     true_action = true_action + action_noise
-    true_action = np.clip(true_action, -1, 1) * 0.05
-    filtered_action = filter(true_action)
-    return true_action, filtered_action
+    true_action = np.clip(true_action, -1, 1)
+    filtered_action = filter(true_action * 0.05)
+    return true_action, filtered_action, action_noise
 
 
 def sample(
@@ -53,30 +54,53 @@ def sample(
     true_action = torch.tensor(initial_action)
     filtered_action = filter(true_action)
     state, conditions = client.send_data(filtered_action)
+    noise_generator = LinearSegmentNoiseND(
+        dim=8,
+        steps=num_steps,
+        noise_size=noise,
+        num_interp_points=10
+    )
+    action_noise = noise_generator()
     if initial_state is not None:
         state = initial_state
     rollout = Rollout(
         states=[],
         actions=[],
         times=[],
-        conditions=[]
+        conditions=[],
+        filtered_actions=[],
+        noise=[]
     )
     current_time = time.time()
-    rollout.append(state, true_action, current_time, conditions)
+    rollout.append(
+        state,
+        true_action,
+        filtered_action,
+        action_noise,
+        current_time,
+        conditions
+    )
     last_conditions = conditions
     for i in tqdm(range(num_steps - 1)):
         current_time = time.time()
-        true_action, filtered_action = compute_actions(
+        true_action, filtered_action, action_noise = compute_actions(
             model=model,
             state=state,
             filter=filter,
-            noise=noise,
+            noise_generator=noise_generator,
         )
         # NOTE: the state, actions stored here are related as the
         # action resulting from the state (not the state resulting
         # from the action)
         state = state.numpy()
-        rollout.append(state, true_action, current_time, last_conditions)
+        rollout.append(
+            state,
+            true_action,
+            filtered_action,
+            action_noise,
+            current_time,
+            last_conditions
+        )
         state, conditions = client.send_data(filtered_action)
         if check_overturned(last_conditions):
             break

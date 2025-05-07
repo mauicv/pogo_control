@@ -8,8 +8,6 @@ import torch
 from time import sleep, time
 import random
 import numpy as np
-import sys
-import os
 from client.sample import Rollout
 from client.sample import deploy_model
 torch.set_grad_enabled(False)
@@ -78,14 +76,29 @@ def get_random_perturbation(perturbation_range: tuple[float, float]):
         return random.uniform(perturbation_range[0], perturbation_range[1])
     
 
-def show_rollout_stats(rollout: Rollout):
-    actions = np.array(rollout.actions)
-    print(f'Rollout actions shape: {actions.shape}')
-    print(f'Rollout actions mean: {actions.mean(axis=0)}')
-    print(f'Rollout actions std: {actions.std(axis=0)}')
-    print(f'Rollout actions min: {actions.min(axis=0)}')
-    print(f'Rollout actions max: {actions.max(axis=0)}')
+def plot_rollout(rollout: Rollout):
+    import matplotlib.pyplot as plt
+    import numpy as np
 
+    # Extract data from rollout
+    actions = np.array([action[0] * 0.05 for action in rollout.actions])
+    filtered_actions = np.array([action[0] for action in rollout.filtered_actions])
+    action_noise = np.array([noise[0] * 0.05 for noise in rollout.noise])
+    # Create subplots
+    fig, axs = plt.subplots(1, 1)
+
+    # Plot actions
+    axs.plot(actions)
+    axs.plot(filtered_actions)
+    axs.plot(action_noise)
+    axs.set_title('Actions')
+    axs.set_xlabel('Time')
+    axs.legend(['True', 'Filtered', 'Noise'])
+    # Show plot
+    plt.show()
+
+
+def show_rollout_details(rollout: Rollout):
     conditions = np.array(rollout.conditions)
     rolled = conditions[:, 0]
     last_detection_ts = conditions[:, -1]
@@ -130,9 +143,13 @@ def run_training(
     
     if not random_model:
         model = wait_for_model(gcs)
-        print(model)
+        # print(model)
 
-    initial_state, initial_action = set_init_state(client=client, filter=butterworth_filter, soln_model=soln_model)
+    initial_state, initial_action = set_init_state(
+        client=client,
+        filter=butterworth_filter,
+        soln_model=soln_model
+    )
     
     count = 0
     time_start = time()
@@ -172,9 +189,11 @@ def run_training(
             set_init_state(client)
             butterworth_filter.reset()
             raise e
+        
 
         print(f'Rollout Sampling time: {time() - sample_start:.2f} seconds')
-        show_rollout_stats(rollout)
+        # plot_rollout(rollout)
+        show_rollout_details(rollout)
         set_init_state(client, filter=butterworth_filter)
 
         accept = input('(A)ccept, (Q)uit, (S)ave-images')
