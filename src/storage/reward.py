@@ -56,7 +56,7 @@ def compute_posture_reward(state, condition):
 def compute_overturn_penalty(state, condition):
     [overturned, *_] = condition
     if overturned:
-        return -250
+        return -50
     return 0
 
 
