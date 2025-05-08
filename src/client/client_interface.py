@@ -2,6 +2,7 @@ from networking_utils.client import Client
 from client.sample import Rollout
 import torch
 import uuid
+from typing import Optional
 
 
 class ClientInterface:
@@ -50,8 +51,9 @@ class ClientInterface:
             rollout.conditions[ind] = rollout.conditions[ind] + pose_data
         return rollout
     
-    def save_images(self):
-        name = str(uuid.uuid4())
+    def save_images(self, name: Optional[str] = None):
+        if name is None:
+            name = str(uuid.uuid4())
         data = self.camera_client.send_data({
             'command': 'store',
             'args': {

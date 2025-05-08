@@ -8,6 +8,7 @@ import torch
 from time import sleep, time
 import random
 import numpy as np
+import uuid
 from client.sample import Rollout
 from client.sample import deploy_model
 torch.set_grad_enabled(False)
@@ -134,22 +135,12 @@ def run_training(
         weight_perturbation_range: tuple[float, float] = (0.00, 0.00),
         random_model: bool = False,
         test: bool = False,
-        pre_solution: Optional[str] = None
     ):
-    set_init_state(client)
-    soln_model = None
-    if pre_solution is not None:
-        soln_model = load_local_model(pre_solution)
-    
+    client.set_servo_states(INITIAL_POSITION)
+
     if not random_model:
         model = wait_for_model(gcs)
         # print(model)
-
-    initial_state, initial_action = set_init_state(
-        client=client,
-        filter=butterworth_filter,
-        soln_model=soln_model
-    )
     
     count = 0
     time_start = time()
@@ -157,8 +148,10 @@ def run_training(
         count += 1
         weight_perturbation = get_random_perturbation(weight_perturbation_range)
         noise = get_random_perturbation(noise_perturbation_range)
+        rollout_name = str(uuid.uuid4())
 
         print('==========================================')
+        print(f'Rollout name: {rollout_name}')
         print(f'Count: {count}')
         print(f'Training Running Time: {(time() - time_start)/60:.2f} minutes')
         print(f'Weight perturbation: {weight_perturbation}')
@@ -184,7 +177,7 @@ def run_training(
             )
         except KeyboardInterrupt as e:
             print(f'Interrupted sampling rollout: {e}')
-            set_init_state(client)
+            client.set_servo_states(INITIAL_POSITION)
             butterworth_filter.reset()
             raise e
         
@@ -199,8 +192,10 @@ def run_training(
 
         for opt in ['S', 's']:
             if opt in accept:
-                name = client.save_images()
-                print(f'Saved images to {name}')
+                client.save_images(
+                    name=rollout_name
+                )
+                print(f'Saved rollout recording')
                 break
 
         if not test:
@@ -209,7 +204,7 @@ def run_training(
                     print('Uploading rollout')
                     gcs.rollout.upload_rollout(
                         rollout.to_dict(),
-                        gcs.model.version
+                        name=rollout_name
                     )
                     break
         else:
@@ -228,11 +223,6 @@ def run_training(
             model = gcs.model.load_model()
 
         butterworth_filter.reset()
-
-        initial_state, initial_action = set_init_state(
-            client,
-            filter=butterworth_filter,
-            soln_model=soln_model
-        )
+        client.set_servo_states(INITIAL_POSITION)
 
         
