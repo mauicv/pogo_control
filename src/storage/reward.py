@@ -1,3 +1,4 @@
+from scipy.signal import butter, filtfilt
 import torch
 
 
@@ -59,20 +60,7 @@ def compute_overturn_penalty(state, condition):
     return 0
 
 
-def compute_velocity_reward(state, condition, last_distance=None):
-    [
-        overturned,
-        last_mpus6050_sample_ts,
-        last_servo_set_ts,
-        x,
-        y,
-        distance,
-        vx,
-        vy,
-        speed,
-        yaw,
-        last_detection_ts   
-    ] = condition
+def compute_velocity_reward(state, distance, last_distance=None):
     if last_distance is None:
         last_distance = distance
     distance_delta_reward = distance - last_distance
@@ -96,10 +84,25 @@ def default_standing_reward(states, conditions):
     return (rewards)[:, None]
 
 
+def butter_lowpass_filter(data, cutoff, fs, order=4):
+    nyquist = 0.5 * fs
+    normal_cutoff = cutoff / nyquist
+    b, a = butter(order, normal_cutoff, btype='low', analog=False)
+    filtered = filtfilt(b, a, data)
+    return filtered
+
+
 def default_velocity_reward(states, conditions):
+    cutoff_freq = 2.0   # Hz
+    sampling_rate = 20  # Hz
+    order = 4
+
+    distances = [condition[5] for condition in conditions]
+    filtered_distances = butter_lowpass_filter(distances, cutoff_freq, sampling_rate, order)
+    
     rewards = []
     last_distance = None
-    for state, condition in zip(states, conditions):
+    for state, condition, distance in zip(states, conditions, filtered_distances):
         overturned = condition[0]
         posture_reward, posture_close = compute_posture_reward(state, condition)
         overturn_penalty = compute_overturn_penalty(state, condition)
