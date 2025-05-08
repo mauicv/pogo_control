@@ -106,7 +106,7 @@ def default_velocity_reward(states, conditions):
         overturned = condition[0]
         posture_reward, posture_close = compute_posture_reward(state, condition)
         overturn_penalty = compute_overturn_penalty(state, condition)
-        velocity_reward, last_distance = compute_velocity_reward(state, condition, last_distance)
+        velocity_reward, last_distance = compute_velocity_reward(state, distance, last_distance)
         if not posture_close:
             velocity_reward = 0
         if overturned:
