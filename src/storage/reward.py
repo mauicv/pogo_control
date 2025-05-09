@@ -93,8 +93,8 @@ def butter_lowpass_filter(data, cutoff, fs, order=4):
 
 
 def default_velocity_reward(states, conditions):
-    cutoff_freq = 2.0   # Hz
-    sampling_rate = 20  # Hz
+    cutoff_freq = 2.0
+    sampling_rate = 20
     order = 4
 
     distances = [condition[5] for condition in conditions]

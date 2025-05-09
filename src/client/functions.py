@@ -9,8 +9,7 @@ from time import sleep, time
 import random
 import numpy as np
 import uuid
-from client.sample import Rollout
-from client.sample import deploy_model
+from client.sample import Rollout, deploy_model, test
 torch.set_grad_enabled(False)
 from config import INITIAL_POSITION
 
@@ -81,21 +80,27 @@ def plot_rollout(rollout: Rollout):
     import matplotlib.pyplot as plt
     import numpy as np
 
-    # Extract data from rollout
-    actions = np.array([action[0] * 0.05 for action in rollout.actions])
-    filtered_actions = np.array([action[0] for action in rollout.filtered_actions])
-    action_noise = np.array([noise[0] * 0.05 for noise in rollout.noise])
-    # Create subplots
-    fig, axs = plt.subplots(1, 1)
+    fig, axs = plt.subplots(2, 4)
 
-    # Plot actions
-    axs.plot(actions)
-    axs.plot(filtered_actions)
-    axs.plot(action_noise)
-    axs.set_title('Actions')
-    axs.set_xlabel('Time')
-    axs.legend(['True', 'Filtered', 'Noise'])
-    # Show plot
+    for i in range(8):
+        actions = np.array([action[i] * 0.05 for action in rollout.actions])
+        filtered_actions = np.array([action[i] for action in rollout.filtered_actions])
+        action_noise = np.array([noise[i] * 0.05 for noise in rollout.noise])
+
+        axs[i%2, i//2].plot(actions)
+        axs[i%2, i//2].plot(filtered_actions)
+        axs[i%2, i//2].plot(action_noise)
+        axs[i%2, i//2].set_ylim(-0.075, 0.075)
+        # axs[i%2, i//2].set_title(f'Action {i}')
+        # axs[i%2, i//2].set_xlabel('Time')
+        # axs[i//2, i%2].set_title('Actions')
+        # axs[i//2, i%2].set_title('Filtered Actions')
+        # axs[i//2, i%2].set_title('Action Noise')
+        # axs[i//2, i%2].set_xlabel('Time')
+        # axs[i//2, i%2].set_xlabel('Time')
+        # axs[i//2, i%2].set_xlabel('Time')
+        # axs[i//2, i%2].legend(['True', 'Filtered', 'Noise'])
+        # Show plot
     plt.show()
 
 
@@ -179,11 +184,11 @@ def run_training(
             print(f'Interrupted sampling rollout: {e}')
             client.set_servo_states(INITIAL_POSITION)
             butterworth_filter.reset()
+            client.reset()
             raise e
-        
 
         print(f'Rollout Sampling time: {time() - sample_start:.2f} seconds')
-        # plot_rollout(rollout)
+        plot_rollout(rollout)
         show_rollout_details(rollout)
         set_init_state(client, filter=butterworth_filter)
 
@@ -197,6 +202,8 @@ def run_training(
                 )
                 print(f'Saved rollout recording')
                 break
+                
+        client.reset()
 
         if not test:
             for opt in ['A', 'a']:
@@ -225,4 +232,21 @@ def run_training(
         butterworth_filter.reset()
         client.set_servo_states(INITIAL_POSITION)
 
-        
+
+def run_test(
+        client: ClientInterface,
+        butterworth_filter: ButterworthFilter,
+        num_steps: int = 100,
+        interval: float = 0.05,
+    ):
+    client.set_servo_states(INITIAL_POSITION)
+    rollout = test(
+        butterworth_filter,
+        client,
+        num_steps,
+        interval,
+    )
+    show_rollout_details(rollout)
+    plot_rollout(rollout)
+    client.set_servo_states(INITIAL_POSITION)
+    return rollout

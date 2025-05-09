@@ -60,7 +60,7 @@ class LinearSegmentNoiseND:
             dim=2,
             steps=200,
             noise_size=0.3,
-            num_interp_points=10,
+            num_interp_points=25,
             ):
         self.dim = dim
         self.generator = [
@@ -77,3 +77,36 @@ class LinearSegmentNoiseND:
 
     def reset(self):
         return [g.reset() for g in self.generator]
+    
+
+class SquareWave1D:
+    def __init__(self, freq=1.0, amplitude=0.3):
+        self.freq = freq
+        self.amplitude = amplitude
+        self.step_ind = 0
+
+    def reset(self):
+        self.step_ind = 0
+
+    def __call__(self):
+        self.step_ind += 1
+        signal = -1 if self.step_ind % (2 * self.freq) < self.freq else 1
+        return self.amplitude * signal
+    
+
+class SquareWaveND:
+    def __init__(self, freq=1.0, amplitude=0.3, dim=8):
+        self.dim = dim
+        self.generator = [
+            SquareWave1D(
+                freq=freq,
+                amplitude=amplitude
+            ) for _ in range(self.dim)
+        ]
+
+    def reset(self):
+        return [g.reset() for g in self.generator]
+
+    def __call__(self):
+        return np.array([g() for g in self.generator])
+

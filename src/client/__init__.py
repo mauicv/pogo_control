@@ -5,7 +5,7 @@ import os
 from storage import GCS_Interface
 from filters.butterworth import ButterworthFilter
 from networking_utils.client import Client
-from client.functions import run_training, deploy_solution
+from client.functions import run_training, deploy_solution, run_test
 from client.client_interface import ClientInterface
 
 dotenv.load_dotenv()
@@ -158,6 +158,53 @@ def deploy(
         multi_client,
         ctx.obj['FILTER'],
         solution=name
+    )
+    
+
+
+
+@client.command()
+@click.pass_context
+@click.option('--camera-host', type=str, default=None)
+@click.option('--camera-port', type=int, default=None)
+@click.option('--pogo-host', type=str, default=None)
+@click.option('--pogo-port', type=int, default=None)
+def test(
+        ctx,
+        camera_host,
+        camera_port,
+        pogo_host,
+        pogo_port,
+    ):
+
+    ctx.obj['POGO_HOST'] = pogo_host if pogo_host else ctx.obj['POGO_HOST']
+    ctx.obj['POGO_PORT'] = pogo_port if pogo_port else ctx.obj['POGO_PORT']
+    ctx.obj['CAMERA_HOST'] = camera_host if camera_host else ctx.obj['CAMERA_HOST']
+    ctx.obj['CAMERA_PORT'] = camera_port if camera_port else ctx.obj['CAMERA_PORT']
+
+    pogo_client = Client(
+        host=ctx.obj['POGO_HOST'],
+        port=ctx.obj['POGO_PORT']
+    )
+    pogo_client.connect()
+
+    camera_client = Client(
+        host=ctx.obj['CAMERA_HOST'],
+        port=ctx.obj['CAMERA_PORT']
+    )
+    camera_client.connect()
+
+
+    multi_client = ClientInterface(
+        pogo_client=pogo_client,
+        camera_client=camera_client
+    )
+
+    run_test(
+        multi_client,
+        ctx.obj['FILTER'],
+        num_steps=ctx.obj['NUM_STEPS'],
+        interval=ctx.obj['INTERVAL'],
     )
     
 

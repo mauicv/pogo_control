@@ -7,7 +7,7 @@ from filters.butterworth import ButterworthFilter
 import numpy as np
 from config import PRECOMPUTED_MEANS, PRECOMPUTED_STDS, INITIAL_ACTION
 from typing import Optional
-from client.noise import LinearSegmentNoiseND
+from client.noise import LinearSegmentNoiseND, SquareWaveND
 
     
 def check_overturned(conditions: list[float]) -> bool:
@@ -133,3 +133,68 @@ def deploy_model(
     # print(f'Final state: {state}')
     # print(f'Final action: {true_action}')
     # return state, true_action
+
+
+class TestModel(torch.nn.Module):
+    def __init__(self):
+        super().__init__()
+
+    def forward(self, x):
+        return torch.tensor([[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]])
+
+
+def test(
+        filter: ButterworthFilter,
+        client: ClientInterface,
+        num_steps: int = 15,
+        interval: float = 0.05,
+    ) -> Rollout:
+    filter.reset()
+    client.reset()
+
+    model = TestModel()
+
+    noise_generator = SquareWaveND(
+        freq=15.0,
+        amplitude=1,
+        dim=8
+    )
+    rollout = Rollout(
+        states=[],
+        actions=[],
+        times=[],
+        conditions=[],
+        filtered_actions=[],
+        noise=[]
+    )
+    current_time = time.time()
+    for i in tqdm(range(num_steps - 1)):
+        current_time = time.time()
+        state, conditions = client.read_state()
+        true_action, filtered_action, action_noise = compute_actions(
+            model=model,
+            state=state,
+            filter=filter,
+            noise_generator=noise_generator,
+        )
+        # NOTE: the state, actions stored here are related as the
+        # action resulting from the state (not the state resulting
+        # from the action)
+        rollout.append(
+            state.numpy(),
+            true_action,
+            filtered_action,
+            action_noise,
+            current_time,
+            conditions
+        )
+        client.take_action(filtered_action)
+        if check_overturned(conditions):
+            break
+
+        elapsed_time = time.time() - current_time
+        if elapsed_time < interval:
+            time.sleep(interval - elapsed_time)
+    
+    rollout = client.post_process(rollout)
+    return rollout
