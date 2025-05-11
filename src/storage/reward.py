@@ -41,7 +41,7 @@ def compute_posture_reward(state, condition):
     pe = 1 - 4 * abs(pitch)
     re = 1 - 4 * abs(roll)
 
-    print(pe, re)
+    print(flbe, frbe, brbe, blbe, flte, frte, brte, blte, pe, re)
 
     posture_reward = 0
     for item in [flbe, frbe, brbe, blbe, flte, frte, brte, blte, pe, re]:
@@ -49,7 +49,7 @@ def compute_posture_reward(state, condition):
 
     posture_close = True
     for item in [flbe, frbe, brbe, blbe, flte, frte, brte, blte]:
-        if item < 0.2:
+        if item < 0.0:
             posture_close = False
 
     return torch.tanh(posture_reward/5), posture_close
