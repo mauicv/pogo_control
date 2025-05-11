@@ -47,7 +47,8 @@ def client(ctx, debug, test, name, num_steps, interval, noise_range, weight_rang
 
     filter = ButterworthFilter(
         order=2,
-        cutoff=3.0,
+        # cutoff=3.0,
+        cutoff=5.0,
         fs=20.0,
         num_components=8 # 8 servo motors
     )

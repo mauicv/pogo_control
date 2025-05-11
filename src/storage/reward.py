@@ -30,16 +30,18 @@ def compute_posture_reward(state, condition):
         pitch
     ] = state
 
-    flbe = 1 - abs(front_left_bottom - 0.4)
-    frbe = 1 - abs(front_right_bottom - 0.4)
-    brbe = 1 - abs(back_right_bottom - 0.4)
-    blbe = 1 - abs(back_left_bottom - 0.4)
-    flte = 1 - abs(front_left_top - -0.3)
-    frte = 1 - abs(front_right_top - -0.3)
-    brte = 1 - abs(back_right_top - -0.3)
-    blte = 1 - abs(back_left_top - -0.3)
-    pe = 1 - abs(pitch)
-    re = 1 - abs(roll)
+    flbe = 1 - 4 * abs(front_left_bottom - 0.3)
+    frbe = 1 - 4 * abs(front_right_bottom - 0.3)
+    brbe = 1 - 4 * abs(back_right_bottom - 0.3)
+    blbe = 1 - 4 * abs(back_left_bottom - 0.3)
+    flte = 1 - 4 * abs(front_left_top - -0.4)
+    frte = 1 - 4 * abs(front_right_top - -0.4)
+    brte = 1 - 4 * abs(back_right_top - -0.4)
+    blte = 1 - 4 * abs(back_left_top - -0.4)
+    pe = 1 - 4 * abs(pitch)
+    re = 1 - 4 * abs(roll)
+
+    print(pe, re)
 
     posture_reward = 0
     for item in [flbe, frbe, brbe, blbe, flte, frte, brte, blte, pe, re]:
@@ -47,16 +49,16 @@ def compute_posture_reward(state, condition):
 
     posture_close = True
     for item in [flbe, frbe, brbe, blbe, flte, frte, brte, blte]:
-        if item < 0.7:
+        if item < 0.2:
             posture_close = False
 
-    return posture_reward, posture_close
+    return torch.tanh(posture_reward/5), posture_close
 
 
 def compute_overturn_penalty(state, condition):
     [overturned, *_] = condition
     if overturned:
-        return -50
+        return -2
     return 0
 
 
@@ -77,7 +79,7 @@ def default_standing_reward(states, conditions):
         overturn_penalty = compute_overturn_penalty(state, condition)
 
         rewards.append(
-            10 * posture_reward +
+            posture_reward +
             overturn_penalty
         )
     rewards = torch.tensor(rewards)
@@ -112,5 +114,5 @@ def default_velocity_reward(states, conditions):
         if overturned:
             velocity_reward = 0
             posture_reward = 0
-        rewards.append(posture_reward + 10 * velocity_reward + overturn_penalty)
+        rewards.append(posture_reward + velocity_reward + overturn_penalty)
     return torch.tensor(rewards)[:, None]

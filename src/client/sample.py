@@ -5,7 +5,7 @@ from client.rollout import Rollout
 from client.client_interface import ClientInterface
 from filters.butterworth import ButterworthFilter
 import numpy as np
-from config import PRECOMPUTED_MEANS, PRECOMPUTED_STDS, INITIAL_ACTION
+from config import PRECOMPUTED_MEANS, PRECOMPUTED_STDS, INITIAL_ACTION, INITIAL_POSITION
 from typing import Optional
 from client.noise import LinearSegmentNoiseND, SquareWaveND
 
@@ -21,12 +21,22 @@ def compute_actions(
         filter: ButterworthFilter,
         noise_generator: LinearSegmentNoiseND,
         mean: torch.Tensor = PRECOMPUTED_MEANS,
-        std: torch.Tensor = PRECOMPUTED_STDS
+        std: torch.Tensor = PRECOMPUTED_STDS,
+        use_neutral_position_correction: bool = True,
 ) -> list[float]:
     norm_state = (state - mean) / std
     true_action = model(norm_state).numpy()[0, 0]
     action_noise = noise_generator()
     true_action = true_action + action_noise
+
+    if use_neutral_position_correction:
+        Kp = 0.25
+        current_joint_posistions = state[0:8].numpy()
+        neutral_joint_posistions = np.array(INITIAL_POSITION)
+        neutral_error = current_joint_posistions - neutral_joint_posistions
+        neutral_action = -Kp * np.sign(neutral_error) * np.minimum(np.abs(neutral_error)**2, 1.0)
+        true_action = true_action + neutral_action
+
     true_action = np.clip(true_action, -1, 1)
     filtered_action = filter(true_action * 0.1)
     return true_action, filtered_action, action_noise
@@ -155,7 +165,7 @@ def test(
     model = TestModel()
 
     noise_generator = SquareWaveND(
-        freq=15.0,
+        freq=25.0,
         amplitude=1,
         dim=8
     )
@@ -188,6 +198,9 @@ def test(
             current_time,
             conditions
         )
+        for i, (a, m) in enumerate(zip(filtered_action, [0.0, 0.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])):
+            filtered_action[i] = a * m
+        # filtered_action = [0.05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         client.take_action(filtered_action)
         if check_overturned(conditions):
             break

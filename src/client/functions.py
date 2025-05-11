@@ -10,6 +10,7 @@ import random
 import numpy as np
 import uuid
 from client.sample import Rollout, deploy_model, test
+from storage.reward import default_standing_reward, default_velocity_reward
 torch.set_grad_enabled(False)
 from config import INITIAL_POSITION
 
@@ -80,27 +81,31 @@ def plot_rollout(rollout: Rollout):
     import matplotlib.pyplot as plt
     import numpy as np
 
-    fig, axs = plt.subplots(2, 4)
+    # fig, axs = plt.subplots(2, 4)
+    fig, axs = plt.subplot_mosaic(
+        [
+            ['action-1', 'action-2', 'action-3', 'action-4', 'reward', 'reward'],
+            ['action-5', 'action-6', 'action-7', 'action-8', 'reward', 'reward'],
+        ],
+        layout='constrained'
+    )
 
+    conditions = rollout.conditions
+    states = torch.tensor(rollout.states)
+    posture_rewards = default_standing_reward(states, conditions)
+    velocity_rewards = default_velocity_reward(states, conditions)
     for i in range(8):
         actions = np.array([action[i] * 0.1 for action in rollout.actions])
         filtered_actions = np.array([action[i] for action in rollout.filtered_actions])
         action_noise = np.array([noise[i] * 0.1 for noise in rollout.noise])
 
-        axs[i%2, i//2].plot(actions)
-        axs[i%2, i//2].plot(filtered_actions)
-        axs[i%2, i//2].plot(action_noise)
-        axs[i%2, i//2].set_ylim(-0.12, 0.12)
-        # axs[i%2, i//2].set_title(f'Action {i}')
-        # axs[i%2, i//2].set_xlabel('Time')
-        # axs[i//2, i%2].set_title('Actions')
-        # axs[i//2, i%2].set_title('Filtered Actions')
-        # axs[i//2, i%2].set_title('Action Noise')
-        # axs[i//2, i%2].set_xlabel('Time')
-        # axs[i//2, i%2].set_xlabel('Time')
-        # axs[i//2, i%2].set_xlabel('Time')
-        # axs[i//2, i%2].legend(['True', 'Filtered', 'Noise'])
-        # Show plot
+        axs[f'action-{i+1}'].plot(actions)
+        axs[f'action-{i+1}'].plot(filtered_actions)
+        axs[f'action-{i+1}'].plot(action_noise)
+        axs[f'action-{i+1}'].set_ylim(-0.12, 0.12)
+    axs[f'reward'].plot(posture_rewards, label='posture')
+    axs[f'reward'].plot(velocity_rewards, label='velocity')
+    axs[f'reward'].legend()
     plt.show()
 
 
