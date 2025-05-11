@@ -11,9 +11,9 @@ class LinearSegmentNoise1D:
     """
     def __init__(
             self,
-            steps=200,
-            noise_size=0.3,
-            num_interp_points=10,
+            steps=100,
+            noise_size=0.5,
+            num_interp_points=35,
             ):
         self.steps = steps
         self.noise_size = noise_size

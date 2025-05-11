@@ -28,7 +28,7 @@ def compute_actions(
     action_noise = noise_generator()
     true_action = true_action + action_noise
     true_action = np.clip(true_action, -1, 1)
-    filtered_action = filter(true_action * 0.05)
+    filtered_action = filter(true_action * 0.1)
     return true_action, filtered_action, action_noise
 
 
@@ -50,7 +50,7 @@ def sample(
         dim=8,
         steps=num_steps,
         noise_size=noise,
-        num_interp_points=10
+        num_interp_points=30
     )
     rollout = Rollout(
         states=[],

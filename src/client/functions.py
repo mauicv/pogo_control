@@ -83,14 +83,14 @@ def plot_rollout(rollout: Rollout):
     fig, axs = plt.subplots(2, 4)
 
     for i in range(8):
-        actions = np.array([action[i] * 0.05 for action in rollout.actions])
+        actions = np.array([action[i] * 0.1 for action in rollout.actions])
         filtered_actions = np.array([action[i] for action in rollout.filtered_actions])
-        action_noise = np.array([noise[i] * 0.05 for noise in rollout.noise])
+        action_noise = np.array([noise[i] * 0.1 for noise in rollout.noise])
 
         axs[i%2, i//2].plot(actions)
         axs[i%2, i//2].plot(filtered_actions)
         axs[i%2, i//2].plot(action_noise)
-        axs[i%2, i//2].set_ylim(-0.075, 0.075)
+        axs[i%2, i//2].set_ylim(-0.12, 0.12)
         # axs[i%2, i//2].set_title(f'Action {i}')
         # axs[i%2, i//2].set_xlabel('Time')
         # axs[i//2, i%2].set_title('Actions')
