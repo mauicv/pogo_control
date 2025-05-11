@@ -14,4 +14,5 @@ PRECOMPUTED_STDS = torch.tensor([[
 INITIAL_ACTION = (0, 0, 0, 0, 0, 0, 0, 0)
 
 
-INITIAL_POSITION= (-0.4, 0.3, -0.4, 0.3, -0.4, 0.3, -0.4, 0.3)
+INITIAL_POSITION= (-0.3, 0.4, -0.3, 0.4, -0.3, 0.4, -0.3, 0.4)
+# INITIAL_POSITION= (-0.4, 0.3, -0.4, 0.3, -0.4, 0.3, -0.4, 0.3)

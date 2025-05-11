@@ -41,8 +41,6 @@ def compute_posture_reward(state, condition):
     pe = 1 - 4 * abs(pitch)
     re = 1 - 4 * abs(roll)
 
-    print(flbe, frbe, brbe, blbe, flte, frte, brte, blte, pe, re)
-
     posture_reward = 0
     for item in [flbe, frbe, brbe, blbe, flte, frte, brte, blte, pe, re]:
         posture_reward += item
