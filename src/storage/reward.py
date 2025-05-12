@@ -50,7 +50,7 @@ def compute_posture_reward(state, condition):
         if item < 0.0:
             posture_close = False
 
-    return torch.tanh(posture_reward/5), posture_close
+    return torch.sigmoid(posture_reward/5), posture_close
 
 
 def compute_overturn_penalty(state, condition):

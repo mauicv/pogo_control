@@ -22,20 +22,18 @@ def compute_actions(
         noise_generator: LinearSegmentNoiseND,
         mean: torch.Tensor = PRECOMPUTED_MEANS,
         std: torch.Tensor = PRECOMPUTED_STDS,
-        use_neutral_position_correction: bool = True,
+        kp: float = 0.0,
 ) -> list[float]:
     norm_state = (state - mean) / std
     true_action = model(norm_state).numpy()[0, 0]
     action_noise = noise_generator()
     true_action = true_action + action_noise
 
-    if use_neutral_position_correction:
-        Kp = 0.25
-        current_joint_posistions = state[0:8].numpy()
-        neutral_joint_posistions = np.array(INITIAL_POSITION)
-        neutral_error = current_joint_posistions - neutral_joint_posistions
-        neutral_action = -Kp * np.sign(neutral_error) * np.minimum(np.abs(neutral_error)**2, 1.0)
-        true_action = true_action + neutral_action
+    current_joint_posistions = state[0:8].numpy()
+    neutral_joint_posistions = np.array(INITIAL_POSITION)
+    neutral_error = current_joint_posistions - neutral_joint_posistions
+    neutral_action = -kp * neutral_error * np.abs(neutral_error)
+    true_action = true_action + neutral_action
 
     true_action = np.clip(true_action, -1, 1)
     filtered_action = filter(true_action * 0.1)
@@ -50,6 +48,7 @@ def sample(
         interval: float = 0.05,
         noise: float = 0.3,
         weight_perturbation: float = 0.0,
+        kp: float = 0.0,
     ) -> Rollout:
     client.reset()
     torch.set_grad_enabled(False)
@@ -79,6 +78,7 @@ def sample(
             state=state,
             filter=filter,
             noise_generator=noise_generator,
+            kp=kp,
         )
         # NOTE: the state, actions stored here are related as the
         # action resulting from the state (not the state resulting

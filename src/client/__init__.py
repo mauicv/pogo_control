@@ -70,12 +70,14 @@ def client(ctx, debug, test, name, num_steps, interval, noise_range, weight_rang
 @click.option('--camera-port', type=int, default=None)
 @click.option('--pogo-host', type=str, default=None)
 @click.option('--pogo-port', type=int, default=None)
+@click.option('--kp', type=float, default=0.0)
 def sample(
         ctx,
         camera_host,
         camera_port,
         pogo_host,
         pogo_port,
+        kp,
     ):
 
     ctx.obj['POGO_HOST'] = pogo_host if pogo_host else ctx.obj['POGO_HOST']
@@ -110,7 +112,8 @@ def sample(
         noise_perturbation_range=ctx.obj['NOISE_RANGE'],
         weight_perturbation_range=ctx.obj['WEIGHT_RANGE'],
         random_model=ctx.obj['RANDOM_MODEL'],
-        test=ctx.obj['TEST']
+        test=ctx.obj['TEST'],
+        kp=kp,
     )
     
 

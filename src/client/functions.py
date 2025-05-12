@@ -93,7 +93,7 @@ def plot_rollout(rollout: Rollout):
     conditions = rollout.conditions
     states = torch.tensor(rollout.states)
     posture_rewards = default_standing_reward(states, conditions)
-    velocity_rewards = default_velocity_reward(states, conditions)
+    # velocity_rewards = default_velocity_reward(states, conditions)
     for i in range(8):
         actions = np.array([action[i] * 0.1 for action in rollout.actions])
         filtered_actions = np.array([action[i] for action in rollout.filtered_actions])
@@ -104,7 +104,7 @@ def plot_rollout(rollout: Rollout):
         axs[f'action-{i+1}'].plot(action_noise)
         axs[f'action-{i+1}'].set_ylim(-0.12, 0.12)
     axs[f'reward'].plot(posture_rewards, label='posture')
-    axs[f'reward'].plot(velocity_rewards, label='velocity')
+    # axs[f'reward'].plot(velocity_rewards, label='velocity')
     axs[f'reward'].legend()
     plt.show()
 
@@ -145,6 +145,7 @@ def run_training(
         weight_perturbation_range: tuple[float, float] = (0.00, 0.00),
         random_model: bool = False,
         test: bool = False,
+        kp: float = 0.0,
     ):
     client.set_servo_states(INITIAL_POSITION)
 
@@ -184,6 +185,7 @@ def run_training(
                 interval,
                 noise,
                 weight_perturbation,
+                kp,
             )
         except KeyboardInterrupt as e:
             print(f'Interrupted sampling rollout: {e}')
