@@ -67,7 +67,7 @@ def compute_velocity_reward(state, distance, last_distance=None):
     last_distance = distance
     reward = -distance_delta_reward
     reward = min(reward, 5)
-    return torch.tanh(reward), last_distance
+    return torch.tanh(torch.tensor(reward)), last_distance
 
 
 def default_standing_reward(states, conditions):
