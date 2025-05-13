@@ -67,7 +67,7 @@ def compute_velocity_reward(state, distance, last_distance=None):
     last_distance = distance
     reward = -distance_delta_reward
     reward = min(reward, 5)
-    return reward, last_distance
+    return torch.tanh(reward), last_distance
 
 
 def default_standing_reward(states, conditions):
@@ -98,19 +98,25 @@ def default_velocity_reward(states, conditions):
     order = 4
 
     distances = [condition[5] for condition in conditions]
-    filtered_distances = butter_lowpass_filter(distances, cutoff_freq, sampling_rate, order)
-    
+    if len(distances) <= 15:
+        filtered_distances = distances
+    else:
+        filtered_distances = butter_lowpass_filter(distances, cutoff_freq, sampling_rate, order)
+
     rewards = []
     last_distance = None
     for state, condition, distance in zip(states, conditions, filtered_distances):
         overturned = condition[0]
         posture_reward, posture_close = compute_posture_reward(state, condition)
         overturn_penalty = compute_overturn_penalty(state, condition)
-        velocity_reward, last_distance = compute_velocity_reward(state, distance, last_distance)
+        if len(distances) > 15:
+            velocity_reward, last_distance = compute_velocity_reward(state, distance, last_distance)
+        else:
+            velocity_reward = 0
         if not posture_close:
             velocity_reward = 0
         if overturned:
             velocity_reward = 0
             posture_reward = 0
-        rewards.append(posture_reward + velocity_reward + overturn_penalty)
+        rewards.append(0.6 * posture_reward + velocity_reward + overturn_penalty)
     return torch.tensor(rewards)[:, None]
