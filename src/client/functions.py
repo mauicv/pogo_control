@@ -12,7 +12,8 @@ import uuid
 from client.sample import Rollout, deploy_model, test
 from storage.reward import default_standing_reward, default_velocity_reward, alt_1_velocity_reward, alt_2_velocity_reward
 torch.set_grad_enabled(False)
-from config import INITIAL_POSITION
+from config import INITIAL_POSITION, ALT_INITIAL_POSITION
+INITIAL_POSITION = ALT_INITIAL_POSITION
 
 
 def wait_for_model(gcs: GCS_Interface):

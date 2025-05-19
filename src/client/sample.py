@@ -5,9 +5,12 @@ from client.rollout import Rollout
 from client.client_interface import ClientInterface
 from filters.butterworth import ButterworthFilter
 import numpy as np
-from config import PRECOMPUTED_MEANS, PRECOMPUTED_STDS, INITIAL_ACTION, INITIAL_POSITION
+from config import PRECOMPUTED_MEANS, PRECOMPUTED_STDS, INITIAL_ACTION, INITIAL_POSITION, ALT_INITIAL_POSITION
 from typing import Optional
 from client.noise import LinearSegmentNoiseND, SquareWaveND
+
+
+INITIAL_POSITION = ALT_INITIAL_POSITION
 
     
 def check_overturned(conditions: list[float]) -> bool:

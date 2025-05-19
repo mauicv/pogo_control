@@ -21,3 +21,6 @@ INITIAL_POSITION= (-0.3, 0.4, -0.3, 0.4, -0.3, 0.4, -0.3, 0.4)
 
 
 # pogo pogo move --front-left-bottom=0.0 --front-right-bottom=0.0 --back-right-bottom=0.4 --back-left-bottom=0.4 --front-left-top=-0.3 --front-right-top=-0.3 --back-right-top=-0.5 --back-left-top=-0.5
+
+
+ALT_INITIAL_POSITION = (-0.3, 0.0, -0.3, 0.0, -0.5, 0.4, -0.5, 0.4)

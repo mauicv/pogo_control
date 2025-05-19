@@ -30,14 +30,34 @@ def compute_posture_reward(state, condition):
         pitch
     ] = state
 
-    flbe = 1 - 4 * abs(front_left_bottom - 0.3)
-    frbe = 1 - 4 * abs(front_right_bottom - 0.3)
-    brbe = 1 - 4 * abs(back_right_bottom - 0.3)
-    blbe = 1 - 4 * abs(back_left_bottom - 0.3)
-    flte = 1 - 4 * abs(front_left_top - -0.4)
-    frte = 1 - 4 * abs(front_right_top - -0.4)
-    brte = 1 - 4 * abs(back_right_top - -0.4)
-    blte = 1 - 4 * abs(back_left_top - -0.4)
+    # posture-1
+    front_left_bottom_target=0.3
+    front_right_bottom_target=0.3
+    back_right_bottom_target=0.3
+    back_left_bottom_target=0.3
+    front_left_top_target=-0.3
+    front_right_top_target=-0.3
+    back_right_top_target=-0.3
+    back_left_top_target=-0.3
+
+    # posture-2
+    # front_left_bottom_target=0.0
+    # front_right_bottom_target=0.0
+    # back_right_bottom_target=0.4
+    # back_left_bottom_target=0.4
+    # front_left_top_target=-0.3
+    # front_right_top_target=-0.3
+    # back_right_top_target=-0.5
+    # back_left_top_target=-0.5
+
+    flbe = 1 - 4 * abs(front_left_bottom - front_left_bottom_target)
+    frbe = 1 - 4 * abs(front_right_bottom - front_right_bottom_target)
+    brbe = 1 - 4 * abs(back_right_bottom - back_right_bottom_target)
+    blbe = 1 - 4 * abs(back_left_bottom - back_left_bottom_target)
+    flte = 1 - 4 * abs(front_left_top - front_left_top_target)
+    frte = 1 - 4 * abs(front_right_top - front_right_top_target)
+    brte = 1 - 4 * abs(back_right_top - back_right_top_target)
+    blte = 1 - 4 * abs(back_left_top - back_left_top_target)
     pe = 1 - 4 * abs(pitch)
     re = 1 - 4 * abs(roll)
 
