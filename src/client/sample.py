@@ -9,9 +9,7 @@ from config import PRECOMPUTED_MEANS, PRECOMPUTED_STDS, INITIAL_ACTION, INITIAL_
 from typing import Optional
 from client.noise import LinearSegmentNoiseND, SquareWaveND
 
-
 INITIAL_POSITION = ALT_INITIAL_POSITION
-
     
 def check_overturned(conditions: list[float]) -> bool:
     overturned, *_ = conditions
