@@ -120,3 +120,106 @@ def default_velocity_reward(states, conditions):
             posture_reward = 0
         rewards.append(0.6 * posture_reward + velocity_reward + overturn_penalty)
     return torch.tensor(rewards)[:, None]
+
+
+def alt_1_velocity_reward(states, conditions):
+    cutoff_freq = 2.0
+    sampling_rate = 20
+    order = 4
+
+    distances = [condition[5] for condition in conditions]
+    if len(distances) <= 15:
+        filtered_distances = distances
+    else:
+        filtered_distances = butter_lowpass_filter(distances, cutoff_freq, sampling_rate, order)
+
+    rewards = []
+    last_distance = None
+    for state, condition, distance in zip(states, conditions, filtered_distances):
+        overturned = condition[0]
+        posture_reward, posture_close = compute_posture_reward(state, condition)
+        overturn_penalty = compute_overturn_penalty(state, condition)
+        if len(distances) > 15:
+            velocity_reward, last_distance = compute_velocity_reward(state, distance, last_distance)
+        else:
+            velocity_reward = 0
+
+        if posture_reward < 0.6 and velocity_reward > 0:
+            velocity_reward = 0
+        if overturned:
+            velocity_reward = 0
+            posture_reward = 0
+        rewards.append(0.6 * posture_reward + velocity_reward + overturn_penalty)
+    return torch.tensor(rewards)[:, None]
+
+
+def alt_2_velocity_reward(states, conditions):
+    cutoff_freq = 2.0
+    sampling_rate = 20
+    order = 4
+
+    distances = [condition[5] for condition in conditions]
+    if len(distances) <= 15:
+        filtered_distances = distances
+    else:
+        filtered_distances = butter_lowpass_filter(distances, cutoff_freq, sampling_rate, order)
+
+    rewards = []
+    last_distance = None
+    for state, condition, distance in zip(states, conditions, filtered_distances):
+        overturned = condition[0]
+        posture_reward, _ = compute_posture_reward(state, condition)
+        overturn_penalty = compute_overturn_penalty(state, condition)
+
+        if len(distances) > 15:
+            velocity_reward, last_distance = compute_velocity_reward(state, distance, last_distance)
+        else:
+            velocity_reward = 0
+
+        if posture_reward < 0.3 and velocity_reward > 0:
+                velocity_reward = 0
+
+        if overturned:
+            velocity_reward = 0
+            posture_reward = 0
+
+        posture_reward = min(posture_reward, 0.4)
+
+        rewards.append(0.6 * posture_reward + velocity_reward + overturn_penalty)
+    return torch.tensor(rewards)[:, None]
+
+
+def alt_3_velocity_reward(states, conditions):
+    cutoff_freq = 5.0 # increase cutoff frequency to 5.0
+    sampling_rate = 20
+    order = 4
+
+    distances = [condition[5] for condition in conditions]
+    if len(distances) <= 15:
+        filtered_distances = distances
+    else:
+        filtered_distances = butter_lowpass_filter(distances, cutoff_freq, sampling_rate, order)
+
+    rewards = []
+    last_distance = None
+    for state, condition, distance in zip(states, conditions, filtered_distances):
+        overturned = condition[0]
+        posture_reward, posture_close = compute_posture_reward(state, condition)
+        overturn_penalty = compute_overturn_penalty(state, condition)
+
+        if len(distances) > 15:
+            velocity_reward, last_distance = compute_velocity_reward(state, distance, last_distance)
+        else:
+            velocity_reward = 0
+
+        if posture_reward < 0.55 and velocity_reward > 0: # increase threshold to 0.55
+                velocity_reward = 0
+
+        if overturned:
+            velocity_reward = 0
+            posture_reward = 0
+
+        posture_reward = min(posture_reward, 0.55) # increase threshold to 0.55
+
+        rewards.append(0.6 * posture_reward + velocity_reward + overturn_penalty)
+    return torch.tensor(rewards)[:, None]

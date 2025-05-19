@@ -21,6 +21,7 @@ logging.basicConfig(
 @click.group()
 @click.option('--debug/--no-debug', default=False)
 @click.option('--name', type=str, default='test')
+@click.option('--model-name', type=str, default=None)
 @click.option('--test', is_flag=True)
 @click.option('--num-steps', type=int, default=150)
 @click.option('--interval', type=float, default=0.1)
@@ -28,7 +29,7 @@ logging.basicConfig(
 @click.option('--weight-range', nargs=2, type=float, default=(0.0, 0.0))
 @click.option('--random-model', is_flag=True)
 @click.pass_context
-def client(ctx, debug, test, name, num_steps, interval, noise_range, weight_range, random_model):
+def client(ctx, debug, test, name, model_name, num_steps, interval, noise_range, weight_range, random_model):
     ctx.ensure_object(dict) 
     import torch
     torch.set_grad_enabled(False)
@@ -57,6 +58,7 @@ def client(ctx, debug, test, name, num_steps, interval, noise_range, weight_rang
 
     gcs = GCS_Interface(
         experiment_name=name,
+        model_name=model_name,
         credentials='world-model-rl-01a513052a8a.json',
         bucket='pogo_wmrl',
         model_limits=4

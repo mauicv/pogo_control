@@ -13,7 +13,7 @@ def move_robot(front_left_bottom, front_left_top, front_right_bottom, front_righ
         update_interval=0.01,
     )
 
-    pogo.update_angle([
+    pogo.set_servo_states([
         front_right_top,
         front_right_bottom,
         front_left_top,
@@ -24,7 +24,6 @@ def move_robot(front_left_bottom, front_left_top, front_right_bottom, front_righ
         back_left_bottom
     ])
 
-    # pogo move-robot --back-right-top=0.2 --front-right-top=-0.3
     time.sleep(3)
     pogo.deinit()
 

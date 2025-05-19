@@ -59,7 +59,7 @@ def sample(
         dim=8,
         steps=num_steps,
         noise_size=noise,
-        num_interp_points=30
+        num_interp_points=40
     )
     rollout = Rollout(
         states=[],
