@@ -20,14 +20,14 @@ def compute_actions(
         model: torch.nn.Module,
         state: torch.Tensor,
         filter: ButterworthFilter,
-        noise_generator: LinearSegmentNoiseND,
+        noise_generator: Optional[LinearSegmentNoiseND] = None,
         mean: torch.Tensor = PRECOMPUTED_MEANS,
         std: torch.Tensor = PRECOMPUTED_STDS,
         kp: float = 0.0,
 ) -> list[float]:
     norm_state = (state - mean) / std
     true_action = model(norm_state).numpy()[0, 0]
-    action_noise = noise_generator()
+    action_noise = noise_generator() if noise_generator is not None else 0.0
     true_action = true_action + action_noise
 
     current_joint_posistions = state[0:8].numpy()
@@ -53,6 +53,7 @@ def sample(
     ) -> Rollout:
     client.reset()
     torch.set_grad_enabled(False)
+    model.reset()
     model.perturb_actor(
         weight_perturbation_size=weight_perturbation
     )
@@ -108,42 +109,30 @@ def deploy_model(
         model: torch.nn.Module,
         filter: ButterworthFilter,
         client: ClientInterface,
-        num_steps: int = 15,
+        num_steps: int = 200,
         interval: float = 0.05,
     ) -> Rollout:
-    raise NotImplementedError
-    # filter.reset()
-    # client.reset()
-    # torch.set_grad_enabled(False)
-    # model.perturb_actor(
-    #     weight_perturbation_size=0.0
-    # )
-    # true_action = torch.tensor(INITIAL_ACTION)
-    # filtered_action = filter(true_action)
-    # state, conditions = client.send_data(filtered_action)
-    # current_time = time.time()
-    # last_conditions = conditions
-    # for i in tqdm(range(num_steps - 1)):
-    #     current_time = time.time()
-    #     true_action, filtered_action = compute_actions(
-    #         model=model,
-    #         state=state,
-    #         filter=filter,
-    #         noise=0.0,
-    #     )
-    #     state, conditions = client.send_data(filtered_action)
-    #     if check_overturned(last_conditions):
-    #         break
+        client.reset()
+        torch.set_grad_enabled(False)
+        current_time = time.time()
+        model.reset()
+        for i in tqdm(range(num_steps - 1)):
+            current_time = time.time()
+            state, conditions = client.read_state()
+            _, filtered_action, _ = compute_actions(
+                model=model,
+                state=state,
+                filter=filter,
+                kp=0,
+            )
+            client.take_action(filtered_action)
+            if check_overturned(conditions):
+                break
 
-    #     last_conditions = conditions
-        
-    #     elapsed_time = time.time() - current_time
-    #     if elapsed_time < interval:
-    #         time.sleep(interval - elapsed_time)
-    
-    # print(f'Final state: {state}')
-    # print(f'Final action: {true_action}')
-    # return state, true_action
+            elapsed_time = time.time() - current_time
+            if elapsed_time < interval:
+                time.sleep(interval - elapsed_time)
+
 
 
 class TestModel(torch.nn.Module):

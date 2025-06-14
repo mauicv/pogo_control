@@ -91,6 +91,17 @@ def plot_rollout(rollout: Rollout):
         layout='constrained'
     )
 
+    action_labels = [
+        "front_right_top",
+        "front_right_bottom",
+        "front_left_top",
+        "front_left_bottom",
+        "back_right_top",
+        "back_right_bottom",
+        "back_left_top",
+        "back_left_bottom"
+    ]
+
     conditions = rollout.conditions
     states = torch.tensor(rollout.states)
     posture_rewards = default_standing_reward(states, conditions)
@@ -102,11 +113,12 @@ def plot_rollout(rollout: Rollout):
         velocity_rewards_1 = torch.zeros(len(posture_rewards))
         velocity_rewards_2 = torch.zeros(len(posture_rewards))
         velocity_rewards_3 = torch.zeros(len(posture_rewards))
-    for i in range(8):
+    for i, label in enumerate(action_labels):
         actions = np.array([action[i] * 0.1 for action in rollout.actions])
         filtered_actions = np.array([action[i] for action in rollout.filtered_actions])
         action_noise = np.array([noise[i] * 0.1 for noise in rollout.noise])
 
+        axs[f'action-{i+1}'].set_title(label)
         axs[f'action-{i+1}'].plot(actions)
         axs[f'action-{i+1}'].plot(filtered_actions)
         axs[f'action-{i+1}'].plot(action_noise)
@@ -141,7 +153,7 @@ def deploy_solution(
     soln_model = None
     if solution is not None:
         soln_model = load_local_model(solution)
-    set_init_state(client=client, filter=butterworth_filter, soln_model=soln_model)
+    deploy_model(soln_model, butterworth_filter, client)
     set_init_state(client)
 
 

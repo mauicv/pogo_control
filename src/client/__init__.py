@@ -99,7 +99,6 @@ def sample(
     )
     camera_client.connect()
 
-
     multi_client = ClientInterface(
         pogo_client=pogo_client,
         camera_client=camera_client

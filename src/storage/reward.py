@@ -31,24 +31,24 @@ def compute_posture_reward(state, condition):
     ] = state
 
     # posture-1
-    # front_left_bottom_target=0.3
-    # front_right_bottom_target=0.3
-    # back_right_bottom_target=0.3
-    # back_left_bottom_target=0.3
-    # front_left_top_target=-0.3
-    # front_right_top_target=-0.3
-    # back_right_top_target=-0.3
-    # back_left_top_target=-0.3
-
-    # posture-2
-    front_left_bottom_target=0.0
-    front_right_bottom_target=0.0
-    back_right_bottom_target=0.4
-    back_left_bottom_target=0.4
+    front_left_bottom_target=0.3
+    front_right_bottom_target=0.3
+    back_right_bottom_target=0.3
+    back_left_bottom_target=0.3
     front_left_top_target=-0.3
     front_right_top_target=-0.3
-    back_right_top_target=-0.5
-    back_left_top_target=-0.5
+    back_right_top_target=-0.3
+    back_left_top_target=-0.3
+
+    # # posture-2
+    # front_left_bottom_target=0.0
+    # front_right_bottom_target=0.0
+    # back_right_bottom_target=0.4
+    # back_left_bottom_target=0.4
+    # front_left_top_target=-0.3
+    # front_right_top_target=-0.3
+    # back_right_top_target=-0.5
+    # back_left_top_target=-0.5
 
     flbe = 1 - 4 * abs(front_left_bottom - front_left_bottom_target)
     frbe = 1 - 4 * abs(front_right_bottom - front_right_bottom_target)
