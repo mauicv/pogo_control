@@ -1,6 +1,6 @@
 import json
 import uuid
-
+from typing import Optional
 
 class GCSRollout:
     def __init__(
@@ -11,9 +11,10 @@ class GCSRollout:
         self.bucket = bucket
         self.experiment_name = experiment_name
 
-    def upload_rollout(self, rollout, model_version):
-        rollout_index = str(uuid.uuid4())
-        blob_name = f"{self.experiment_name}/rollouts/{model_version}-n-{rollout_index}.json"
+    def upload_rollout(self, rollout, name: Optional[str] = None):
+        if name is None:
+            name = str(uuid.uuid4())
+        blob_name = f"{self.experiment_name}/rollouts/{name}.json"
         blob = self.bucket.blob(blob_name)
         blob.upload_from_string(json.dumps(rollout))
 

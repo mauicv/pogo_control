@@ -6,7 +6,7 @@ from storage import GCS_Interface
 from filters.butterworth import ButterworthFilter
 from networking_utils.client import Client
 from client.functions import run_training, deploy_solution
-from client.client_interface import StandingClientInterface, WalkingClientInterface
+from client.client_interface import ClientInterface
 
 dotenv.load_dotenv()
 
@@ -21,14 +21,15 @@ logging.basicConfig(
 @click.group()
 @click.option('--debug/--no-debug', default=False)
 @click.option('--name', type=str, default='test')
+@click.option('--model-name', type=str, default=None)
 @click.option('--test', is_flag=True)
-@click.option('--num-steps', type=int, default=250)
-@click.option('--interval', type=float, default=0.2)
-@click.option('--noise-range', nargs=2, type=float, default=(0.01, 0.5))
-@click.option('--weight-range', nargs=2, type=float, default=(0.01, 0.02))
+@click.option('--num-steps', type=int, default=150)
+@click.option('--interval', type=float, default=0.1)
+@click.option('--noise-range', nargs=2, type=float, default=(0.3, 0.3))
+@click.option('--weight-range', nargs=2, type=float, default=(0.0, 0.0))
 @click.option('--random-model', is_flag=True)
 @click.pass_context
-def client(ctx, debug, test, name, num_steps, interval, noise_range, weight_range, random_model):
+def client(ctx, debug, test, name, model_name, num_steps, interval, noise_range, weight_range, random_model):
     ctx.ensure_object(dict) 
     import torch
     torch.set_grad_enabled(False)
@@ -46,9 +47,10 @@ def client(ctx, debug, test, name, num_steps, interval, noise_range, weight_rang
     ctx.obj['TEST'] = test
 
     filter = ButterworthFilter(
-        order=5,
-        cutoff=12.0,
-        fs=50.0,
+        order=2,
+        # cutoff=3.0,
+        cutoff=5.0,
+        fs=20.0,
         num_components=8 # 8 servo motors
     )
 
@@ -56,45 +58,12 @@ def client(ctx, debug, test, name, num_steps, interval, noise_range, weight_rang
 
     gcs = GCS_Interface(
         experiment_name=name,
+        model_name=model_name,
         credentials='world-model-rl-01a513052a8a.json',
         bucket='pogo_wmrl',
         model_limits=4
     )
     ctx.obj['GCS'] = gcs
-
-@client.command()
-@click.option('--pogo-host', type=str, default=None)
-@click.option('--pogo-port', type=int, default=None)
-@click.pass_context
-def standing(
-        ctx,
-        pogo_host,
-        pogo_port
-    ):
-    ctx.obj['POGO_HOST'] = pogo_host if pogo_host else ctx.obj['POGO_HOST']
-    ctx.obj['POGO_PORT'] = pogo_port if pogo_port else ctx.obj['POGO_PORT']
-
-    client = Client(
-        host=ctx.obj['POGO_HOST'],
-        port=ctx.obj['POGO_PORT']
-    )
-    client.connect()
-
-    standing_client = StandingClientInterface(
-        pogo_client=client
-    )
-
-    run_training(
-        ctx.obj['GCS'],
-        standing_client,
-        ctx.obj['FILTER'],
-        num_steps=ctx.obj['NUM_STEPS'],
-        interval=ctx.obj['INTERVAL'],
-        noise_perturbation_range=ctx.obj['NOISE_RANGE'],
-        weight_perturbation_range=ctx.obj['WEIGHT_RANGE'],
-        random_model=ctx.obj['RANDOM_MODEL'],
-        test=ctx.obj['TEST']
-    )
 
 
 @client.command()
@@ -103,12 +72,14 @@ def standing(
 @click.option('--camera-port', type=int, default=None)
 @click.option('--pogo-host', type=str, default=None)
 @click.option('--pogo-port', type=int, default=None)
-def walking(
+@click.option('--kp', type=float, default=0.0)
+def sample(
         ctx,
         camera_host,
         camera_port,
         pogo_host,
         pogo_port,
+        kp,
     ):
 
     ctx.obj['POGO_HOST'] = pogo_host if pogo_host else ctx.obj['POGO_HOST']
@@ -128,8 +99,7 @@ def walking(
     )
     camera_client.connect()
 
-
-    multi_client = WalkingClientInterface(
+    multi_client = ClientInterface(
         pogo_client=pogo_client,
         camera_client=camera_client
     )
@@ -143,7 +113,8 @@ def walking(
         noise_perturbation_range=ctx.obj['NOISE_RANGE'],
         weight_perturbation_range=ctx.obj['WEIGHT_RANGE'],
         random_model=ctx.obj['RANDOM_MODEL'],
-        test=ctx.obj['TEST']
+        test=ctx.obj['TEST'],
+        kp=kp,
     )
     
 
@@ -182,7 +153,7 @@ def deploy(
     camera_client.connect()
 
 
-    multi_client = WalkingClientInterface(
+    multi_client = ClientInterface(
         pogo_client=pogo_client,
         camera_client=camera_client
     )
@@ -194,4 +165,3 @@ def deploy(
         solution=name
     )
     
-

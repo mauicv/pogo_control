@@ -2,37 +2,10 @@ from networking_utils.client import Client
 from client.sample import Rollout
 import torch
 import uuid
+from typing import Optional
 
 
-class StandingClientInterface:
-    def __init__(
-            self,
-            pogo_client: Client,
-        ):
-        self.pogo_client = pogo_client
-
-    def connect(self):
-        self.pogo_client.connect()
-
-    def send_data(self, actions):
-        servo_state, world_state, conditions = self.pogo_client.send_data(actions)
-        state = torch.tensor(servo_state + world_state)
-        return state, conditions
-    
-    def post_process(self, rollout: Rollout):
-        return rollout
-    
-    def reset(self):
-        pass
-
-    def save_images(self):
-        print('Not implemented for standing client')
-
-    def close(self):
-        self.pogo_client.close()
-
-
-class WalkingClientInterface:
+class ClientInterface:
     def __init__(
             self,
             pogo_client: Client,
@@ -44,15 +17,33 @@ class WalkingClientInterface:
     def connect(self):
         self.pogo_client.connect()
         self.camera_client.connect()
-
-    def send_data(self, actions):
-        servo_state, world_state, conditions = self.pogo_client.send_data(actions)
-        state = torch.tensor(servo_state + world_state)
+    
+    def take_action(self, actions: list[float]):
+        self.pogo_client.send_data({
+            'command': 'act',
+            'args': {
+                'values': actions
+            }
+        })
+    
+    def read_state(self):
         self.camera_client.send_data({'command': 'capture'})
+        servo_state, world_state, conditions =  self.pogo_client.send_data({
+            'command': 'read'
+        })
+        state = torch.tensor(servo_state + world_state)
         return (
             state,
             conditions
         )
+    
+    def set_servo_states(self, states: list[float]):
+        return self.pogo_client.send_data({
+            'command': 'set_servo_states',
+            'args': {
+                'values': states
+            }
+        })
     
     def post_process(self, rollout: Rollout):
         data = self.camera_client.send_data({'command': 'process'})
@@ -60,8 +51,9 @@ class WalkingClientInterface:
             rollout.conditions[ind] = rollout.conditions[ind] + pose_data
         return rollout
     
-    def save_images(self):
-        name = str(uuid.uuid4())
+    def save_images(self, name: Optional[str] = None):
+        if name is None:
+            name = str(uuid.uuid4())
         data = self.camera_client.send_data({
             'command': 'store',
             'args': {

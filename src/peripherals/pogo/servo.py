@@ -28,6 +28,12 @@ class Servo:
             setpoint=self.init_value,
         )
 
+    def update_setpoint_delta(self, setpoint_delta: float):
+        updated_setpoint = self.pid_controller.setpoint + setpoint_delta
+        if updated_setpoint > self.pin_limits[1]: updated_setpoint = self.pin_limits[1]
+        elif updated_setpoint < self.pin_limits[0]: updated_setpoint = self.pin_limits[0]
+        self.pid_controller.setpoint = updated_setpoint
+
     def update_setpoint(self, setpoint: float):
         self.pid_controller.setpoint = setpoint
 

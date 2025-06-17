@@ -9,6 +9,7 @@ class GCS_Interface:
     def __init__(
             self,
             experiment_name,
+            model_name=None,
             credentials='world-model-rl-01a513052a8a.json',
             project_id='world-model-rl',
             bucket='pogo_wmrl',
@@ -25,11 +26,14 @@ class GCS_Interface:
         elif project_id:
             client = storage.Client(project=project_id)
 
+        if model_name is None:
+            model_name = experiment_name
+
         self.bucket = client.bucket(bucket)
         self.model = GCSModel(
             self.bucket,
             model_limits=model_limits,
-            experiment_name=experiment_name
+            experiment_name=model_name
         )
         self.rollout = GCSRollout(
             self.bucket,

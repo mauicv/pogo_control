@@ -21,20 +21,20 @@ def pogo(ctx, debug, host, port):
 @click.option('--sensor-only', is_flag=True)
 def start(ctx, update_interval, sensor_only):
     from peripherals.pogo.setup import setup_pogo_control
-    from peripherals.pogo.setup import setup_pogo_sensor
+    # from peripherals.pogo.setup import setup_pogo_sensor
 
-    if sensor_only:
-        setup_pogo_sensor(
-            host=ctx.obj['HOST'],
-            port=ctx.obj['POST'],
-            update_interval=update_interval
-        )
-    else:
-        setup_pogo_control(
-            host=ctx.obj['HOST'],
-            port=ctx.obj['POST'],
-            update_interval=update_interval
-        )
+    # if sensor_only:
+    #     setup_pogo_sensor(
+    #         host=ctx.obj['HOST'],
+    #         port=ctx.obj['POST'],
+    #         update_interval=update_interval
+    #     )
+    # else:
+    setup_pogo_control(
+        host=ctx.obj['HOST'],
+        port=ctx.obj['POST'],
+        update_interval=update_interval
+    )
 
 
 @pogo.command()
@@ -60,7 +60,7 @@ def move(
     Move the robot to the given angles.
 
     example:
-        pogo move-robot --front-left-bottom=0.4 --front-right-bottom=0.4 --back-right-bottom=0.4 --back-left-bottom=0.4 --front-left-top=-0.3 --front-right-top=-0.3 --back-right-top=-0.3 --back-left-top=-0.3
+        pogo move --front-left-bottom=0.4 --front-right-bottom=0.4 --back-right-bottom=0.4 --back-left-bottom=0.4 --front-left-top=-0.3 --front-right-top=-0.3 --back-right-top=-0.3 --back-left-top=-0.3
     """
 
     move_robot(

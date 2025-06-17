@@ -1,12 +1,13 @@
 from peripherals.pogo.mpu6050Mixin import MPU6050Mixin
 from peripherals.pogo.servo_controller import ServoController
 from peripherals.pogo.servo import Servo
+import time
 
 
 generic_values = {
-    "kp": 0.05,
+    "kp": 0.08,
     "ki": 0.01,
-    "kd": 0.001,
+    "kd": 0.005,
 }
 
 class Pogo(ServoController, MPU6050Mixin):
@@ -42,6 +43,27 @@ class Pogo(ServoController, MPU6050Mixin):
             mpu=mpu,
         )
 
+    def _parse_command(self, message):
+        command = message['command']
+        args = message['args'] if 'args' in message else {}
+        return command, args
+
+    def handle_message(self, message):
+        command, args = self._parse_command(message)
+        return {
+            'act': self.act,
+            'set_servo_states': self.set_servo_states,
+            'read': self.get_data,
+        }[command](**args)
+    
+    def act(self, values: list[float]):
+        self.update_setpoint_delta(values)
+        return True
+    
+    def set_servo_states(self, values: list[float]):
+        self.update_setpoint(values)
+        return True
+
     def get_data(self):
         state_data = [
             *self.latest_filtered_data,
@@ -64,36 +86,36 @@ class Pogo(ServoController, MPU6050Mixin):
         self.deinit_mpu()
 
 
-class SensorPogo(MPU6050Mixin):
-    servos: list[Servo] = []
+# class SensorPogo(MPU6050Mixin):
+#     servos: list[Servo] = []
 
-    def __init__(self,
-            update_interval: float = 0.01,
-            mpu=None,
-        ):
-        if not mpu:
-            from peripherals.pogo.mpu6050 import mpu6050
-            mpu = mpu6050(0x68)
+#     def __init__(self,
+#             update_interval: float = 0.01,
+#             mpu=None,
+#         ):
+#         if not mpu:
+#             from peripherals.pogo.mpu6050 import mpu6050
+#             mpu = mpu6050(0x68)
 
-        super().__init__(
-            mpu_update_interval=update_interval,
-            mpu=mpu,
-        )
+#         super().__init__(
+#             mpu_update_interval=update_interval,
+#             mpu=mpu,
+#         )
 
-    def get_data(self):
-        state_data = [
-            *self.latest_filtered_data,
-            self.c_filter.roll,
-            self.c_filter.pitch,
-        ]
-        conditions_data = [
-            self.overturned,
-            self.last_mpus6050_sample_ts,
-        ]
-        return [
-            state_data,
-            conditions_data
-        ]
+#     def get_data(self):
+#         state_data = [
+#             *self.latest_filtered_data,
+#             self.c_filter.roll,
+#             self.c_filter.pitch,
+#         ]
+#         conditions_data = [
+#             self.overturned,
+#             self.last_mpus6050_sample_ts,
+#         ]
+#         return [
+#             state_data,
+#             conditions_data
+#         ]
     
-    def deinit(self):
-        self.deinit_mpu()
+#     def deinit(self):
+#         self.deinit_mpu()
