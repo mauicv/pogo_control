@@ -10,10 +10,9 @@ import random
 import numpy as np
 import uuid
 from client.sample import Rollout, deploy_model, test
-from storage.reward import default_standing_reward, default_velocity_reward, alt_1_velocity_reward, alt_2_velocity_reward
+from storage.reward import default_standing_reward, default_velocity_reward
 torch.set_grad_enabled(False)
-from config import INITIAL_POSITION, ALT_INITIAL_POSITION
-INITIAL_POSITION = ALT_INITIAL_POSITION
+from config import INITIAL_POSITION
 
 
 def wait_for_model(gcs: GCS_Interface):
@@ -25,8 +24,10 @@ def wait_for_model(gcs: GCS_Interface):
             sleep(1)
             continue
 
+
 def load_local_model(solution: str):
     local_path = f"solutions/{solution}.pt"
+    print(f'Loading model from {local_path}')
     model = torch.load(
         local_path,
         map_location=torch.device('cpu')
@@ -106,13 +107,9 @@ def plot_rollout(rollout: Rollout):
     states = torch.tensor(rollout.states)
     posture_rewards = default_standing_reward(states, conditions)
     if len(posture_rewards) > 15:
-        velocity_rewards_1 = default_velocity_reward(states, conditions)
-        velocity_rewards_2 = alt_1_velocity_reward(states, conditions)
-        velocity_rewards_3 = alt_2_velocity_reward(states, conditions)
+        velocity_rewards = default_velocity_reward(states, conditions)
     else:
-        velocity_rewards_1 = torch.zeros(len(posture_rewards))
-        velocity_rewards_2 = torch.zeros(len(posture_rewards))
-        velocity_rewards_3 = torch.zeros(len(posture_rewards))
+        velocity_rewards = torch.zeros(len(posture_rewards))
     for i, label in enumerate(action_labels):
         actions = np.array([action[i] * 0.1 for action in rollout.actions])
         filtered_actions = np.array([action[i] for action in rollout.filtered_actions])
@@ -124,9 +121,7 @@ def plot_rollout(rollout: Rollout):
         axs[f'action-{i+1}'].plot(action_noise)
         axs[f'action-{i+1}'].set_ylim(-0.12, 0.12)
     axs[f'reward'].plot(posture_rewards, label='posture')
-    axs[f'reward'].plot(velocity_rewards_1, label='velocity_1')
-    axs[f'reward'].plot(velocity_rewards_2, label='velocity_2')
-    axs[f'reward'].plot(velocity_rewards_3, label='velocity_3')
+    axs[f'reward'].plot(velocity_rewards, label='velocity')
     axs[f'reward'].legend()
     plt.show()
 
@@ -149,7 +144,7 @@ def deploy_solution(
         butterworth_filter: ButterworthFilter,
         solution: str
     ):
-    set_init_state(client)
+    client.set_servo_states(INITIAL_POSITION)
     soln_model = None
     if solution is not None:
         soln_model = load_local_model(solution)
@@ -173,7 +168,6 @@ def run_training(
 
     if not random_model:
         model = wait_for_model(gcs)
-        # print(model)
     
     count = 0
     time_start = time()
