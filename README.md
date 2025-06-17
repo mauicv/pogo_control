@@ -25,25 +25,33 @@ pogo --help
 
 to see all options.
 
-__Starting Pogo__: On pogo's rpi:
+___
+
+__Starting Pogo__: On pogo's raspberrypi:
 
 ```sh
 pogo pogo start
 ```
 
+___
+
 On the camera rpi:
 
-__Starting camera__: On 
+__Starting camera__: On the camera raspberrypi
 
 ```sh
 pogo camera start
 ```
+
+___
 
 __Deploy__: Will deploy `plastic-thumb-nozzle-212` which is the current best solution trained. Runs for 500 steps.
 
 ```sh
 pogo client --num-steps=500 deploy --name="plastic-thumb-nozzle-212"
 ```
+
+___
 
 __Sample__: Starts a sampling loop. Uses `strain-super-ring` as the google bucket to upload rollouts to and `plastic-thumb-nozzle` as the model bucket to check for new actors. No action noise or weight perturbation. Rolls out 200 steps each sample.
 
