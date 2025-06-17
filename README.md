@@ -1,23 +1,10 @@
 # Pogo Control
 
-This project has sampling logic and a control system for a [`puppy_pi`](https://www.hiwonder.com/products/puppypi?variant=40213129003095) robot affectionately named `Pogo` by my sister. The robot is controlled by a Raspberry Pi and a MPU6050 IMU sensor. There are three main components:
+![](/assets/pogo-rollout.gif)
 
-## `client.py`
+This project has sampling logic and a control system for a [`puppy_pi`](https://www.hiwonder.com/products/puppypi?variant=40213129003095) robot affectionately named `Pogo` by my sister. The robot is controlled by a Raspberry Pi and a MPU6050 IMU sensor.
 
-This is a simple client that sends commands to the robot. It is responsible for parsing the commands and sending them to the robot via a socket connection.
-
-## `server.py`
-
-The server is run on the robot. It is responsible for reading and implementing the actions sent from the client and sending the sensor data to the client.
-
-## `sampler.py`
-
-The sampler performs a set of actions. Firstly Its responsible for performing the actor model rollouts via the client logic. During this process it stores the actions (the PWM values for each motor) and the observations (the readings from the IMU). It uploads the data to a google cloud bucket. It uses the latest actor model to generate the actions.
-
-Secondly, it checks the google cloud bucket for new actor model versions. If there are new versions it will download them and use them to generate the actions during the next round of rollouts.
-
-Note the actor model is trained externally and periodically uploaded to the google cloud bucket.
-
+__Note__: This repo was built mostly as a POC and as such the testing, maintance and documentation is minimal throughout. It's part of a larger project to train a Robot to walk using Model based RL (see [this blog post](https://mauicv.com/#/posts/real-world-model-rl) if your interested). Feel free to reach out if you have questions.
 
 ## Setting up Pogo
 
@@ -26,4 +13,41 @@ Note the actor model is trained externally and periodically uploaded to the goog
 3. pip install requirements/server.txt
 4. Setup pigpio daemon: see [here](https://abyz.me.uk/rpi/pigpio/download.html)
 5. install cv2 dependencies: `apt-get update && apt-get install ffmpeg libsm6 libxext6  -y`
-5. Run `python3 main.py server` to start the server.
+
+
+## Utilization
+
+Pogo uses [click](https://click.palletsprojects.com/en/stable/) for a CLI. Use:
+
+```
+pogo --help
+```
+
+to see all options.
+
+__Starting Pogo__: On pogo's rpi:
+
+```sh
+pogo pogo start
+```
+
+On the camera rpi:
+
+__Starting camera__: On 
+
+```sh
+pogo camera start
+```
+
+__Deploy__: Will deploy `plastic-thumb-nozzle-212` which is the current best solution trained. Runs for 500 steps.
+
+```sh
+pogo client --num-steps=500 deploy --name="plastic-thumb-nozzle-212"
+```
+
+__Sample__: Starts a sampling loop. Uses `strain-super-ring` as the google bucket to upload rollouts to and `plastic-thumb-nozzle` as the model bucket to check for new actors. No action noise or weight perturbation. Rolls out 200 steps each sample.
+
+```sh
+pogo client --name="strain-super-ring" --model-name="plastic-thumb-nozzle" --noise-range=0 0 --num-steps=200 --weight-range=0 0 sample
+```
+
